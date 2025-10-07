@@ -43,4 +43,8 @@ Route::get('/login', function () {
     return view('login');
 })->name('login');
 
+Route::get('/usuarios', function () {
+    return view('usuarios');
+})->name('usuarios');
+
 require __DIR__.'/auth.php';
