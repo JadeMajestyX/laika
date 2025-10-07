@@ -6,6 +6,11 @@ Route::get('/', function () {
     return view('dashboard');
     })->name('dashboard');
 
+Route::get('/usuarios', function () {
+    return view('usuarios');
+    })->name('usuarios');
+
+
 Route::get('/mascotas', function () {
     return view('mascotas');
     })->name('mascotas');
@@ -25,3 +30,5 @@ Route::get('/reportes', function () {
 Route::get('/configuracion', function () {
     return view('configuracion');
     })->name('configuracion');
+
+
