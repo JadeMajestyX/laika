@@ -55,4 +55,9 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+        public function hasRole($rol)
+    {
+        return $this->rol === $rol; // si solo tienes un campo 'rol' en la tabla users
+    }
 }

@@ -1,0 +1,85 @@
+@extends('layouts.app_admin')
+
+{{-- Título de la página --}}
+
+@section('title', 'Mascotas')
+
+{{-- Aside específico para esta vista --}}
+@section('aside')
+        <li class="nav-item mb-2"><a class="nav-link text-white" href="{{ route('dashboard') }}"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a></li>
+        <li class="nav-item mb-2"><a class="nav-link text-white" href="#"><i class="bi bi-people me-2"></i> Usuarios</a></li>
+        <li class="nav-item mb-2"><a class="nav-link text-white active" href="{{ route('mascotas') }}"><i class="bi bi-basket2 me-2"></i> Mascotas</a></li>
+        <li class="nav-item mb-2"><a class="nav-link text-white" href="{{ route('inventario') }}"><i class="bi bi-box-seam me-2"></i> Inventario</a></li>
+        <li class="nav-item mb-2"><a class="nav-link text-white" href="{{ route('trabajadores') }}"><i class="bi bi-person-badge me-2"></i> Trabajadores</a></li>
+        <li class="nav-item mb-2"><a class="nav-link text-white" href="{{ route('reportes') }}"><i class="bi bi-clipboard-data me-2"></i> Reportes</a></li>
+        <li class="nav-item mb-2"><a class="nav-link text-white" href="{{ route('configuracion') }}"><i class="bi bi-gear me-2"></i> Configuración</a></li>
+@endsection
+
+  @section('header-title', 'Mascotas')
+
+  @section('content')
+      <!-- Tabla -->
+      <div class="card shadow-sm mt-4">
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>Nombre</th>
+                  <th>Especie</th>
+                  <th>Raza</th>
+                  <th>Edad</th>
+                  <th>Peso</th>
+                  <th>Dueño</th>
+                  <th class="text-center">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Firulais</td>
+                  <td>Canino</td>
+                  <td>Labrador</td>
+                  <td>3 años</td>
+                  <td>42 kg</td>
+                  <td>Pedro</td>
+                  <td class="text-center">
+                    <div class="d-inline-flex gap-1">
+                      <button class="btn btn-warning btn-sm" data-bs-toggle="tooltip" title="Ver"><i class="bi bi-eye"></i></button>
+                      <button class="btn btn-info btn-sm text-white" data-bs-toggle="tooltip" title="Editar"><i class="bi bi-pencil-square"></i></button>
+                      <button class="btn btn-danger btn-sm" data-bs-toggle="tooltip" title="Eliminar"><i class="bi bi-trash"></i></button>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td>Julio</td>
+                  <td>Felino</td>
+                  <td>Siamés</td>
+                  <td>5 años</td>
+                  <td>6 kg</td>
+                  <td>Jaime</td>
+                  <td class="text-center">
+                    <div class="d-inline-flex gap-1">
+                      <button class="btn btn-warning btn-sm" data-bs-toggle="tooltip" title="Ver"><i class="bi bi-eye"></i></button>
+                      <button class="btn btn-info btn-sm text-white" data-bs-toggle="tooltip" title="Editar"><i class="bi bi-pencil-square"></i></button>
+                      <button class="btn btn-danger btn-sm" data-bs-toggle="tooltip" title="Eliminar"><i class="bi bi-trash"></i></button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Paginación -->
+      <nav class="mt-3" aria-label="Paginación">
+        <ul class="pagination pagination-sm mb-0">
+          <li class="page-item disabled"><a class="page-link" href="#">Anterior</a></li>
+          <li class="page-item active"><a class="page-link" href="#">1</a></li>
+          <li class="page-item"><a class="page-link" href="#">2</a></li>
+          <li class="page-item"><a class="page-link" href="#">3</a></li>
+          <li class="page-item"><a class="page-link" href="#">Siguiente</a></li>
+        </ul>
+      </nav>
+  @endsection
+

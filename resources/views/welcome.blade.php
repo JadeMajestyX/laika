@@ -7,7 +7,6 @@
     <title>Document</title>
 </head>
 <body>
-    <h1>Welcome to Laika</h1>
-    <p>Your one-stop solution for pet care management.</p>
+    <img src="{{ asset('images/image.png') }}" alt="">
 </body>
 </html>
