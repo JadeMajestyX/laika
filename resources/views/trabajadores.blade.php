@@ -63,7 +63,7 @@
           <a class="nav-link" href="{{ route('dashboard') }}"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a>
         </li>
         <li class="nav-item mb-2">
-          <a class="nav-link" href="#"><i class="bi bi-people me-2"></i> Usuarios</a>
+          <a class="nav-link active" href="{{ route('usuarios') }}"><i class="bi bi-people me-2"></i> Usuarios</a>
         </li>
         <li class="nav-item mb-2">
           <a class="nav-link" href="{{ route('mascotas') }}"><i class="bi bi-basket2 me-2"></i> Mascotas</a>

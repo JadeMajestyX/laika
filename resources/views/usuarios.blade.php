@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Inventario - Laika</title>
+  <title>Usuarios - Laika</title>
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
@@ -37,6 +37,18 @@
       font-weight: 600;
       font-size: 1rem;
     }
+    .add-btn {
+      background: #6f42c1;
+      border: none;
+      border-radius: 50%;
+      color: #fff;
+      width: 35px;
+      height: 35px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+    }
   </style>
 </head>
 <body>
@@ -48,16 +60,16 @@
       <h4 class="mb-4">Laika</h4>
       <ul class="nav flex-column">
         <li class="nav-item mb-2">
-          <a class="nav-link" href="{{route('dashboard')}}"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a>
+          <a class="nav-link" href="{{ route('dashboard') }}"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a>
         </li>
         <li class="nav-item mb-2">
-          <a class="nav-link" href="{{ route('usuarios') }}"><i class="bi bi-people me-2"></i> Usuarios</a>
+          <a class="nav-link active" href="{{ route('usuarios') }}"><i class="bi bi-people me-2"></i> Usuarios</a>
         </li>
         <li class="nav-item mb-2">
           <a class="nav-link" href="{{ route('mascotas') }}"><i class="bi bi-basket2 me-2"></i> Mascotas</a>
         </li>
         <li class="nav-item mb-2">
-          <a class="nav-link active" href="{{ route('inventario') }}"><i class="bi bi-box-seam me-2"></i> Inventario</a>
+          <a class="nav-link" href="{{ route('inventario') }}"><i class="bi bi-box-seam me-2"></i> Inventario</a>
         </li>
         <li class="nav-item mb-2">
           <a class="nav-link" href="{{ route('trabajadores') }}"><i class="bi bi-person-badge me-2"></i> Trabajadores</a>
@@ -75,7 +87,7 @@
     <main class="col-md-10 ms-sm-auto px-4">
       <!-- Header -->
       <div class="d-flex justify-content-between align-items-center mt-3">
-        <h2>Inventario</h2>
+        <h2>Usuarios</h2>
         <div class="d-flex align-items-center">
           <input type="text" class="form-control me-3" placeholder="Buscar ...">
           <i class="bi bi-bell me-3 fs-4"></i>
@@ -84,33 +96,31 @@
         </div>
       </div>
 
-      <!-- Productos -->
+      <!-- Tabla de trabajadores -->
       <div class="card shadow-sm mt-4">
-        <div class="card-header d-flex justify-content-between">
-          <span>Productos</span>
-          <a href="#">Ver todos</a>
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span>Usuarios Registrados</span>
+          <button class="add-btn"><i class="bi bi-plus-lg"></i></button>
         </div>
         <div class="card-body p-0">
           <table class="table table-hover mb-0">
             <thead class="table-light">
               <tr>
-                <th>Producto</th>
-                <th>Categoría</th>
-                <th>Stock</th>
-                <th>SKU</th>
-                <th>Marca</th>
-                <th>Precio</th>
+                <th>Nombre</th>
+                <th>Apellidos</th>
+                <th>Correo</th>
+                <th>Edad</th>
+                <th>Mascotas</th>
                 <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td>Vacuna</td>
-                <td>Antibiótico</td>
-                <td>245</td>
-                <td>1434</td>
-                <td>X</td>
-                <td>$200</td>
+                <td>Pedro</td>
+                <td>Hernandez</td>
+                <td>Hrm123@gmail.com</td>
+                <td>27 años</td>
+                <td>3</td>
                 <td>
                   <button class="action-btn view"><i class="bi bi-eye"></i></button>
                   <button class="action-btn edit"><i class="bi bi-file-earmark-text"></i></button>
@@ -118,57 +128,16 @@
                 </td>
               </tr>
               <tr>
-                <td>Shampoo</td>
-                <td>Shampoo</td>
-                <td>123</td>
-                <td>1346</td>
-                <td>XY</td>
-                <td>$60</td>
+                <td>Jaime</td>
+                <td>Sanchez</td>
+                <td>Sanz123@gmail.com</td>
+                <td>25 años</td>
+                <td>1</td>
                 <td>
                   <button class="action-btn view"><i class="bi bi-eye"></i></button>
                   <button class="action-btn edit"><i class="bi bi-file-earmark-text"></i></button>
                   <button class="action-btn delete"><i class="bi bi-trash"></i></button>
                 </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Movimientos -->
-      <div class="card shadow-sm mt-4">
-        <div class="card-header d-flex justify-content-between">
-          <span>Movimientos</span>
-          <a href="#">Ver todos</a>
-        </div>
-        <div class="card-body p-0">
-          <table class="table table-hover mb-0">
-            <thead class="table-light">
-              <tr>
-                <th>Tipo</th>
-                <th>Categoría</th>
-                <th>Cantidad</th>
-                <th>SKU</th>
-                <th>Marca</th>
-                <th>Precio compra / venta</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Entrada</td>
-                <td>Antibiótico</td>
-                <td>50</td>
-                <td>1434</td>
-                <td>X</td>
-                <td>$10,000</td>
-              </tr>
-              <tr>
-                <td>Salida</td>
-                <td>Shampoo</td>
-                <td>2</td>
-                <td>1346</td>
-                <td>XY</td>
-                <td>$120</td>
               </tr>
             </tbody>
           </table>
