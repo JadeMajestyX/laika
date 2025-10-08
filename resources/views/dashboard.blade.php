@@ -62,7 +62,7 @@
         <div class="col-md-3 mb-3">
           <div class="card shadow-sm text-center">
             <div class="card-body">
-              <h4>{{$data}}</h4>
+              <h4>{{$data['new_users_last_month']}}</h4>
               <p class="mb-0">Clientes nuevos (Mes)</p>
             </div>
           </div>
