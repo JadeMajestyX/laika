@@ -49,6 +49,7 @@
         <table class="table table-hover mb-0">
             <thead class="table-light">
                 <tr>
+                    <th>ID</th> <!-- Nueva columna -->
                     <th>Nombre</th>
                     <th>Apellidos</th>
                     <th>Correo</th>
@@ -61,6 +62,7 @@
             <tbody>
                 @foreach($usuarios as $usuario)
                 <tr>
+                    <td>{{ $usuario->id }}</td> <!-- Mostrando ID -->
                     <td>{{ $usuario->nombre }}</td>
                     <td>{{ $usuario->apellidos }}</td>
                     <td>{{ $usuario->email }}</td>
@@ -87,5 +89,6 @@
         </table>
     </div>
 </div>
+
 
 @endsection
