@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\MascotaController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\TrabajadorController;
+use App\Http\Controllers\ReporteController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -19,6 +20,8 @@ Route::middleware(EnsureUserHasRole::class.':A')->group(function () {
     Route::get('/usuarios', [UserController::class, 'index'])->name('usuarios');
     Route::get('/mascotas', [MascotaController::class, 'index'])->name('mascotas');
     Route::get('/trabajadores', [TrabajadorController::class, 'index'])->name('trabajadores');
+    Route::get('/reportes', [ReporteController::class, 'index'])->name('reportes');
+    Route::get('/inventario', [App\Http\Controllers\InventarioController::class, 'index'])->name('inventario');
 });
 
 
@@ -29,16 +32,6 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-
-
-Route::get('/inventario', function () {
-    return view('inventario');
-})->name('inventario');
-
-
-Route::get('/reportes', function () {
-    return view('reportes');
-})->name('reportes');
 
 Route::get('/configuracion', function () {
     return view('configuracion');

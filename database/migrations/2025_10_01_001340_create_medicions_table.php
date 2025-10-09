@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('medicions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('dispensador_id')->constrained('dispensadors')->onDelete('cascade');
+            $table->foreignId('dispensador_id')->constrained('codigo_dispensadors')->onDelete('cascade');
             $table->string('nivel_comida', 50);
             $table->string('peso_comida', 50);
             $table->timestamps();
