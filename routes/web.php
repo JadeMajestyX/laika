@@ -2,6 +2,7 @@
 
 // use App\Http\Controllers\Dashboard;
 
+use App\Http\Controllers\ConfiguracionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Middleware\EnsureUserHasRole;
@@ -22,6 +23,7 @@ Route::middleware(EnsureUserHasRole::class.':A')->group(function () {
     Route::get('/trabajadores', [TrabajadorController::class, 'index'])->name('trabajadores');
     Route::get('/reportes', [ReporteController::class, 'index'])->name('reportes');
     Route::get('/inventario', [App\Http\Controllers\InventarioController::class, 'index'])->name('inventario');
+    Route::get('/configuracion', [ConfiguracionController::class, 'index'])->name('configuracion');
 });
 
 
@@ -32,10 +34,6 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-
-Route::get('/configuracion', function () {
-    return view('configuracion');
-})->name('configuracion');
 
 Route::get('/login', function () {
     return view('login');

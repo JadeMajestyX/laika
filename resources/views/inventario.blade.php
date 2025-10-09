@@ -6,6 +6,7 @@
 
 {{-- Aside específico para esta vista --}}
 @section('aside')
+  <li class="nav-item mb-2">
   <a class="nav-link text-white" href="{{route('dashboard')}}"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a>
   </li>
   <li class="nav-item mb-2">
