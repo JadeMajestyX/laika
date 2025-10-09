@@ -29,7 +29,7 @@
                     <input type="text" class="form-control me-3" placeholder="Buscar ...">
                     <i class="bi bi-bell me-3 fs-4"></i>
                     <span class="badge bg-secondary rounded-circle p-3">CJ</span>
-                    <span class="ms-2">Administrador</span>
+                    <span class="ms-2">{{ $usuario->nombre }}</span>
                 </div>
             </div>
 

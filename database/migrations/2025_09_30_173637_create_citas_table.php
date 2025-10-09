@@ -19,7 +19,7 @@ return new class extends Migration
             $table->foreignId('creada_por')->constrained('users');
             $table->dateTime('fecha');
             $table->text('notas')->nullable();
-            $table->enum('status', ['pendiente', 'completada', 'cancelada'])->default('pendiente');
+            $table->enum('status', ['pendiente', 'completada', 'cancelada', 'confirmada'])->default('pendiente');
             $table->timestamps();
         });
     }

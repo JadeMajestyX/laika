@@ -1,10 +1,7 @@
 @extends('layouts.app_admin')
 
-{{-- Título de la página --}}
-
 @section('title', 'Dashboard')
 
-{{-- Aside específico para esta vista --}}
 @section('aside')
         <li class="nav-item mb-2">
           <a class="nav-link text-white bg-white bg-opacity-10 rounded active" href="{{ route('dashboard') }}"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a>
@@ -29,16 +26,16 @@
         </li>
 @endsection
 
-  @section('header-title', 'Inventario')
+@section('header-title', 'Dashboard')
 
-  @section('content')
+@section('content')
 
       <!-- Stats -->
       <div class="row mt-4">
         <div class="col-md-3 mb-3">
           <div class="card shadow-sm text-center">
             <div class="card-body">
-              <h4>8</h4>
+              <h4>{{$numero['citasHoy']}}</h4>
               <p class="mb-0">Citas Hoy</p>
             </div>
           </div>
@@ -46,23 +43,23 @@
         <div class="col-md-3 mb-3">
           <div class="card shadow-sm text-center">
             <div class="card-body">
-              <h4>18</h4>
-              <p class="mb-0">Consultas Hoy</p>
+              <h4>{{$numero['citasHoyCompletadas']}}</h4>
+              <p class="mb-0">Citas completas</p>
             </div>
           </div>
         </div>
         <div class="col-md-3 mb-3">
           <div class="card shadow-sm text-center">
             <div class="card-body">
-              <h4>124</h4>
-              <p class="mb-0">Mascotas registradas hoy</p>
+              <h4>{{$numero['mascotasUltimoMes']}}</h4>
+              <p class="mb-0">Mascotas registradas (Mes)</p>
             </div>
           </div>
         </div>
         <div class="col-md-3 mb-3">
           <div class="card shadow-sm text-center">
             <div class="card-body">
-              <h4>{{$data}}</h4>
+              <h4>{{$numero['clientesNuevosMes']}}</h4>
               <p class="mb-0">Clientes nuevos (Mes)</p>
             </div>
           </div>
@@ -73,85 +70,84 @@
       <div class="row mt-4">
         <div class="col-md-12">
 
-          <div class="card shadow-sm mb-4">
-            <div class="card-header d-flex justify-content-between">
-              <span>Citas de hoy <small>19/09/2025</small></span>
-              <a href="#">Ver todas</a>
-            </div>
-            <div class="card-body p-0">
-              <table class="table table-hover mb-0">
-                <thead class="table-light">
-                  <tr>
+<!-- Citas de hoy -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header d-flex justify-content-between">
+        <span>Citas de hoy <small>{{ now()->format('d/m/Y') }}</small></span>
+        <a href="#">Ver todas</a>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
                     <th>Hora</th>
                     <th>Nombre</th>
+                    <th>Dueño</th>
                     <th>Raza</th>
                     <th>Motivo</th>
+                    <th>Clínica</th> <!-- Nueva columna -->
                     <th>Estado</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>9:00 AM</td>
-                    <td>Firulais</td>
-                    <td>Canino - Labrador</td>
-                    <td>Salud</td>
-                    <td><span class="badge bg-success rounded-pill">Confirmada</span></td>
-                  </tr>
-                  <tr>
-                    <td>11:00 AM</td>
-                    <td>Chimenea</td>
-                    <td>Canino - Rough collie</td>
-                    <td>Aseo</td>
-                    <td><span class="badge bg-warning text-dark rounded-pill">Por confirmar</span></td>
-                  </tr>
-                  <tr>
-                    <td>17:00 PM</td>
-                    <td>Botas</td>
-                    <td>Felino - Siamés</td>
-                    <td>Aseo</td>
-                    <td><span class="badge bg-danger rounded-pill">Cancelada</span></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($data['citasPendientes'] as $cita)
+                <tr>
+                    <td>{{ \Carbon\Carbon::parse($cita->fecha)->format('h:i A') }}</td>
+                    <td>{{ $cita->mascota->nombre }}</td>
+                    <td>{{ $cita->mascota->user->nombre }}</td>
+                    <td>{{ $cita->mascota->especie}} - {{ $cita->mascota->raza }}</td>
+                    <td>{{ $cita->servicio->nombre }}</td>
+                    <td>{{ $cita->clinica->nombre ?? 'Sin clínica' }}</td> <!-- Aquí se muestra la clínica -->
+                    <td>
+                        @if ($cita->status === 'confirmada')
+                            <span class="badge bg-success rounded-pill">Confirmada</span>
+                        @elseif ($cita->status === 'pendiente')
+                            <span class="badge bg-warning text-dark rounded-pill">Por confirmar</span>
+                        @elseif ($cita->status === 'cancelada')
+                            <span class="badge bg-danger rounded-pill">Cancelada</span>
+                        @elseif ($cita->status === 'completada')
+                            <span class="badge bg-primary rounded-pill">Completada</span>
+                        @endif
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+</div>
 
-          <div class="card shadow-sm">
-            <div class="card-header d-flex justify-content-between">
-              <span>Consultas de hoy <small>19/09/2025</small></span>
-              <a href="#">Ver todas</a>
-            </div>
-            <div class="card-body p-0">
-              <table class="table table-hover mb-0">
-                <thead class="table-light">
-                  <tr>
+<!-- Realizadas de hoy -->
+<div class="card shadow-sm">
+    <div class="card-header d-flex justify-content-between">
+        <span>Realizadas de hoy <small>{{ now()->format('d/m/Y') }}</small></span>
+        <a href="#">Ver todas</a>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
                     <th>Hora</th>
                     <th>Nombre</th>
+                    <th>Dueño</th>
                     <th>Raza</th>
                     <th>Motivo</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>9:00 AM</td>
-                    <td>Firulais</td>
-                    <td>Canino - Labrador</td>
-                    <td>Salud</td>
-                  </tr>
-                  <tr>
-                    <td>11:00 AM</td>
-                    <td>Chimenea</td>
-                    <td>Canino - Rough collie</td>
-                    <td>Aseo</td>
-                  </tr>
-                  <tr>
-                    <td>17:00 PM</td>
-                    <td>Botas</td>
-                    <td>Felino - Siamés</td>
-                    <td>Aseo</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
+                    <th>Clínica</th> <!-- Nueva columna -->
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($data['citasCompletadas'] as $cita)
+                <tr>
+                    <td>{{ \Carbon\Carbon::parse($cita->fecha)->format('h:i A') }}</td>
+                    <td>{{ $cita->mascota->nombre }}</td>
+                    <td>{{ $cita->mascota->user->nombre }}</td>
+                    <td>{{ $cita->mascota->especie}} - {{ $cita->mascota->raza }}</td>
+                    <td>{{ $cita->servicio->nombre }}</td>
+                    <td>{{ $cita->clinica->nombre ?? 'Sin clínica' }}</td> <!-- Mostrar clínica -->
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+</div>
+
 @endsection
