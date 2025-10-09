@@ -40,7 +40,11 @@
                   <td>{{ $mascota->nombre }}</td>
                   <td>{{ $mascota->especie }}</td>
                   <td>{{ $mascota->raza }}</td>
-                  <td>{{ $mascota->edad }} años</td>
+                  @if ($mascota->fecha_nacimiento === null)
+                    <td>Desconocida</td>
+                  @else
+                    <td>{{ \Carbon\Carbon::parse($mascota->fecha_nacimiento)->age }} años</td>
+                  @endif
                   <td>{{ $mascota->peso }} kg</td>
                   <td>{{ $mascota->user->nombre }} {{ $mascota->user->apellido_paterno }}</td>
                   <td class="text-center">
