@@ -35,14 +35,14 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($usuarios as $usuario)
+                    @foreach($usuarios as $cliente)
                     <tr>
-                        <td>{{ $usuario->id }}</td>
-                        <td>{{ $usuario->nombre }}</td>
-                        <td>{{ $usuario->apellido_paterno }} {{ $usuario->apellido_materno }}</td>
-                        <td>{{ $usuario->email }}</td>
-                        <td>{{ \Carbon\Carbon::parse($usuario->fecha_nacimiento)->age }} años</td>
-                        <td>{{ $usuario->mascotas->count() }}</td>
+                        <td>{{ $cliente->id }}</td>
+                        <td>{{ $cliente->nombre }}</td>
+                        <td>{{ $cliente->apellido_paterno }} {{ $cliente->apellido_materno }}</td>
+                        <td>{{ $cliente->email }}</td>
+                        <td>{{ \Carbon\Carbon::parse($cliente->fecha_nacimiento)->age }} años</td>
+                        <td>{{ $cliente->mascotas->count() }}</td>
                         <td>
                             <div class="d-inline-flex gap-1">
                                 <button class="btn btn-warning btn-sm" data-bs-toggle="tooltip" title="Ver"><i class="bi bi-eye"></i></button>
