@@ -31,7 +31,6 @@
                         <th>Correo</th>
                         <th>Edad</th>
                         <th>Mascotas</th>
-                        <th>Rol</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -44,16 +43,6 @@
                         <td>{{ $usuario->email }}</td>
                         <td>{{ \Carbon\Carbon::parse($usuario->fecha_nacimiento)->age }} años</td>
                         <td>{{ $usuario->mascotas->count() }}</td>
-                        <td>
-                            @switch($usuario->rol)
-                                @case('A') Administrador @break
-                                @case('V') Veterinario @break
-                                @case('G') Groomer @break
-                                @case('R') Recepcionista @break
-                                @case('U') Usuario @break
-                                @default Sin rol
-                            @endswitch
-                        </td>
                         <td>
                             <div class="d-inline-flex gap-1">
                                 <button class="btn btn-warning btn-sm" data-bs-toggle="tooltip" title="Ver"><i class="bi bi-eye"></i></button>
