@@ -18,27 +18,8 @@
 
 @section('content')
 
-<!-- Filtros -->
-<div class="card shadow-sm mt-4 mb-3">
-    <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <form action="{{ route('usuarios') }}" method="GET" class="d-flex gap-2 align-items-center flex-wrap">
-            <input type="text" name="search" class="form-control" placeholder="Buscar por nombre o apellido" value="{{ request('search') }}">
-            <select name="rol" class="form-select">
-                <option value="">Todos los roles</option>
-                <option value="A" {{ request('rol') == 'A' ? 'selected' : '' }}>Administrador</option>
-                <option value="V" {{ request('rol') == 'V' ? 'selected' : '' }}>Veterinario</option>
-                <option value="G" {{ request('rol') == 'G' ? 'selected' : '' }}>Groomer</option>
-                <option value="R" {{ request('rol') == 'R' ? 'selected' : '' }}>Recepcionista</option>
-                <option value="U" {{ request('rol') == 'U' ? 'selected' : '' }}>Usuario</option>
-            </select>
-            <button type="submit" class="btn btn-primary"><i class="bi bi-funnel-fill me-1"></i> Filtrar</button>
-        </form>
-        <button class="btn btn-success"><i class="bi bi-plus-lg"></i> Agregar</button>
-    </div>
-</div>
-
 <!-- Tabla de usuarios -->
-<div class="card shadow-sm">
+<div class="card shadow-sm mt-4">
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover table-striped align-middle mb-0">
