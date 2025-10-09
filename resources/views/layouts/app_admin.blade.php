@@ -23,15 +23,31 @@
         {{-- Main content --}}
         <main class="col-md-10 ms-sm-auto px-4">
             {{-- Header --}}
-            <div class="d-flex justify-content-between align-items-center mt-3">
-                <h2>@yield('header-title')</h2>
-                <div class="d-flex align-items-center">
-                    <input type="text" class="form-control me-3" placeholder="Buscar ...">
-                    <i class="bi bi-bell me-3 fs-4"></i>
-                    <span class="badge bg-secondary rounded-circle p-3">CJ</span>
-                    <span class="ms-2">{{ $usuario->nombre }}</span>
-                </div>
+
+            <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap">
+            <h2>@yield('header-title')</h2>
+
+            <div class="d-flex align-items-center flex-wrap justify-content-end">
+                <!-- Campo de búsqueda -->
+                <input type="text" class="form-control me-3" placeholder="Buscar ..." style="max-width: 200px;">
+
+                <!-- Icono de notificación -->
+                <i class="bi bi-bell me-3 fs-4"></i>
+
+                <!-- Avatar y nombre -->
+                <span class="badge bg-secondary rounded-circle p-3">CJ</span>
+                <span class="ms-2">{{ $usuario->nombre }}</span>
+
+                <!-- Botón de cerrar sesión -->
+                <form method="POST" action="{{ route('logout') }}" class="ms-3 d-inline">
+                    @csrf
+                    <button type="submit" class="btn btn-outline-danger btn-sm d-flex align-items-center">
+                        <i class="bi bi-box-arrow-right me-1"></i> Cerrar sesión
+                    </button>
+                </form>
             </div>
+        </div>
+
 
             {{-- Contenido específico de cada vista --}}
             @yield('content')
