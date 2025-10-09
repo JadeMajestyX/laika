@@ -20,75 +20,107 @@
 
 <!-- Filtros -->
 <div class="card shadow-sm mt-4 mb-3">
-    <div class="card-body d-flex justify-content-between align-items-center">
-        <form action="{{ route('usuarios') }}" method="GET" class="d-flex gap-2 align-items-center">
-            <div>
-                <input type="text" name="search" class="form-control" placeholder="Buscar por nombre o apellido" value="{{ request('search') }}">
-            </div>
-            <div>
-                <select name="rol" class="form-select">
-                    <option value="">Todos los roles</option>
-                    <option value="A" {{ request('rol') == 'A' ? 'selected' : '' }}>Administrador</option>
-                    <option value="V" {{ request('rol') == 'V' ? 'selected' : '' }}>Veterinario</option>
-                    <option value="G" {{ request('rol') == 'G' ? 'selected' : '' }}>Groomer</option>
-                    <option value="R" {{ request('rol') == 'R' ? 'selected' : '' }}>Recepcionista</option>
-                    <option value="U" {{ request('rol') == 'U' ? 'selected' : '' }}>Usuario</option>
-                </select>
-            </div>
-            <div>
-                <button type="submit" class="btn btn-primary"><i class="bi bi-funnel-fill me-1"></i> Filtrar</button>
-            </div>
+    <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <form action="{{ route('usuarios') }}" method="GET" class="d-flex gap-2 align-items-center flex-wrap">
+            <input type="text" name="search" class="form-control" placeholder="Buscar por nombre o apellido" value="{{ request('search') }}">
+            <select name="rol" class="form-select">
+                <option value="">Todos los roles</option>
+                <option value="A" {{ request('rol') == 'A' ? 'selected' : '' }}>Administrador</option>
+                <option value="V" {{ request('rol') == 'V' ? 'selected' : '' }}>Veterinario</option>
+                <option value="G" {{ request('rol') == 'G' ? 'selected' : '' }}>Groomer</option>
+                <option value="R" {{ request('rol') == 'R' ? 'selected' : '' }}>Recepcionista</option>
+                <option value="U" {{ request('rol') == 'U' ? 'selected' : '' }}>Usuario</option>
+            </select>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-funnel-fill me-1"></i> Filtrar</button>
         </form>
-        <button class="add-btn"><i class="bi bi-plus-lg"></i></button>
+        <button class="btn btn-success"><i class="bi bi-plus-lg"></i> Agregar</button>
     </div>
 </div>
 
 <!-- Tabla de usuarios -->
 <div class="card shadow-sm">
     <div class="card-body p-0">
-        <table class="table table-hover mb-0">
-            <thead class="table-light">
-                <tr>
-                    <th>ID</th> <!-- Nueva columna -->
-                    <th>Nombre</th>
-                    <th>Apellidos</th>
-                    <th>Correo</th>
-                    <th>Edad</th>
-                    <th>Mascotas</th>
-                    <th>Rol</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($usuarios as $usuario)
-                <tr>
-                    <td>{{ $usuario->id }}</td> <!-- Mostrando ID -->
-                    <td>{{ $usuario->nombre }}</td>
-                    <td>{{ $usuario->apellido_paterno }} {{ $usuario->apellido_materno }}</td>
-                    <td>{{ $usuario->email }}</td>
-                    <td>{{ \Carbon\Carbon::parse($usuario->fecha_nacimiento)->age }} años</td>
-                    <td>{{ $usuario->mascotas->count() }}</td>
-                    <td>
-                        @switch($usuario->rol)
-                            @case('A') Administrador @break
-                            @case('V') Veterinario @break
-                            @case('G') Groomer @break
-                            @case('R') Recepcionista @break
-                            @case('U') Usuario @break
-                            @default Sin rol
-                        @endswitch
-                    </td>
-                    <td>
-                        <button class="btn btn-warning btn-sm" data-bs-toggle="tooltip" title="Ver"><i class="bi bi-eye"></i></button>
-                        <button class="btn btn-info btn-sm text-white" data-bs-toggle="tooltip" title="Editar"><i class="bi bi-pencil-square"></i></button>
-                        <button class="btn btn-danger btn-sm" data-bs-toggle="tooltip" title="Eliminar"><i class="bi bi-trash"></i></button>
-                    </td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table class="table table-hover table-striped align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Apellidos</th>
+                        <th>Correo</th>
+                        <th>Edad</th>
+                        <th>Mascotas</th>
+                        <th>Rol</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($usuarios as $usuario)
+                    <tr>
+                        <td>{{ $usuario->id }}</td>
+                        <td>{{ $usuario->nombre }}</td>
+                        <td>{{ $usuario->apellido_paterno }} {{ $usuario->apellido_materno }}</td>
+                        <td>{{ $usuario->email }}</td>
+                        <td>{{ \Carbon\Carbon::parse($usuario->fecha_nacimiento)->age }} años</td>
+                        <td>{{ $usuario->mascotas->count() }}</td>
+                        <td>
+                            @switch($usuario->rol)
+                                @case('A') Administrador @break
+                                @case('V') Veterinario @break
+                                @case('G') Groomer @break
+                                @case('R') Recepcionista @break
+                                @case('U') Usuario @break
+                                @default Sin rol
+                            @endswitch
+                        </td>
+                        <td>
+                            <div class="d-inline-flex gap-1">
+                                <button class="btn btn-warning btn-sm" data-bs-toggle="tooltip" title="Ver"><i class="bi bi-eye"></i></button>
+                                <button class="btn btn-info btn-sm text-white" data-bs-toggle="tooltip" title="Editar"><i class="bi bi-pencil-square"></i></button>
+                                <button class="btn btn-danger btn-sm" data-bs-toggle="tooltip" title="Eliminar"><i class="bi bi-trash"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
+<!-- Paginación mejorada -->
+<nav class="mt-3 d-flex justify-content-center" aria-label="Paginación">
+    <ul class="pagination pagination-sm pagination-rounded shadow-sm">
+        {{-- Enlace anterior --}}
+        @if ($usuarios->onFirstPage())
+            <li class="page-item disabled">
+                <span class="page-link"><i class="bi bi-chevron-left"></i> Anterior</span>
+            </li>
+        @else
+            <li class="page-item">
+                <a class="page-link" href="{{ $usuarios->previousPageUrl() }}"><i class="bi bi-chevron-left"></i> Anterior</a>
+            </li>
+        @endif
+
+        {{-- Páginas --}}
+        @foreach ($usuarios->getUrlRange(1, $usuarios->lastPage()) as $page => $url)
+            <li class="page-item {{ $page == $usuarios->currentPage() ? 'active' : '' }}">
+                <a class="page-link" href="{{ $url }}">{{ $page }}</a>
+            </li>
+        @endforeach
+
+        {{-- Enlace siguiente --}}
+        @if ($usuarios->hasMorePages())
+            <li class="page-item">
+                <a class="page-link" href="{{ $usuarios->nextPageUrl() }}">Siguiente <i class="bi bi-chevron-right"></i></a>
+            </li>
+        @else
+            <li class="page-item disabled">
+                <span class="page-link">Siguiente <i class="bi bi-chevron-right"></i></span>
+            </li>
+        @endif
+    </ul>
+</nav>
 
 @endsection
+

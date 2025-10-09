@@ -35,13 +35,14 @@
                 </tr>
               </thead>
               <tbody>
+                @foreach ($mascotas as $mascota)
                 <tr>
-                  <td>Firulais</td>
-                  <td>Canino</td>
-                  <td>Labrador</td>
-                  <td>3 años</td>
-                  <td>42 kg</td>
-                  <td>Pedro</td>
+                  <td>{{ $mascota->nombre }}</td>
+                  <td>{{ $mascota->especie }}</td>
+                  <td>{{ $mascota->raza }}</td>
+                  <td>{{ $mascota->edad }} años</td>
+                  <td>{{ $mascota->peso }} kg</td>
+                  <td>{{ $mascota->user->nombre }} {{ $mascota->user->apellido_paterno }}</td>
                   <td class="text-center">
                     <div class="d-inline-flex gap-1">
                       <button class="btn btn-warning btn-sm" data-bs-toggle="tooltip" title="Ver"><i class="bi bi-eye"></i></button>
@@ -50,36 +51,47 @@
                     </div>
                   </td>
                 </tr>
-                <tr>
-                  <td>Julio</td>
-                  <td>Felino</td>
-                  <td>Siamés</td>
-                  <td>5 años</td>
-                  <td>6 kg</td>
-                  <td>Jaime</td>
-                  <td class="text-center">
-                    <div class="d-inline-flex gap-1">
-                      <button class="btn btn-warning btn-sm" data-bs-toggle="tooltip" title="Ver"><i class="bi bi-eye"></i></button>
-                      <button class="btn btn-info btn-sm text-white" data-bs-toggle="tooltip" title="Editar"><i class="bi bi-pencil-square"></i></button>
-                      <button class="btn btn-danger btn-sm" data-bs-toggle="tooltip" title="Eliminar"><i class="bi bi-trash"></i></button>
-                    </div>
-                  </td>
-                </tr>
+                @endforeach
               </tbody>
             </table>
           </div>
         </div>
       </div>
 
-      <!-- Paginación -->
-      <nav class="mt-3" aria-label="Paginación">
-        <ul class="pagination pagination-sm mb-0">
-          <li class="page-item disabled"><a class="page-link" href="#">Anterior</a></li>
-          <li class="page-item active"><a class="page-link" href="#">1</a></li>
-          <li class="page-item"><a class="page-link" href="#">2</a></li>
-          <li class="page-item"><a class="page-link" href="#">3</a></li>
-          <li class="page-item"><a class="page-link" href="#">Siguiente</a></li>
-        </ul>
-      </nav>
+<!-- Paginación mejorada -->
+<nav class="mt-4 d-flex justify-content-center" aria-label="Paginación">
+    <ul class="pagination pagination-sm pagination-rounded shadow-sm">
+        {{-- Enlace anterior --}}
+        @if ($mascotas->onFirstPage())
+            <li class="page-item disabled">
+                <span class="page-link"><i class="bi bi-chevron-left"></i> Anterior</span>
+            </li>
+        @else
+            <li class="page-item">
+                <a class="page-link" href="{{ $mascotas->previousPageUrl() }}"><i class="bi bi-chevron-left"></i> Anterior</a>
+            </li>
+        @endif
+
+        {{-- Páginas --}}
+        @foreach ($mascotas->getUrlRange(1, $mascotas->lastPage()) as $page => $url)
+            <li class="page-item {{ $page == $mascotas->currentPage() ? 'active' : '' }}">
+                <a class="page-link" href="{{ $url }}">{{ $page }}</a>
+            </li>
+        @endforeach
+
+        {{-- Enlace siguiente --}}
+        @if ($mascotas->hasMorePages())
+            <li class="page-item">
+                <a class="page-link" href="{{ $mascotas->nextPageUrl() }}">Siguiente <i class="bi bi-chevron-right"></i></a>
+            </li>
+        @else
+            <li class="page-item disabled">
+                <span class="page-link">Siguiente <i class="bi bi-chevron-right"></i></span>
+            </li>
+        @endif
+    </ul>
+</nav>
+
+
   @endsection
 

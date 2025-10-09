@@ -12,7 +12,7 @@ class UserController extends Controller
         $usuario = auth()->user();
 
         // Iniciamos la consulta con la relación 'mascotas'
-        $query = User::with('mascotas');
+        $query = User::with('mascotas')->where('is_active', True);
 
         // Filtro por búsqueda de nombre o apellido
         if ($request->filled('search')) {
@@ -29,7 +29,7 @@ class UserController extends Controller
             $query->where('rol', $request->rol);
         }
 
-        $usuarios = $query->get();
+        $usuarios = $query->paginate(10);
 
         return view('usuarios', compact('usuario', 'usuarios'));
     }
