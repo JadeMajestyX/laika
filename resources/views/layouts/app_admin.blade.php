@@ -29,7 +29,12 @@
 
             <div class="d-flex align-items-center flex-wrap justify-content-end">
                 <!-- Campo de búsqueda -->
-                <input type="text" class="form-control me-3" placeholder="Buscar ..." style="max-width: 200px;">
+                <form action="{{ route('buscar') }}" method="GET" class="d-flex align-items-center me-3">
+                    <input type="text" name="q" class="form-control" placeholder="Buscar ..." style="max-width: 200px;">
+                        <button type="submit" class="btn btn-outline-secondary ms-2">
+                    <i class="bi bi-search"></i>
+                </button>
+                </form>
 
                 <!-- Icono de notificación -->
                 <i class="bi bi-bell me-3 fs-4"></i>
