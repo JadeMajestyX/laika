@@ -8,6 +8,7 @@ use App\Http\Middleware\EnsureUserHasRole;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\MascotaController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\TrabajadorController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -16,6 +17,8 @@ Route::get('/', function () {
 Route::middleware(EnsureUserHasRole::class.':A')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/usuarios', [UserController::class, 'index'])->name('usuarios');
+    Route::get('/mascotas', [MascotaController::class, 'index'])->name('mascotas');
+    Route::get('/trabajadores', [TrabajadorController::class, 'index'])->name('trabajadores');
 });
 
 
@@ -27,15 +30,11 @@ Route::middleware('auth')->group(function () {
 });
 
 
-Route::get('/trabajadores', function () {
-    return view('trabajadores');
-})->name('trabajadores');
 
 Route::get('/inventario', function () {
     return view('inventario');
 })->name('inventario');
 
-Route::get('/mascotas', [MascotaController::class, 'index'])->name('mascotas');
 
 Route::get('/reportes', function () {
     return view('reportes');

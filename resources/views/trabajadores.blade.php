@@ -37,30 +37,29 @@
               </tr>
             </thead>
             <tbody>
+              @foreach ($trabajadores as $trabajador)
               <tr>
-                <td>Arnoldo</td>
-                <td>Hernandez</td>
-                <td>Hrm123@gmail.com</td>
-                <td>28 años</td>
-                <td>Veterinario</td>
+                <td>{{ $trabajador->nombre }}</td>
+                <td>{{ $trabajador->apellido_paterno }} {{ $trabajador->apellido_materno }}</td>
+                <td>{{ $trabajador->email }}</td>
+                <td>{{ \Carbon\Carbon::parse($trabajador->fecha_nacimiento)->age }} años</td>
+                <td>
+                  @switch($trabajador->rol)
+                    @case('A') Administrador @break
+                    @case('V') Veterinario @break
+                    @case('G') Groomer @break
+                    @case('R') Recepcionista @break
+                    @case('U') Usuario @break
+                    @default Sin rol
+                  @endswitch
+                </td>
                 <td>
                   <button class="btn btn-warning btn-sm me-1"><i class="bi bi-eye"></i></button>
                   <button class="btn btn-primary btn-sm me-1"><i class="bi bi-file-earmark-text"></i></button>
                   <button class="btn btn-danger btn-sm"><i class="bi bi-trash"></i></button>
                 </td>
               </tr>
-              <tr>
-                <td>Aurelio</td>
-                <td>Sanchez</td>
-                <td>Sanz123@gmail.com</td>
-                <td>22 años</td>
-                <td>Groomer</td>
-                <td>
-                  <button class="btn btn-warning btn-sm me-1"><i class="bi bi-eye"></i></button>
-                  <button class="btn btn-primary btn-sm me-1"><i class="bi bi-file-earmark-text"></i></button>
-                  <button class="btn btn-danger btn-sm"><i class="bi bi-trash"></i></button>
-                </td>
-              </tr>
+              @endforeach
             </tbody>
           </table>
         </div>
