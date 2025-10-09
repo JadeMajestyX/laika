@@ -7,10 +7,29 @@ use App\Models\User;
 
 class UserController extends Controller
 {
-    public function index(){
+    public function index(Request $request)
+    {
         $usuario = auth()->user();
 
-        $usuarios = User::with('mascotas')->get();
+        // Iniciamos la consulta con la relación 'mascotas'
+        $query = User::with('mascotas');
+
+        // Filtro por búsqueda de nombre o apellido
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('nombre', 'like', "%{$search}%")
+                  ->orWhere('apellido_paterno', 'like', "%{$search}%")
+                  ->orWhere('apellido_materno', 'like', "%{$search}%");
+            });
+        }
+
+        // Filtro por rol
+        if ($request->filled('rol')) {
+            $query->where('rol', $request->rol);
+        }
+
+        $usuarios = $query->get();
 
         return view('usuarios', compact('usuario', 'usuarios'));
     }

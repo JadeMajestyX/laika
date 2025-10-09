@@ -18,12 +18,33 @@
 
 @section('content')
 
-<!-- Tabla de usuarios -->
-<div class="card shadow-sm mt-4">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <span>Usuarios Registrados</span>
+<!-- Filtros -->
+<div class="card shadow-sm mt-4 mb-3">
+    <div class="card-body d-flex justify-content-between align-items-center">
+        <form action="{{ route('usuarios') }}" method="GET" class="d-flex gap-2 align-items-center">
+            <div>
+                <input type="text" name="search" class="form-control" placeholder="Buscar por nombre o apellido" value="{{ request('search') }}">
+            </div>
+            <div>
+                <select name="rol" class="form-select">
+                    <option value="">Todos los roles</option>
+                    <option value="A" {{ request('rol') == 'A' ? 'selected' : '' }}>Administrador</option>
+                    <option value="V" {{ request('rol') == 'V' ? 'selected' : '' }}>Veterinario</option>
+                    <option value="G" {{ request('rol') == 'G' ? 'selected' : '' }}>Groomer</option>
+                    <option value="R" {{ request('rol') == 'R' ? 'selected' : '' }}>Recepcionista</option>
+                    <option value="U" {{ request('rol') == 'U' ? 'selected' : '' }}>Usuario</option>
+                </select>
+            </div>
+            <div>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-funnel-fill me-1"></i> Filtrar</button>
+            </div>
+        </form>
         <button class="add-btn"><i class="bi bi-plus-lg"></i></button>
     </div>
+</div>
+
+<!-- Tabla de usuarios -->
+<div class="card shadow-sm">
     <div class="card-body p-0">
         <table class="table table-hover mb-0">
             <thead class="table-light">
@@ -33,7 +54,7 @@
                     <th>Correo</th>
                     <th>Edad</th>
                     <th>Mascotas</th>
-                    <th>Rol</th> <!-- Nueva columna -->
+                    <th>Rol</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
@@ -47,23 +68,12 @@
                     <td>{{ $usuario->mascotas->count() }}</td>
                     <td>
                         @switch($usuario->rol)
-                            @case('A')
-                                Administrador
-                                @break
-                            @case('V')
-                                Veterinario
-                                @break
-                            @case('G')
-                                Groomer
-                                @break
-                            @case('R')
-                                Recepcionista
-                                @break
-                            @case('U')
-                                Usuario
-                                @break
-                            @default
-                                Sin rol
+                            @case('A') Administrador @break
+                            @case('V') Veterinario @break
+                            @case('G') Groomer @break
+                            @case('R') Recepcionista @break
+                            @case('U') Usuario @break
+                            @default Sin rol
                         @endswitch
                     </td>
                     <td>
