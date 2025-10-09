@@ -64,7 +64,7 @@
                 <tr>
                     <td>{{ $usuario->id }}</td> <!-- Mostrando ID -->
                     <td>{{ $usuario->nombre }}</td>
-                    <td>{{ $usuario->apellidos }}</td>
+                    <td>{{ $usuario->apellido_paterno }} {{ $usuario->apellido_materno }}</td>
                     <td>{{ $usuario->email }}</td>
                     <td>{{ \Carbon\Carbon::parse($usuario->fecha_nacimiento)->age }} años</td>
                     <td>{{ $usuario->mascotas->count() }}</td>
