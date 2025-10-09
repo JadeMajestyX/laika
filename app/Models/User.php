@@ -56,6 +56,13 @@ class User extends Authenticatable
         ];
     }
 
+    // app/Models/User.php
+
+    public function mascotas()
+    {
+        return $this->hasMany(Mascota::class);
+    }
+
         public function hasRole($rol)
     {
         return $this->rol === $rol; // si solo tienes un campo 'rol' en la tabla users

@@ -3,13 +3,15 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\User;
 
 class UserController extends Controller
 {
-    //numero de usuarios
-    public function numberOfUsers() {
-        // Lógica para obtener el número de usuarios
-        $userCount = \App\Models\User::count();
-        return response()->json(['user_count' => $userCount]);
+    public function index(){
+        $usuario = auth()->user();
+
+        $usuarios = User::with('mascotas')->get();
+
+        return view('usuarios', compact('usuario', 'usuarios'));
     }
 }

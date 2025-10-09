@@ -6,13 +6,19 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Middleware\EnsureUserHasRole;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\MascotaController;
+use App\Http\Controllers\UserController;
 
 Route::get('/', function () {
     return view('welcome');
 });
 
+Route::middleware(EnsureUserHasRole::class.':A')->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/usuarios', [UserController::class, 'index'])->name('usuarios');
+});
 
-Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(EnsureUserHasRole::class.':A')->name('dashboard');
+
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -29,9 +35,7 @@ Route::get('/inventario', function () {
     return view('inventario');
 })->name('inventario');
 
-Route::get('/mascotas', function () {
-    return view('mascotas');
-})->name('mascotas');
+Route::get('/mascotas', [MascotaController::class, 'index'])->name('mascotas');
 
 Route::get('/reportes', function () {
     return view('reportes');
@@ -45,8 +49,5 @@ Route::get('/login', function () {
     return view('login');
 })->name('login');
 
-Route::get('/usuarios', function () {
-    return view('usuarios');
-})->name('usuarios');
 
 require __DIR__.'/auth.php';
