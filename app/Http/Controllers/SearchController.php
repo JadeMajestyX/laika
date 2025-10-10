@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Mascota;
+use Illuminate\Support\Facades\Auth;
 
 class SearchController extends Controller
 {
@@ -24,6 +25,8 @@ class SearchController extends Controller
         $mascotas = Mascota::where('nombre', 'like', "%{$query}%")
             ->orWhere('raza', 'like', "%{$query}%")
             ->get();
+
+         $usuario = Auth::user();
 
         return view('resultados', compact('query', 'usuarios', 'mascotas'));
     }
