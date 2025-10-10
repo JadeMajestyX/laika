@@ -25,7 +25,7 @@ class SearchController extends Controller
             ->orWhere('raza', 'like', "%{$query}%")
             ->get();
 
-        return view('buscar.resultados', compact('query', 'usuarios', 'mascotas'));
+        return view('resultados', compact('query', 'usuarios', 'mascotas'));
     }
 }
 
