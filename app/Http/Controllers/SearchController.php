@@ -28,7 +28,7 @@ class SearchController extends Controller
 
          $usuario = Auth::user();
 
-        return view('resultados', compact('query', 'usuarios', 'mascotas'));
+        return view('resultados', compact('query', 'usuarios', 'mascotas','usuario'));
     }
 }
 
