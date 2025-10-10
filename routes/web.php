@@ -11,6 +11,9 @@ use App\Http\Controllers\MascotaController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\TrabajadorController;
 use App\Http\Controllers\ReporteController;
+use App\Http\Controllers\SearchController;
+
+
 
 Route::get('/', function () {
     return view('welcome');
@@ -24,6 +27,8 @@ Route::middleware(EnsureUserHasRole::class.':A')->group(function () {
     Route::get('/reportes', [ReporteController::class, 'index'])->name('reportes');
     Route::get('/inventario', [App\Http\Controllers\InventarioController::class, 'index'])->name('inventario');
     Route::get('/configuracion', [ConfiguracionController::class, 'index'])->name('configuracion');
+
+    Route::get('/buscar', [SearchController::class, 'buscar'])->name('buscar');
 });
 
 
@@ -33,6 +38,8 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+
+
 
 
 Route::get('/login', function () {
