@@ -28,7 +28,7 @@ Route::middleware(EnsureUserHasRole::class.':A')->group(function () {
     Route::get('/inventario', [App\Http\Controllers\InventarioController::class, 'index'])->name('inventario');
     Route::get('/configuracion', [ConfiguracionController::class, 'index'])->name('configuracion');
 
-    Route::get('/buscar', [SearchController::class, 'buscar'])->name('buscar');
+    //Route::get('/buscar', [SearchController::class, 'buscar'])->name('buscar');
 });
 
 

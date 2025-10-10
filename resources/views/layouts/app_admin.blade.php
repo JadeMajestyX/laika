@@ -29,12 +29,12 @@
 
             <div class="d-flex align-items-center flex-wrap justify-content-end">
                 <!-- Campo de búsqueda -->
-                <form action="{{ route('buscar') }}" method="GET" class="d-flex align-items-center me-3">
-                    <input type="text" name="q" class="form-control" placeholder="Buscar ..." style="max-width: 200px;">
-                        <button type="submit" class="btn btn-outline-secondary ms-2">
+                   <form id="busqueda-local" class="d-flex align-items-center me-3" onsubmit="return false;">
+                <input type="text" id="buscador" class="form-control" placeholder="Buscar ..." style="max-width: 200px;">
+                <button type="button" class="btn btn-outline-secondary ms-2" id="btnBuscar">
                     <i class="bi bi-search"></i>
                 </button>
-                </form>
+            </form>
 
                 <!-- Icono de notificación -->
                 <i class="bi bi-bell me-3 fs-4"></i>
@@ -63,5 +63,34 @@
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 @yield('scripts')
+
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const input = document.getElementById('buscador');
+        const boton = document.getElementById('btnBuscar');
+
+        function filtrar() {
+            const filtro = input.value.toLowerCase();
+            const tabla = document.querySelector("#tablaUsuarios tbody");
+
+            if (tabla) {
+                const filas = tabla.querySelectorAll("tr");
+                filas.forEach(fila => {
+                    const textoFila = fila.textContent.toLowerCase();
+                    fila.style.display = textoFila.includes(filtro) ? "" : "none";
+                });
+            }
+        }
+
+        if (input) {
+            input.addEventListener('keyup', filtrar);
+        }
+        if (boton) {
+            boton.addEventListener('click', filtrar);
+        }
+    });
+    </script>
+
 </body>
 </html>
