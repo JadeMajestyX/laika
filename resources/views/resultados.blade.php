@@ -1,4 +1,4 @@
-@extends('layouts.app_admi')
+@extends('layouts.app_admin')
 
 @section('title', 'Resultados de búsqueda')
 @section('header-title', 'Resultados de búsqueda')
