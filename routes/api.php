@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
 use App\Models\Medicion;
+use App\Models\Status;
+use NunoMaduro\Collision\Adapters\Phpunit\State;
 
 Route::post('/login', function(Request $request){
     $request->validate([
@@ -122,5 +124,44 @@ Route::middleware('auth:sanctum')->get('/mis-mascotas', function(Request $reques
     return response()->json([
         'success' => true,
         'mascotas' => $mascotas
+    ]);
+});
+
+
+Route::get('/estado-dispensador', function (Request $request) {
+    $codigo = $request->query('codigo');
+
+    if (!$codigo) {
+        return response()->json(['success' => false, 'message' => 'Código no proporcionado'], 400);
+    }
+
+    // Buscar el dispensador por su código
+    $dispensador = CodigoDispensador::where('codigo', $codigo)->first();
+
+    if (!$dispensador) {
+        return response()->json(['success' => false, 'message' => 'Dispensador no encontrado'], 404);
+    }
+
+    // Buscar o crear el estado
+    $statuss = Status::firstOrCreate(
+        ['dispensador_id' => $dispensador->id],
+        ['status' => false]
+    );
+
+    // Guardamos el estado actual antes de modificarlo
+    $estadoActual = $statuss->status;
+
+    // Si el estado era true, cambiarlo a false y guardar en BD
+    if ($estadoActual === true) {
+
+        //actualizamos el estado a false
+        $statuss->status = false;
+        $statuss->save();
+    }
+
+    return response()->json([
+        'success' => true,
+        'estado' => $estadoActual ? 1 : 0,
+        'message' => $estadoActual ? 'Estado cambiado a false' : 'Estado ya era false'
     ]);
 });
