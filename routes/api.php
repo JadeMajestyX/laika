@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\CodigoDispensador;
+use App\Models\Mascota;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -97,7 +98,7 @@ Route::post('/register-mascota', function(Request $request){
         'user_id' => 'required|exists:users,id'
     ]);
 
-    $mascota = \App\Models\Mascota::create([
+    $mascota = Mascota::create([
         'nombre' => $request->nombre,
         'especie' => $request->especie,
         'raza' => $request->raza,
@@ -111,5 +112,15 @@ Route::post('/register-mascota', function(Request $request){
     return response()->json([
        'message' => 'Mascota registrada exitosamente',
        'data' => $mascota
+    ]);
+});
+
+
+Route::middleware('auth:sanctum')->get('/mis-mascotas', function(Request $request) {
+    // Obtener mascotas del usuario autenticado
+    $mascotas = Mascota::where('user_id', $request->user()->id)->get();
+    return response()->json([
+        'success' => true,
+        'mascotas' => $mascotas
     ]);
 });
