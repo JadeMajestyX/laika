@@ -150,7 +150,7 @@ Route::middleware('auth:sanctum')->get('/mis-dispensadores', function(Request $r
             'id' => $dispensador->id,
             'codigo' => $dispensador->codigoDispensador->codigo,
             'nombre' => $dispensador->nombre,
-            'mascota_id' => $dispensador->mascota_id,
+            'mascota_nombre' => $dispensador->mascota->nombre ?? null,
         ];
     });
 
