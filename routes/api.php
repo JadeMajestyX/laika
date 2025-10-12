@@ -154,6 +154,10 @@ Route::middleware('auth:sanctum')->get('/mis-dispensadores', function(Request $r
         ];
     });
 
+    return response()->json([
+        'success' => true,
+        'dispensadores' => $dispensadores
+    ]);
 });
 
 Route::get('/estado-dispensador', function (Request $request) {
