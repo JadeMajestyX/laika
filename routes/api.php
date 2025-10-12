@@ -144,11 +144,16 @@ Route::middleware('auth:sanctum')->get('/mis-mascotas', function(Request $reques
 
 //mis dispensadores con el usuario autenticado con token
 Route::middleware('auth:sanctum')->get('/mis-dispensadores', function(Request $request) {
-    $dispensadores = Dispensador::where('usuario_id', $request->user()->id)->with('codigoDispensador')->get();
-    return response()->json([
-        'success' => true,
-        'dispensadores' => $dispensadores
-    ]);
+    $dispensadores = Dispensador::where('usuario_id', $request->user()->id)->with('codigoDispensador')->get()
+    ->map(function ($dispensador) {
+        return [
+            'id' => $dispensador->id,
+            'codigo' => $dispensador->codigoDispensador->codigo,
+            'created_at' => $dispensador->created_at,
+            'updated_at' => $dispensador->updated_at,
+        ];
+    });
+
 });
 
 Route::get('/estado-dispensador', function (Request $request) {
