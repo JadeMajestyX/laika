@@ -121,6 +121,13 @@ Route::post('/register-mascota', function(Request $request){
 Route::middleware('auth:sanctum')->get('/mis-mascotas', function(Request $request) {
     // Obtener mascotas del usuario autenticado
     $mascotas = Mascota::where('user_id', $request->user()->id)->get();
+
+    //convierte la fecha de nacimiento a formato a años con carbon
+    foreach ($mascotas as $mascota) {
+        $mascota->edad = \Carbon\Carbon::parse($mascota->fecha_nacimiento)->age;
+    }
+    
+
     return response()->json([
         'success' => true,
         'mascotas' => $mascotas
@@ -163,5 +170,39 @@ Route::get('/estado-dispensador', function (Request $request) {
         'success' => true,
         'estado' => $estadoActual ? 1 : 0,
         'message' => $estadoActual ? 'Estado cambiado a false' : 'Estado ya era false'
+    ]);
+});
+
+
+//actualizar mascota
+Route::middleware('auth:sanctum')->put('/actualizar-mascota/{id}', function(Request $request, $id){
+    $mascota = Mascota::find($id);
+
+    if (!$mascota) {
+        return response()->json(['message' => 'Mascota no encontrada'], 404);
+    }
+
+    $request->validate([
+        'nombre' => 'string|max:100',
+        'raza' => 'string|max:100',
+        'fecha_nacimiento' => 'date',
+        'sexo' => 'in:M,F,O',
+        'peso' => 'numeric|min:0|max:200',
+        'imagen' => 'nullable|string|max:100',
+    ]);
+
+    $mascota->update($request->only([
+        'nombre',
+        'especie',
+        'raza',
+        'fecha_nacimiento',
+        'sexo',
+        'peso',
+        'imagen'
+    ]));
+
+    return response()->json([
+        'message' => 'Mascota actualizada exitosamente',
+        'data' => $mascota
     ]);
 });
