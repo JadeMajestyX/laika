@@ -144,7 +144,7 @@ Route::middleware('auth:sanctum')->get('/mis-mascotas', function(Request $reques
 
 //mis dispensadores
 Route::middleware('auth:sanctum')->get('/mis-dispensadores', function(Request $request) {
-    $dispensadores = Dispensador::where('usuario_id', $request->user()->id)->with('codigoDispensador')->get();
+    $dispensadores = Dispensador::where('usuario_id');
     return response()->json([
         'success' => true,
         'dispensadores' => $dispensadores
