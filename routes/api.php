@@ -188,11 +188,11 @@ Route::middleware('auth:sanctum')->put('/actualizar-mascota/{id}', function(Requ
     }
 
     $request->validate([
-        'nombre' => 'string|max:100',
-        'raza' => 'string|max:100',
-        'fecha_nacimiento' => 'date',
-        'sexo' => 'in:M,F,O',
-        'peso' => 'numeric|min:0|max:200',
+        'nombre' => 'nullable|string|max:100',
+        'raza' => 'nullable|string|max:100',
+        'fecha_nacimiento' => 'nullable|date',
+        'sexo' => 'nullable|string|in:M,F,O',
+        'peso' => 'nullable|numeric|min:0|max:200',
         'imagen' => 'nullable|string|max:100',
     ]);
 
