@@ -15,6 +15,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('usuario_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('codigo_dispensador_id')->constrained('codigo_dispensadors')->onDelete('cascade');
+            $table->string('nombre')->nullable();
+            $table->foreignId('mascota_id')->nullable()->constrained('mascotas')->onDelete('set null');
             $table->timestamps();
         });
     }
@@ -27,6 +29,6 @@ return new class extends Migration
         Schema::dropIfExists('dispensadors');
     }
 
-    
+
 
 };

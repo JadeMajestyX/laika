@@ -149,8 +149,8 @@ Route::middleware('auth:sanctum')->get('/mis-dispensadores', function(Request $r
         return [
             'id' => $dispensador->id,
             'codigo' => $dispensador->codigoDispensador->codigo,
-            'created_at' => $dispensador->created_at,
-            'updated_at' => $dispensador->updated_at,
+            'nombre' => $dispensador->nombre,
+            'mascota_id' => $dispensador->mascota_id,
         ];
     });
 

@@ -16,6 +16,8 @@ class Dispensador extends Model
     protected $fillable = [
         'usuario_id',
         'codigo_dispensador_id',
+        'nombre',
+        'mascota_id',
     ];
 
     /**
@@ -24,6 +26,14 @@ class Dispensador extends Model
     public function usuario()
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Relación con la mascota
+     */
+    public function mascota()
+    {
+        return $this->belongsTo(Mascota::class);
     }
 
     /**
