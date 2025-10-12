@@ -127,7 +127,7 @@ Route::middleware('auth:sanctum')->get('/mis-mascotas', function(Request $reques
                 'nombre' => $mascota->nombre,
                 'especie' => $mascota->especie,
                 'raza' => $mascota->raza,
-                'fecha_nacimiento' => \Carbon\Carbon::parse($mascota->fecha_nacimiento)->age,
+                'fecha_nacimiento' => \Carbon\Carbon::parse($mascota->fecha_nacimiento)->age . ' años',
                 'peso' => $mascota->peso,
             ];
         });
