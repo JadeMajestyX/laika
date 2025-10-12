@@ -1,6 +1,8 @@
 <?php
 
+use App\Models\Cita;
 use App\Models\CodigoDispensador;
+use App\Models\Dispensador;
 use App\Models\Mascota;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -140,6 +142,14 @@ Route::middleware('auth:sanctum')->get('/mis-mascotas', function(Request $reques
 });
 
 
+//mis dispensadores
+Route::middleware('auth:sanctum')->get('/mis-dispensadores', function(Request $request) {
+    $dispensadores = Dispensador::where('usuario_id', $request->user()->id)->with('codigoDispensador')->get();
+    return response()->json([
+        'success' => true,
+        'dispensadores' => $dispensadores
+    ]);
+});
 
 Route::get('/estado-dispensador', function (Request $request) {
     $codigo = $request->query('codigo');
@@ -210,5 +220,21 @@ Route::middleware('auth:sanctum')->put('/actualizar-mascota/{id}', function(Requ
     return response()->json([
         'message' => 'Mascota actualizada exitosamente',
         'data' => $mascota
+    ]);
+});
+
+
+//obtener citas de una mascota
+Route::middleware('auth:sanctum')->get('/citas-mascota/{id}', function(Request $request, $id){
+    $mascota = Mascota::find($id);
+    if (!$mascota) {
+        return response()->json(['message' => 'Mascota no encontrada'], 404);
+    }
+
+    $citas = Cita::where('mascota_id', $mascota->id)->get();
+
+    return response()->json([
+        'success' => true,
+        'citas' => $citas
     ]);
 });
