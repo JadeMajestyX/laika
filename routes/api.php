@@ -119,20 +119,25 @@ Route::post('/register-mascota', function(Request $request){
 
 
 Route::middleware('auth:sanctum')->get('/mis-mascotas', function(Request $request) {
-    // Obtener mascotas del usuario autenticado
-    $mascotas = Mascota::where('user_id', $request->user()->id)->get();
-
-    //convierte la fecha de nacimiento a formato a años con carbon
-    foreach ($mascotas as $mascota) {
-        $mascota->edad = \Carbon\Carbon::parse($mascota->fecha_nacimiento)->age;
-    }
-    
+    $mascotas = Mascota::where('user_id', $request->user()->id)
+        ->get()
+        ->map(function ($mascota) {
+            return [
+                'id' => $mascota->id,
+                'nombre' => $mascota->nombre,
+                'especie' => $mascota->especie,
+                'raza' => $mascota->raza,
+                'fecha_nacimiento' => \Carbon\Carbon::parse($mascota->fecha_nacimiento)->age,
+                'peso' => $mascota->peso,
+            ];
+        });
 
     return response()->json([
         'success' => true,
         'mascotas' => $mascotas
     ]);
 });
+
 
 
 Route::get('/estado-dispensador', function (Request $request) {
