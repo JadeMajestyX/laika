@@ -282,7 +282,7 @@ Route::middleware('auth:sanctum')->get('/mediciones-dispensador/{id}', function(
     // Formatear fecha y hora
     $medicionesFormateadas = $mediciones->map(function($medicion){
         return [
-            'id' => $medicion->id,
+            'dispensador_id' => $medicion->id,
             'peso_comida' => $medicion->peso_comida,
             'nivel_comida' => $medicion->nivel_comida,
             'fecha_hora' => Carbon::parse($medicion->created_at)->format('Y-m-d H:i:s'),
