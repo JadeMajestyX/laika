@@ -22,6 +22,10 @@ Route::get('/', function () {
 Route::middleware(EnsureUserHasRole::class.':A')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/usuarios', [UserController::class, 'index'])->name('usuarios');
+    Route::get('/usuarios/{id}', [UserController::class, 'show'])->name('usuarios.show');
+    Route::get('/usuarios/{id}/editar', [UserController::class, 'edit'])->name('usuarios.edit');
+    Route::put('/usuarios/{id}', [UserController::class, 'update'])->name('usuarios.update');
+    Route::delete('/usuarios/{id}', [UserController::class, 'destroy'])->name('usuarios.destroy');
     Route::get('/mascotas', [MascotaController::class, 'index'])->name('mascotas');
     Route::get('/trabajadores', [TrabajadorController::class, 'index'])->name('trabajadores');
     Route::get('/reportes', [ReporteController::class, 'index'])->name('reportes');

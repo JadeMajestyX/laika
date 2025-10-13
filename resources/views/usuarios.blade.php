@@ -43,13 +43,29 @@
                         <td>{{ $cliente->email }}</td>
                         <td>{{ \Carbon\Carbon::parse($cliente->fecha_nacimiento)->age }} años</td>
                         <td>{{ $cliente->mascotas->count() }}</td>
-                        <td>
-                            <div class="d-inline-flex gap-1">
-                                <button class="btn btn-warning btn-sm" data-bs-toggle="tooltip" title="Ver"><i class="bi bi-eye"></i></button>
-                                <button class="btn btn-info btn-sm text-white" data-bs-toggle="tooltip" title="Editar"><i class="bi bi-pencil-square"></i></button>
-                                <button class="btn btn-danger btn-sm" data-bs-toggle="tooltip" title="Eliminar"><i class="bi bi-trash"></i></button>
-                            </div>
-                        </td>
+                    <td>
+                        <div class="d-inline-flex gap-1">
+                            <!-- Ver -->
+                            <a href="{{ route('usuarios.show', $cliente->id) }}" class="btn btn-warning btn-sm" data-bs-toggle="tooltip" title="Ver">
+                                <i class="bi bi-eye"></i>
+                            </a>
+
+                            <!-- Editar -->
+                            <a href="{{ route('usuarios.edit', $cliente->id) }}" class="btn btn-info btn-sm text-white" data-bs-toggle="tooltip" title="Editar">
+                                <i class="bi bi-pencil-square"></i>
+                            </a>
+
+                            <!-- Eliminar -->
+                            <form action="{{ route('usuarios.destroy', $cliente->id) }}" method="POST" onsubmit="return confirm('¿Seguro que deseas eliminar este usuario?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-danger btn-sm" data-bs-toggle="tooltip" title="Eliminar">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+
                     </tr>
                     @endforeach
                 </tbody>
