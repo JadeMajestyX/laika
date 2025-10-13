@@ -327,3 +327,30 @@ Route::middleware('auth:sanctum')->get('/mis-citas', function(Request $request) 
         'citas' => $resultado
     ]);
 });
+
+
+//agendar cita
+Route::middleware('auth:sanctum')->post('/agendar-cita', function(Request $request){
+    $request->validate([
+        'clinica_id' => 'required|exists:clinicas,id',
+        'servicio_id' => 'required|exists:servicios,id',
+        'mascota_id' => 'required|exists:mascotas,id',
+        'fecha' => 'required|date|after:today',
+        'notas' => 'nullable|string|max:500',
+    ]);
+
+    // Crear la cita
+    $cita = Cita::create([
+        'clinica_id' => $request->clinica_id,
+        'servicio_id' => $request->servicio_id,
+        'creada_por' => $request->user()->id,
+        'mascota_id' => $request->mascota_id,
+        'fecha' => $request->fecha,
+        'notas' => $request->notas,
+    ]);
+
+    return response()->json([
+        'success' => true,
+        'cita' => $cita
+    ]);
+});
