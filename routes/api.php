@@ -356,16 +356,11 @@ Route::middleware('auth:sanctum')->post('/agendar-cita', function(Request $reque
 });
 
 
-$clinicas = \App\Models\Clinica::all()->map(function ($clinica) {
-    return [
-        'id' => $clinica->id,
-        'nombre' => $clinica->nombre,
-        'direccion' => $clinica->direccion,
-        'telefono' => $clinica->telefono,
-        'email' => $clinica->email,
-        'is_open' => $clinica->is_open,
-        'is_visible' => $clinica->is_visible,
-        'site' => $clinica->site,
-    ];
+//obtener clinicas
+Route::get('/clinicas', function(){
+    $clinicas = \App\Models\Clinica::all();
+    return response()->json([
+        'success' => true,
+        'clinicas' => $clinicas
+    ]);
 });
-dd($clinicas); // ver qué devuelve
