@@ -354,3 +354,13 @@ Route::middleware('auth:sanctum')->post('/agendar-cita', function(Request $reque
         'cita' => $cita
     ]);
 });
+
+
+//obtener clinicas
+Route::get('/clinicas', function(){
+    $clinicas = \App\Models\Clinica::all();
+    return response()->json([
+        'success' => true,
+        'clinicas' => $clinicas
+    ]);
+});
