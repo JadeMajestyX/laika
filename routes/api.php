@@ -364,3 +364,12 @@ Route::get('/clinicas', function(){
         'clinicas' => $clinicas
     ]);
 });
+
+//obtener servicios
+Route::get('/servicios', function(){
+    $servicios = \App\Models\Servicio::all();
+    return response()->json([
+        'success' => true,
+        'servicios' => $servicios
+    ]);
+});
