@@ -283,7 +283,8 @@ Route::middleware('auth:sanctum')->get('/mediciones-dispensador/{id}', function(
     $medicionesFormateadas = $mediciones->map(function($medicion){
         return [
             'id' => $medicion->id,
-            'valor' => $medicion->valor,
+            'peso_comida' => $medicion->peso_comida,
+            'nivel_comida' => $medicion->nivel_comida,
             'fecha_hora' => Carbon::parse($medicion->created_at)->format('Y-m-d H:i:s'),
         ];
     });
