@@ -77,7 +77,6 @@ Route::post('/mediciones', function(Request $request){
         'peso_comida' => 'required|numeric|min:0|max:1000',
     ]);
 
-    // Crear la medición
     $medicion = Medicion::create([
         'dispensador_id' => CodigoDispensador::where('codigo', $request->codigo)->first()->id,
         'nivel_comida' => $request->nivel_comida,
