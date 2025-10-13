@@ -26,6 +26,7 @@ Route::middleware(EnsureUserHasRole::class.':A')->group(function () {
     Route::get('/usuarios/{id}/editar', [UserController::class, 'edit'])->name('usuarios.edit');
     Route::put('/usuarios/{id}', [UserController::class, 'update'])->name('usuarios.update');
     Route::delete('/usuarios/{id}', [UserController::class, 'destroy'])->name('usuarios.destroy');
+    Route::get('/citas', [App\Http\Controllers\CitaController::class, 'index'])->name('citas');
 
     Route::get('/mascotas', [MascotaController::class, 'index'])->name('mascotas');
     Route::get('/mascotas/{id}', [MascotaController::class, 'show'])->name('mascotas.show');

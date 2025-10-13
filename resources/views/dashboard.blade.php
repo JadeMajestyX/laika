@@ -12,9 +12,10 @@
         <li class="nav-item mb-2">
           <a class="nav-link text-white" href="{{ route('mascotas') }}"><i class="bi bi-basket2 me-2"></i> Mascotas</a>
         </li>
-        <li class="nav-item mb-2">
+                <li class="nav-item mb-2"><a class="nav-link text-white " href="{{ route('citas') }}"><i class="bi bi-calendar-event me-2"></i> Citas</a></li>
+        {{-- <li class="nav-item mb-2">
           <a class="nav-link text-white" href="{{ route('inventario') }}"><i class="bi bi-box-seam me-2"></i> Inventario</a>
-        </li>
+        </li> --}}
         <li class="nav-item mb-2">
           <a class="nav-link text-white" href="{{ route('trabajadores') }}"><i class="bi bi-person-badge me-2"></i> Trabajadores</a>
         </li>
@@ -74,7 +75,7 @@
 <div class="card shadow-sm mb-4">
     <div class="card-header d-flex justify-content-between">
         <span>Citas de hoy <small>{{ now()->format('d/m/Y') }}</small></span>
-        <a href="#">Ver todas</a>
+        <a href="{{ route('citas') }}">Ver todas</a>
     </div>
     <div class="card-body p-0">
         <table class="table table-hover mb-0">
