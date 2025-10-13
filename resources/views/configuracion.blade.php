@@ -15,9 +15,9 @@
         <li class="nav-item mb-2">
           <a class="nav-link text-white" href="{{ route('mascotas') }}"><i class="bi bi-basket2 me-2"></i> Mascotas</a>
         </li>
-        <li class="nav-item mb-2">
+        {{-- <li class="nav-item mb-2">
           <a class="nav-link text-white" href="{{ route('inventario') }}"><i class="bi bi-box-seam me-2"></i> Inventario</a>
-        </li>
+        </li> --}}
         <li class="nav-item mb-2">
           <a class="nav-link text-white" href="{{ route('trabajadores') }}"><i class="bi bi-person-badge me-2"></i> Trabajadores</a>
         </li>
