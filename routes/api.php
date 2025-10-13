@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
 use App\Models\Medicion;
 use App\Models\Status;
-use Carbon\Carbon;
 use NunoMaduro\Collision\Adapters\Phpunit\State;
 
 Route::post('/login', function(Request $request){
@@ -279,21 +278,12 @@ Route::middleware('auth:sanctum')->get('/mediciones-dispensador/{id}', function(
         ->take(10)
         ->get();
 
-    // Formatear fecha y hora
-    $medicionesFormateadas = $mediciones->map(function($medicion){
-        return [
-            'dispensador_id' => $medicion->id,
-            'peso_comida' => $medicion->peso_comida,
-            'nivel_comida' => $medicion->nivel_comida,
-            'fecha_hora' => Carbon::parse($medicion->created_at)->format('Y-m-d H:i:s'),
-        ];
-    });
-
     return response()->json([
         'success' => true,
-        'mediciones' => $medicionesFormateadas
+        'mediciones' => $mediciones
     ]);
 });
+
 
 //obtener citas de una mascota
 Route::middleware('auth:sanctum')->get('/citas-mascota/{id}', function(Request $request, $id){
