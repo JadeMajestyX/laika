@@ -266,6 +266,25 @@ Route::middleware('auth:sanctum')->put('/actualizar-mascota/{id}', function(Requ
 });
 
 
+//obtener las ultimas 10 mediciones de un dispensador
+Route::middleware('auth:sanctum')->get('/mediciones-dispensador/{id}', function(Request $request, $id){
+    $dispensador = Dispensador::find($id);
+    if (!$dispensador) {
+        return response()->json(['message' => 'Dispensador no encontrado'], 404);
+    }
+
+    $mediciones = Medicion::where('dispensador_id', $dispensador->id)
+        ->orderBy('created_at', 'desc')
+        ->take(10)
+        ->get();
+
+    return response()->json([
+        'success' => true,
+        'mediciones' => $mediciones
+    ]);
+});
+
+
 //obtener citas de una mascota
 Route::middleware('auth:sanctum')->get('/citas-mascota/{id}', function(Request $request, $id){
     $mascota = Mascota::find($id);
