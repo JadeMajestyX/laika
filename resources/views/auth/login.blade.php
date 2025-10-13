@@ -254,7 +254,7 @@ body {
                     @csrf
                     <div class="input-group">
                         <div class="input-icon">
-                            <img src="../drawable/carta-b.png" alt="icon email">
+                            <img src="{{ asset('drawable/carta-b.png') }}" alt="icon email">
                         </div>
                         <input type="email" name="email" placeholder="Email address:" required>
                     </div>
