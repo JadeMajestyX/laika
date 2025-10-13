@@ -299,3 +299,31 @@ Route::middleware('auth:sanctum')->get('/citas-mascota/{id}', function(Request $
         'citas' => $citas
     ]);
 });
+
+
+// Obtener las citas de las mascotas del usuario autenticado
+Route::middleware('auth:sanctum')->get('/mis-citas', function(Request $request) {
+
+    // Obtener los IDs de las mascotas del usuario
+    $mascotasIds = Mascota::where('user_id', $request->user()->id)->pluck('id');
+
+    // Traer las citas de esas mascotas con las relaciones necesarias
+    $citas = Cita::with(['mascota', 'servicio'])
+                 ->whereIn('mascota_id', $mascotasIds)
+                 ->get();
+
+    // Formatear la respuesta
+    $resultado = $citas->map(function($cita) {
+        return [
+            'id' => $cita->id,
+            'mascota' => $cita->mascota ? $cita->mascota->nombre : null,
+            'motivo' => $cita->servicio ? $cita->servicio->nombre : null,
+            'fecha' => $cita->fecha,
+        ];
+    });
+
+    return response()->json([
+        'success' => true,
+        'citas' => $resultado
+    ]);
+});
