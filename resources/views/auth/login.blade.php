@@ -242,7 +242,7 @@ body {
         <div class="login-card">
             <div class="header">
                 <div class="circle">
-                    <img scr="{{ asset("images/logopetcare.png") }}" alt="Logo">
+                    <img src="{{ asset('images/logopetcare.png') }}" alt="Logo">
                 </div>
                 <h3>Laika</h3>
             </div>
@@ -254,11 +254,7 @@ body {
                     @csrf
                     <div class="input-group">
                         <div class="input-icon">
-<<<<<<< HEAD
-                            <img src="{{ asset("images/gmail.png") }}" alt="icon email">
-=======
-                            <img src="{{ asset('drawable/carta-b.png') }}" alt="icon email">
->>>>>>> 423dd0bc19e5c6192caa3780c1e24b284dbb4e8d
+                            <img src="{{ asset('images/gmail.png') }}" alt="icon email">
                         </div>
                         <input type="email" name="email" placeholder="Email address:" required>
                     </div>
