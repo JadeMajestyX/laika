@@ -49,9 +49,21 @@
                   <td>{{ $mascota->user->nombre }} {{ $mascota->user->apellido_paterno }}</td>
                   <td class="text-center">
                     <div class="d-inline-flex gap-1">
-                      <button class="btn btn-warning btn-sm" data-bs-toggle="tooltip" title="Ver"><i class="bi bi-eye"></i></button>
-                      <button class="btn btn-info btn-sm text-white" data-bs-toggle="tooltip" title="Editar"><i class="bi bi-pencil-square"></i></button>
-                      <button class="btn btn-danger btn-sm" data-bs-toggle="tooltip" title="Eliminar"><i class="bi bi-trash"></i></button>
+
+                  <a href="{{ route('mascotas.show', $mascota->id) }}" class="btn btn-warning btn-sm" data-bs-toggle="tooltip" title="Ver">
+                     <i class="bi bi-eye"></i>
+                  </a>
+                  <a href="{{ route('mascotas.edit', $mascota->id) }}" class="btn btn-info btn-sm text-white" data-bs-toggle="tooltip" title="Editar">
+                      <i class="bi bi-pencil-square"></i>
+                  </a>
+                  <form action="{{ route('mascotas.destroy', $mascota->id) }}" method="POST" class="d-inline">
+                      @csrf
+                      @method('DELETE')
+                      <button type="submit" class="btn btn-danger btn-sm" data-bs-toggle="tooltip" title="Eliminar" onclick="return confirm('¿Seguro que deseas eliminar esta mascota?')">
+                          <i class="bi bi-trash"></i>
+                      </button>
+                  </form>
+
                     </div>
                   </td>
                 </tr>
