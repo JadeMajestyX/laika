@@ -199,6 +199,39 @@ Route::get('/estado-dispensador', function (Request $request) {
 });
 
 
+//activar dispensador
+Route::get('/activar-dispensador', function (Request $request) {
+    $codigo = $request->query('codigo');
+    if (!$codigo) {
+        return response()->json(['success' => false, 'message' => 'Código no proporcionado'], 400);
+    }
+    // Buscar el dispensador por su código
+    $dispensador = CodigoDispensador::where('codigo', $codigo)->first();
+    if (!$dispensador) {
+        return response()->json(['success' => false, 'message' => 'Dispensador no encontrado'], 404);
+    }
+    // Buscar o crear el estado
+    $statuss = Status::firstOrCreate(
+        ['dispensador_id' => $dispensador->id],
+        ['status' => false]
+    );
+    // Guardamos el estado actual antes de modificarlo
+    $estadoActual = $statuss->status;
+    // Si el estado era false, cambiarlo a true y guardar en BD
+    if ($estadoActual === false) {
+        $statuss->status = true;
+        $statuss->save();
+    }
+
+    return response()->json([
+        'success' => true,
+        'estado' => $estadoActual ? 1 : 0,
+        'message' => $estadoActual ? 'Estado cambiado a true' : 'Estado ya era true'
+    ]);
+});
+
+
+
 //actualizar mascota
 Route::middleware('auth:sanctum')->put('/actualizar-mascota/{id}', function(Request $request, $id){
     $mascota = Mascota::find($id);
