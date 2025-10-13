@@ -22,7 +22,11 @@
       <div class="card shadow-sm mt-4">
         <div class="card-header d-flex justify-content-between align-items-center">
           <span>Lista de Trabajadores</span>
-          <button class="btn text-white" style="background:#6f42c1; border-radius:50%; width:35px; height:35px; display:flex; align-items:center; justify-content:center;"><i class="bi bi-plus-lg"></i></button>
+          <button onclick="window.location='{{ route('trabajadores.create') }}'" class="btn text-white"
+            style="background:#6f42c1; border-radius:50%; width:35px; height:35px; display:flex; align-items:center; justify-content:center;">
+            <i class="bi bi-plus-lg"></i>
+          </button>
+
         </div>
         <div class="card-body p-0">
           <table class="table table-hover mb-0">
@@ -54,10 +58,15 @@
                   @endswitch
                 </td>
                 <td>
-                  <button class="btn btn-warning btn-sm me-1"><i class="bi bi-eye"></i></button>
-                  <button class="btn btn-primary btn-sm me-1"><i class="bi bi-file-earmark-text"></i></button>
-                  <button class="btn btn-danger btn-sm"><i class="bi bi-trash"></i></button>
+                <a href="{{ route('trabajadores.show', $trabajador->id) }}" class="btn btn-warning btn-sm me-1"><i class="bi bi-eye"></i></a>
+                <a href="{{ route('trabajadores.edit', $trabajador->id) }}" class="btn btn-primary btn-sm me-1"><i class="bi bi-file-earmark-text"></i></a>
+                <form action="{{ route('trabajadores.destroy', $trabajador->id) }}" method="POST" style="display:inline;">
+                  @csrf
+                  @method('DELETE')
+                  <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Seguro que deseas eliminar este trabajador?');"><i class="bi bi-trash"></i></button>
+                </form>
                 </td>
+
               </tr>
               @endforeach
             </tbody>

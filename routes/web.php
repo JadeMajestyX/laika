@@ -32,8 +32,17 @@ Route::middleware(EnsureUserHasRole::class.':A')->group(function () {
     Route::get('/mascotas/{id}/editar', [MascotaController::class, 'edit'])->name('mascotas.edit');
     Route::put('/mascotas/{id}', [MascotaController::class, 'update'])->name('mascotas.update');
     Route::delete('/mascotas/{id}', [MascotaController::class, 'destroy'])->name('mascotas.destroy');
-    
+
     Route::get('/trabajadores', [TrabajadorController::class, 'index'])->name('trabajadores');
+    Route::get('/trabajadores/{id}', [TrabajadorController::class, 'show'])->name('trabajadores.show');
+    Route::get('/trabajadores/{id}/editar', [TrabajadorController::class, 'edit'])->name('trabajadores.edit');
+    Route::put('/trabajadores/{id}', [TrabajadorController::class, 'update'])->name('trabajadores.update');
+    Route::delete('/trabajadores/{id}', [TrabajadorController::class, 'destroy'])->name('trabajadores.destroy');
+
+    // registrar nuevo administrador
+    Route::get('/trabajadores/crear', [TrabajadorController::class, 'create'])->name('trabajadores.create');
+    Route::post('/trabajadores', [TrabajadorController::class, 'store'])->name('trabajadores.store');
+
     Route::get('/reportes', [ReporteController::class, 'index'])->name('reportes');
     Route::get('/inventario', [App\Http\Controllers\InventarioController::class, 'index'])->name('inventario');
     Route::get('/configuracion', [ConfiguracionController::class, 'index'])->name('configuracion');
