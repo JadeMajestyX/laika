@@ -58,8 +58,8 @@ In development 🚧
 
 ## Authors
 - [Jose Angel](https://github.com/JadeMajestyX)
-- [Juan Pablo](https://github.com/JuanPablo)
-- [Alvaro](https://github.com/Alvaro)
-- [Sandra](https://github.com/Sandra)
+- [Juan Pablo](https://github.com/Insano2145)
+- [Alvaro](https://github.com/AlvaroMDN)
+- [Sandra](https://github.com/Sandra0602)
 - [Antonio](https://github.com/ARodriguez08)
 
