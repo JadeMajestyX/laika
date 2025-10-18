@@ -264,7 +264,7 @@ fetch('/dashboard/data')
           datasets: [{
             label: 'Citas',
             data: chartData,
-            backgroundColor: '#a855f7',
+            backgroundColor: '#3A7CA5',
             borderRadius: 8,
           }]
         },

@@ -18,11 +18,24 @@
       --sidebar-width: 260px;
       --radius-xl: 0.75rem;
       --header-h: 70px;
+
+      /* Paleta personalizada */
+      --brand: #3A7CA5;
+      --brand-dark: #2f6485; /* tono más oscuro para gradiente/hover */
+      /* Override Bootstrap primary */
+      --bs-primary: var(--brand);
+      --bs-primary-rgb: 58, 124, 165;
+      --bs-link-color: var(--brand);
+      --bs-link-hover-color: var(--brand-dark);
+      /* Utilidades subtle de Bootstrap 5.3 */
+      --bs-primary-bg-subtle: #d7eaf4; /* fondo claro */
+      --bs-primary-border-subtle: #a7c9dc;
+      --bs-primary-text-emphasis: #1f4f6a;
     }
     body{ background-color:#f8f9fa; }
     .app{ display:flex; min-height:100vh; overflow:hidden; }
     /* Sidebar */
-    .sidebar{ width:var(--sidebar-width); background:linear-gradient(180deg,#7c3aed,#6d28d9); color:#fff; padding:24px; display:flex; flex-direction:column; position:fixed; top:0; left:0; height:100vh; z-index:1040; }
+  .sidebar{ width:var(--sidebar-width); background:linear-gradient(180deg,var(--brand),var(--brand-dark)); color:#fff; padding:24px; display:flex; flex-direction:column; position:fixed; top:0; left:0; height:100vh; z-index:1040; }
     .sidebar.collapsed{ width:72px; padding:24px 12px; }
     .sidebar.collapsed .brand{ justify-content:center; }
     .sidebar .brand{ transition:all .2s ease; }
@@ -71,7 +84,7 @@
     [data-bs-theme="dark"] body { background-color: #1e1f25; color: #e2e2e2; }
     [data-bs-theme="dark"] .app-header { background: #252632; border-color: #333842; }
     [data-bs-theme="dark"] .card-soft { background: #2a2b33; border-color: #3b3d47; }
-    [data-bs-theme="dark"] .sidebar { background: linear-gradient(180deg, #7c3aed, #6d28d9); }
+  [data-bs-theme="dark"] .sidebar { background: linear-gradient(180deg, var(--brand), var(--brand-dark)); }
     [data-bs-theme="dark"] .avatar { background: #333842; color: #e2e2e2; }
     [data-bs-theme="dark"] .table> :not(caption)>*>* { color: #e2e2e2; }
     [data-bs-theme="dark"] .text-body-secondary { color: #c0c3c9; }
