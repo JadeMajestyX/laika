@@ -62,12 +62,20 @@ class DashboardController extends Controller
                                   ->count();
 
 
-$comparacionporcentaje = [
-    'citasHoy' => $citasAyer > 0 ? round((($citasHoy - $citasAyer) / $citasAyer) * 100, 2) : ($citasHoy > 0 ? 100 : 0),
-    'citasCompletadas' => $citasCompletadasAyer > 0 ? round((($citasCompletadas - $citasCompletadasAyer) / $citasCompletadasAyer) * 100, 2) : ($citasCompletadas > 0 ? 100 : 0),
-    'mascotasRegistradas' => $mascotasRegistradasAyer > 0 ? round((($mascotasRegistradas - $mascotasRegistradasAyer) / $mascotasRegistradasAyer) * 100, 2) : ($mascotasRegistradas > 0 ? 100 : 0),
-    'clientesNuevos' => $clientesNuevosAyer > 0 ? round((($clientesNuevos - $clientesNuevosAyer) / $clientesNuevosAyer) * 100, 2) : ($clientesNuevos > 0 ? 100 : 0),
-];
+        $comparacionporcentaje = [
+            'citasHoy' => $citasAyer > 0 ? round((($citasHoy - $citasAyer) / $citasAyer) * 100, 2) : ($citasHoy > 0 ? 100 : 0),
+            'citasCompletadas' => $citasCompletadasAyer > 0 ? round((($citasCompletadas - $citasCompletadasAyer) / $citasCompletadasAyer) * 100, 2) : ($citasCompletadas > 0 ? 100 : 0),
+            'mascotasRegistradas' => $mascotasRegistradasAyer > 0 ? round((($mascotasRegistradas - $mascotasRegistradasAyer) / $mascotasRegistradasAyer) * 100, 2) : ($mascotasRegistradas > 0 ? 100 : 0),
+            'clientesNuevos' => $clientesNuevosAyer > 0 ? round((($clientesNuevos - $clientesNuevosAyer) / $clientesNuevosAyer) * 100, 2) : ($clientesNuevos > 0 ? 100 : 0),
+        ];
+
+        //numero de citas por dia de la semana actual
+        $startOfWeek = Carbon::now()->startOfWeek();
+        $endOfWeek = Carbon::now()->endOfWeek();
+        $citasPorDia = Cita::whereBetween('fecha', [$startOfWeek, $endOfWeek])
+                            ->selectRaw('DAYNAME(fecha) as dia, COUNT(*) as total')
+                            ->groupBy('dia')
+                            ->get();
 
 
         return response()->json([
@@ -77,6 +85,7 @@ $comparacionporcentaje = [
             'clientesNuevos' => $clientesNuevos,
 
             'comparacionporcentaje' => $comparacionporcentaje,
+            'citasPorDia' => $citasPorDia,
         ]);
     }
 }

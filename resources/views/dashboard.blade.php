@@ -147,64 +147,112 @@
 fetch('/dashboard/data')
   .then(response => response.json())
   .then(data => {
-    //citas
-    
+    // 📊 MÉTRICAS PRINCIPALES (sin cambios)
     const citasHoy = document.getElementById('citasHoy');
     const porcentajeCitasElem = document.getElementById('porcentajeCitas');
-      const citas = data.citasHoy;
-      citasHoy.textContent = citas;
-      const cambio = data.comparacionporcentaje['citasHoy'];
-      porcentajeCitasElem.textContent = (cambio >= 0 ? '+' : '') + cambio + '%';
-      porcentajeCitasElem.className = 'small ' + (cambio >= 0 ? 'text-success' : 'text-danger');
+    const citas = data.citasHoy;
+    citasHoy.textContent = citas;
+    const cambio = data.comparacionporcentaje['citasHoy'];
+    porcentajeCitasElem.textContent = (cambio >= 0 ? '+' : '') + cambio + '%';
+    porcentajeCitasElem.className = 'small ' + (cambio >= 0 ? 'text-success' : 'text-danger');
 
-      //citas completadas
-      const citasCompletadas = document.getElementById('citasCompletadas');
-      const porcentajeCitasCompletadasElem = document.getElementById('porcentajeCitasCompletadas');
-      const citasComp = data.citasCompletadas;
-      citasCompletadas.textContent = citasComp;
-      const cambioComp = data.comparacionporcentaje['citasCompletadas'];
-      porcentajeCitasCompletadasElem.textContent = (cambioComp >= 0 ? '+' : '') + cambioComp + '%';
-      porcentajeCitasCompletadasElem.className = 'small ' + (cambioComp >= 0 ? 'text-success' : 'text-danger');
+    const citasCompletadas = document.getElementById('citasCompletadas');
+    const porcentajeCitasCompletadasElem = document.getElementById('porcentajeCitasCompletadas');
+    const citasComp = data.citasCompletadas;
+    citasCompletadas.textContent = citasComp;
+    const cambioComp = data.comparacionporcentaje['citasCompletadas'];
+    porcentajeCitasCompletadasElem.textContent = (cambioComp >= 0 ? '+' : '') + cambioComp + '%';
+    porcentajeCitasCompletadasElem.className = 'small ' + (cambioComp >= 0 ? 'text-success' : 'text-danger');
 
-      //mascotas registradas
-      const mascotasRegistradas = document.getElementById('mascotasRegistradas');
-      const porcentajeMascotasRegistradasElem = document.getElementById('porcentajeMascotasRegistradas');
-      const mascotas = data.mascotasRegistradas;
-      mascotasRegistradas.textContent = mascotas;
-      const cambioMascotas = data.comparacionporcentaje['mascotasRegistradas'];
-      porcentajeMascotasRegistradasElem.textContent = (cambioMascotas >= 0 ? '+' : '') + cambioMascotas + '%';
-      porcentajeMascotasRegistradasElem.className = 'small ' + (cambioMascotas >= 0 ? 'text-success' : 'text-danger');
+    const mascotasRegistradas = document.getElementById('mascotasRegistradas');
+    const porcentajeMascotasRegistradasElem = document.getElementById('porcentajeMascotasRegistradas');
+    const mascotas = data.mascotasRegistradas;
+    mascotasRegistradas.textContent = mascotas;
+    const cambioMascotas = data.comparacionporcentaje['mascotasRegistradas'];
+    porcentajeMascotasRegistradasElem.textContent = (cambioMascotas >= 0 ? '+' : '') + cambioMascotas + '%';
+    porcentajeMascotasRegistradasElem.className = 'small ' + (cambioMascotas >= 0 ? 'text-success' : 'text-danger');
 
-      //clientes nuevos
-      const clientesNuevos = document.getElementById('clientesNuevos');
-      const porcentajeClientesNuevosElem = document.getElementById('porcentajeClientesNuevos');
-      const clientes = data.clientesNuevos;
-      clientesNuevos.textContent = clientes;
-      const cambioClientes = data.comparacionporcentaje['clientesNuevos'];
-      porcentajeClientesNuevosElem.textContent = (cambioClientes >= 0 ? '+' : '') + cambioClientes + '%';
-      porcentajeClientesNuevosElem.className = 'small ' + (cambioClientes >= 0 ? 'text-success' : 'text-danger');
+    const clientesNuevos = document.getElementById('clientesNuevos');
+    const porcentajeClientesNuevosElem = document.getElementById('porcentajeClientesNuevos');
+    const clientes = data.clientesNuevos;
+    clientesNuevos.textContent = clientes;
+    const cambioClientes = data.comparacionporcentaje['clientesNuevos'];
+    porcentajeClientesNuevosElem.textContent = (cambioClientes >= 0 ? '+' : '') + cambioClientes + '%';
+    porcentajeClientesNuevosElem.className = 'small ' + (cambioClientes >= 0 ? 'text-success' : 'text-danger');
 
-  }).catch(error => {
+
+    // 📈 DATOS DE LA GRÁFICA
+    const citasPorDia = data.citasPorDia;
+
+    // Días de la semana en orden (Chart mostrará estos)
+    const diasOrdenados = [
+      { en: 'Monday', es: 'Lun' },
+      { en: 'Tuesday', es: 'Mar' },
+      { en: 'Wednesday', es: 'Mié' },
+      { en: 'Thursday', es: 'Jue' },
+      { en: 'Friday', es: 'Vie' },
+      { en: 'Saturday', es: 'Sáb' },
+      { en: 'Sunday', es: 'Dom' }
+    ];
+
+    // Crear un diccionario con los totales que vienen del servidor
+    const citasMap = {};
+    citasPorDia.forEach(item => {
+      citasMap[item.dia] = item.total;
+    });
+
+    // Generar los arreglos completos (si no existe el día → 0)
+    const chartLabels = diasOrdenados.map(d => d.es);
+    const chartData = diasOrdenados.map(d => citasMap[d.en] || 0);
+
+    console.log('Labels:', chartLabels);
+    console.log('Datos:', chartData);
+
+    // Renderizar la gráfica
+    let chartInstance = null;
+    function renderChart(){
+      const ctx = document.getElementById('appointmentsChart');
+      if(!ctx) return;
+      if(chartInstance){ chartInstance.destroy(); }
+
+      const gridColor = getComputedStyle(document.querySelector('[data-bs-theme]'))
+        .getPropertyValue('--bs-border-color').trim() || '#e9ecef';
+
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: chartLabels,
+          datasets: [{
+            label: 'Citas',
+            data: chartData,
+            backgroundColor: '#3A7CA5',
+            borderRadius: 8,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { grid: { display: false }, ticks: { color: getTextColor() } },
+            y: { grid: { color: gridColor }, ticks: { color: getTextColor() }, beginAtZero: true }
+          },
+          plugins: { legend: { display:false } }
+        }
+      });
+    }
+
+    renderChart();
+
+  })
+  .catch(error => {
     console.error('Error al obtener los datos del dashboard:', error);
   });
+
 
 </script>
 
   <script>
-    // Datos de ejemplo (equivalentes a los del proyecto React)
-    const chartData = [12, 15, 8, 18, 14, 6, 3];
-    const chartLabels = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
-
-    const appointments = [
-      { time: '09:00', pet: 'Max', owner: 'Carlos García', breed: 'Golden Retriever', reason: 'Vacunación anual', clinic: 'Clínica Principal', status: 'Confirmado', petType: 'dog' },
-      { time: '10:30', pet: 'Luna', owner: 'María Rodríguez', breed: 'Siamés', reason: 'Control general', clinic: 'Clínica Principal', status: 'Confirmado', petType: 'cat' },
-      { time: '11:00', pet: 'Rocky', owner: 'Juan Pérez', breed: 'Bulldog Francés', reason: 'Problemas respiratorios', clinic: 'Clínica Sur', status: 'En Progreso', petType: 'dog' },
-      { time: '14:00', pet: 'Mia', owner: 'Ana López', breed: 'Persa', reason: 'Esterilización', clinic: 'Clínica Principal', status: 'Programado', petType: 'cat' },
-      { time: '15:30', pet: 'Suly', owner: 'Pedro Martínez', breed: 'Beagle', reason: 'Revisión dental', clinic: 'Clínica Norte', status: 'Programado', petType: 'dog' },
-      { time: '16:00', pet: 'Coco', owner: 'Laura Sánchez', breed: 'Canario', reason: 'Control rutinario', clinic: 'Clínica Principal', status: 'Programado', petType: 'dog' },
-    ];
-
-    // Formatear fecha de hoy en español
+    //Formatear fecha de hoy
     function setTodayTexts(){
       const date = new Date();
       const fmtDate = date.toLocaleDateString('es-ES',{ day:'2-digit', month:'2-digit', year:'numeric' });
@@ -248,43 +296,10 @@ fetch('/dashboard/data')
       }
     }
 
-    // Chart.js
-    let chartInstance = null;
-    function renderChart(){
-      const ctx = document.getElementById('appointmentsChart');
-      if(!ctx) return;
-      // Destroy previous chart if exists (prevents multiple instances/resizes)
-      if(chartInstance){ chartInstance.destroy(); }
-      const gridColor = getComputedStyle(document.querySelector('[data-bs-theme]'))
-        .getPropertyValue('--bs-border-color').trim() || '#e9ecef';
-      chartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: chartLabels,
-          datasets: [{
-            label: 'Citas',
-            data: chartData,
-            backgroundColor: '#3A7CA5',
-            borderRadius: 8,
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false, // use the .chart-container height
-          scales: {
-            x: { grid: { display: false }, ticks: { color: getTextColor() } },
-            y: { grid: { color: gridColor }, ticks: { color: getTextColor() } }
-          },
-          plugins: { legend: { display:false } }
-        }
-      });
-    }
-
     // Init
     document.addEventListener('DOMContentLoaded', () =>{
       setTodayTexts();
       renderAppointments();
-      renderChart();
     });
   </script>
 @endpush
