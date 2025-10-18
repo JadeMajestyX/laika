@@ -1,138 +1,239 @@
 @extends('layouts.app_admin')
 
-@section('title', 'Dashboard')
-
-@section('aside')
-<li class="nav-item mb-2">
-  <a class="nav-link d-flex align-items-center gap-2 {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
-    <i class="bi bi-speedometer2"></i> <span class="nav-text">Dashboard</span>
-  </a>
-</li>
-<li class="nav-item mb-2"><a class="nav-link d-flex align-items-center gap-2" href="{{ route('usuarios') }}"><i class="bi bi-people"></i> <span class="nav-text">Usuarios</span></a></li>
-<li class="nav-item mb-2"><a class="nav-link d-flex align-items-center gap-2" href="{{ route('mascotas') }}"><i class="bi bi-basket2"></i> <span class="nav-text">Mascotas</span></a></li>
-<li class="nav-item mb-2"><a class="nav-link d-flex align-items-center gap-2" href="{{ route('citas') }}"><i class="bi bi-calendar-event"></i> <span class="nav-text">Citas</span></a></li>
-<li class="nav-item mb-2"><a class="nav-link d-flex align-items-center gap-2" href="{{ route('trabajadores') }}"><i class="bi bi-person-badge"></i> <span class="nav-text">Trabajadores</span></a></li>
-<li class="nav-item mb-2"><a class="nav-link d-flex align-items-center gap-2" href="{{ route('reportes') }}"><i class="bi bi-clipboard-data"></i> <span class="nav-text">Reportes</span></a></li>
-<li class="nav-item mb-2"><a class="nav-link d-flex align-items-center gap-2" href="{{ route('configuracion') }}"><i class="bi bi-gear"></i> <span class="nav-text">Configuración</span></a></li>
-@endsection
-
-@section('header-title', 'Dashboard')
+@section('title', 'VetCare - Panel')
 
 @section('content')
-<style>
-  
-  .stats-card h4 {
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--accent);
-  }
+      <!-- Main -->
+        <!-- Welcome -->
+        <div class="mb-3">
+          <h1 class="mb-1">¡Bienvenida, Sofia! 👋</h1>
+          <p class="text-body-secondary small" id="todayText">Aquí está el resumen de hoy</p>
+        </div>
 
-  .stats-card p {
-    font-size: 0.95rem;
-    color: var(--muted);
-  }
+        <!-- Stats -->
+        <div class="row g-3 g-lg-4 mb-4">
+          <div class="col-12 col-md-6 col-lg-3">
+            <div class="card card-soft p-4">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <div class="text-body-secondary small mb-1">Citas de Hoy</div>
+                  <div class="h4 mb-1">6</div>
+                  <div class="small text-success">+10%</div>
+                </div>
+                <div class="icon-bubble bg-opacity-25 bg-primary-subtle text-primary"><i class="bi bi-calendar3"></i></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-6 col-lg-3">
+            <div class="card card-soft p-4">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <div class="text-body-secondary small mb-1">Citas Completadas</div>
+                  <div class="h4 mb-1">3</div>
+                  <div class="small text-success">+8%</div>
+                </div>
+                <div class="icon-bubble bg-opacity-25 bg-success-subtle text-success"><i class="bi bi-check-circle"></i></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-6 col-lg-3">
+            <div class="card card-soft p-4">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <div class="text-body-secondary small mb-1">Mascotas (Vets)</div>
+                  <div class="h4 mb-1">21</div>
+                  <div class="small text-success">+8%</div>
+                </div>
+                <div class="icon-bubble bg-opacity-25 bg-info-subtle text-info"><i class="bi bi-heart"></i></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-6 col-lg-3">
+            <div class="card card-soft p-4">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <div class="text-body-secondary small mb-1">Clientes Nuevos (Mtz)</div>
+                  <div class="h4 mb-1">12</div>
+                  <div class="small text-success">+15%</div>
+                </div>
+                <div class="icon-bubble bg-opacity-25 bg-warning-subtle text-warning"><i class="bi bi-person-plus"></i></div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-  .table thead {
-    /* header cells: use the accent-light variable explicitly and force it
-       to override Bootstrap or other styles that set a white background */
-    color: var(--accent);
-    font-weight: 600;
-  }
+        <!-- Chart + Activity -->
+        <div class="row g-3 g-lg-4 mb-4">
+          <div class="col-12 col-lg-8">
+            <div class="card card-soft p-4 h-100">
+              <h3 class="h6 mb-3">Citas Esta Semana</h3>
+              <div class="chart-container">
+                <canvas id="appointmentsChart"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-lg-4">
+            <div class="card card-soft p-4 h-100">
+              <h3 class="h6 mb-3">Actividad Reciente</h3>
+              <div class="vstack gap-3">
+                <div class="d-flex gap-3 align-items-start">
+                  <div class="icon-bubble bg-opacity-25 bg-primary-subtle text-primary"><i class="bi bi-calendar3"></i></div>
+                  <div>
+                    <div>Cita completada para Max - Vacunación</div>
+                    <div class="small text-body-secondary">Hace 30 min</div>
+                  </div>
+                </div>
+                <div class="d-flex gap-3 align-items-start">
+                  <div class="icon-bubble bg-opacity-25 bg-info-subtle text-info"><i class="bi bi-syringe"></i></div>
+                  <div>
+                    <div>Nuevo cliente registrado: Ana López</div>
+                    <div class="small text-body-secondary">Hace 1 hora</div>
+                  </div>
+                </div>
+                <div class="d-flex gap-3 align-items-start">
+                  <div class="icon-bubble bg-opacity-25 bg-danger-subtle text-danger"><i class="bi bi-credit-card"></i></div>
+                  <div>
+                    <div>Pago recibido: $150 - Carlos García</div>
+                    <div class="small text-body-secondary">Hace 2 horas</div>
+                  </div>
+                </div>
+                <div class="d-flex gap-3 align-items-start">
+                  <div class="icon-bubble bg-opacity-25 bg-warning-subtle text-warning"><i class="bi bi-capsule"></i></div>
+                  <div>
+                    <div>Nueva mascota registrada: Coco (Canario)</div>
+                    <div class="small text-body-secondary">Hace 3 horas</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-  /* more specific selector targeting the th elements and forcing background */
-  .table thead th {
-    background-color: var(--accent-light) !important;
-    color: var(--accent) !important;
-    font-weight: 600;
-  }
-
-  /* make the table and body rows transparent so the card background shows
-     through (prevents a white table surface from covering the dark card) */
-  .card-body .table,
-  .card-body .table tbody,
-  .card-body .table tbody tr,
-  .card-body .table td {
-    background-color: transparent !important;
-  }
-
-  .table tbody tr:hover {
-    background-color: rgba(37, 99, 235, 0.04);
-  }
-
-  /* In dark mode, force table text to be white for better contrast */
-  html[data-theme="dark"] .card-body .table thead th,
-  html[data-theme="dark"] .card-body .table th,
-  html[data-theme="dark"] .card-body .table td {
-    color: #ffffff !important;
-  }
-
-  
-</style>
-
-<!-- ===== STATS ===== -->
-<div class="row g-4 mt-2">
-  @php
-    $stats = [
-      ['valor' => $numero['citasHoy'], 'texto' => 'Citas Hoy'],
-      ['valor' => $numero['citasHoyCompletadas'], 'texto' => 'Citas Completas'],
-      ['valor' => $numero['mascotasUltimoMes'], 'texto' => 'Mascotas (Mes)'],
-      ['valor' => $numero['clientesNuevosMes'], 'texto' => 'Clientes Nuevos (Mes)'],
-    ];
-  @endphp
-  @foreach ($stats as $s)
-  <div class="col-md-3 col-6">
-    <div class="card stats-card text-center py-4">
-      <div class="card-body">
-        <h4>{{ $s['valor'] }}</h4>
-        <p>{{ $s['texto'] }}</p>
-      </div>
-    </div>
-  </div>
-  @endforeach
-</div>
-
-<!-- ===== TABLAS ===== -->
-<div class="card shadow-sm mt-5">
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <span>Citas de hoy <small class="text-muted">{{ now()->format('d/m/Y') }}</small></span>
-    <a href="{{ route('citas') }}" class="fw-semibold" style="color: var(--accent); text-decoration:none;">Ver todas</a>
-  </div>
-  <div class="card-body p-0">
-    <table class="table align-middle mb-0">
-      <thead>
-        <tr>
-          <th>Hora</th>
-          <th>Nombre</th>
-          <th>Dueño</th>
-          <th>Raza</th>
-          <th>Motivo</th>
-          <th>Clínica</th>
-          <th>Estado</th>
-        </tr>
-      </thead>
-      <tbody>
-        @forelse ($data['citasPendientes'] as $cita)
-        <tr>
-          <td>{{ \Carbon\Carbon::parse($cita->fecha)->format('h:i A') }}</td>
-          <td>{{ $cita->mascota->nombre }}</td>
-          <td>{{ $cita->mascota->user->nombre }}</td>
-          <td>{{ $cita->mascota->especie }} - {{ $cita->mascota->raza }}</td>
-          <td>{{ $cita->servicio->nombre }}</td>
-          <td>{{ $cita->clinica->nombre ?? 'Sin clínica' }}</td>
-          <td>
-            @switch($cita->status)
-              @case('confirmada') <span class="badge bg-success">Confirmada</span> @break
-              @case('pendiente') <span class="badge bg-warning text-dark">Por confirmar</span> @break
-              @case('cancelada') <span class="badge bg-danger">Cancelada</span> @break
-              @case('completada') <span class="badge bg-primary">Completada</span> @break
-            @endswitch
-          </td>
-        </tr>
-        @empty
-        <tr><td colspan="7" class="text-center py-3 text-muted">No hay citas programadas hoy</td></tr>
-        @endforelse
-      </tbody>
-    </table>
-  </div>
-</div>
+        <!-- Table -->
+        <div class="card card-soft p-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+              <h3 class="h6 mb-0">Citas de Hoy - <span id="todayDate">17/10/2025</span></h3>
+              <div class="small text-body-secondary">6 citas</div>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="table align-middle">
+              <thead>
+                <tr>
+                  <th>HORA</th>
+                  <th>MASCOTA</th>
+                  <th>DUEÑO</th>
+                  <th>RAZA</th>
+                  <th>MOTIVO</th>
+                  <th>CLÍNICA</th>
+                  <th>ESTADO</th>
+                </tr>
+              </thead>
+              <tbody id="appointmentsBody"></tbody>
+            </table>
+          </div>
+        </div>
 @endsection
+
+@push('scripts')
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script>
+    // Datos de ejemplo (equivalentes a los del proyecto React)
+    const chartData = [12, 15, 8, 18, 14, 6, 3];
+    const chartLabels = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+
+    const appointments = [
+      { time: '09:00', pet: 'Max', owner: 'Carlos García', breed: 'Golden Retriever', reason: 'Vacunación anual', clinic: 'Clínica Principal', status: 'Confirmado', petType: 'dog' },
+      { time: '10:30', pet: 'Luna', owner: 'María Rodríguez', breed: 'Siamés', reason: 'Control general', clinic: 'Clínica Principal', status: 'Confirmado', petType: 'cat' },
+      { time: '11:00', pet: 'Rocky', owner: 'Juan Pérez', breed: 'Bulldog Francés', reason: 'Problemas respiratorios', clinic: 'Clínica Sur', status: 'En Progreso', petType: 'dog' },
+      { time: '14:00', pet: 'Mia', owner: 'Ana López', breed: 'Persa', reason: 'Esterilización', clinic: 'Clínica Principal', status: 'Programado', petType: 'cat' },
+      { time: '15:30', pet: 'Suly', owner: 'Pedro Martínez', breed: 'Beagle', reason: 'Revisión dental', clinic: 'Clínica Norte', status: 'Programado', petType: 'dog' },
+      { time: '16:00', pet: 'Coco', owner: 'Laura Sánchez', breed: 'Canario', reason: 'Control rutinario', clinic: 'Clínica Principal', status: 'Programado', petType: 'dog' },
+    ];
+
+    // Formatear fecha de hoy en español
+    function setTodayTexts(){
+      const date = new Date();
+      const fmtDate = date.toLocaleDateString('es-ES',{ day:'2-digit', month:'2-digit', year:'numeric' });
+      const fmtLong = new Intl.DateTimeFormat('es-ES', { weekday:'long', day:'numeric', month:'long', year:'numeric' }).format(date);
+      document.getElementById('todayDate').textContent = fmtDate;
+      document.getElementById('todayText').textContent = `Aquí está el resumen de hoy, ${fmtLong}`;
+    }
+
+    // Render tabla
+    function renderAppointments(){
+      const tbody = document.getElementById('appointmentsBody');
+      tbody.innerHTML = '';
+      for(const apt of appointments){
+  const badge = (status => {
+          switch(status){
+            case 'Confirmado': return '<span class="badge text-bg-success-subtle border-0">Confirmado</span>';
+            case 'En Progreso': return '<span class="badge text-bg-warning-subtle border-0">En Progreso</span>';
+            case 'Programado': return '<span class="badge text-bg-primary-subtle border-0">Programado</span>';
+            default: return '<span class="badge text-bg-secondary border-0">-</span>';
+          }
+        })(apt.status);
+  const petIcon = 'bi-heart';
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td class="text-body-secondary">${apt.time}</td>
+          <td>
+            <div class="d-flex align-items-center gap-2">
+              <div class="avatar" style="width:32px;height:32px;border-radius:0.5rem;" aria-hidden="true">
+                <i class="bi ${petIcon} text-primary"></i>
+              </div>
+              <span>${apt.pet}</span>
+            </div>
+          </td>
+          <td>${apt.owner}</td>
+          <td class="text-body-secondary">${apt.breed}</td>
+          <td class="text-body-secondary">${apt.reason}</td>
+          <td class="text-body-secondary">${apt.clinic}</td>
+          <td>${badge}</td>
+        `;
+        tbody.appendChild(row);
+      }
+    }
+
+    // Chart.js
+    let chartInstance = null;
+    function renderChart(){
+      const ctx = document.getElementById('appointmentsChart');
+      if(!ctx) return;
+      // Destroy previous chart if exists (prevents multiple instances/resizes)
+      if(chartInstance){ chartInstance.destroy(); }
+      const gridColor = getComputedStyle(document.querySelector('[data-bs-theme]'))
+        .getPropertyValue('--bs-border-color').trim() || '#e9ecef';
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: chartLabels,
+          datasets: [{
+            label: 'Citas',
+            data: chartData,
+            backgroundColor: '#a855f7',
+            borderRadius: 8,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false, // use the .chart-container height
+          scales: {
+            x: { grid: { display: false }, ticks: { color: getTextColor() } },
+            y: { grid: { color: gridColor }, ticks: { color: getTextColor() } }
+          },
+          plugins: { legend: { display:false } }
+        }
+      });
+    }
+
+    // Init
+    document.addEventListener('DOMContentLoaded', () =>{
+      setTodayTexts();
+      renderAppointments();
+      renderChart();
+    });
+  </script>
+@endpush
