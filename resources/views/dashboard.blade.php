@@ -6,7 +6,7 @@
       <!-- Main -->
         <!-- Welcome -->
         <div class="mb-3">
-          <h1 class="mb-1">¡Bienvenida, Sofia! 👋</h1>
+          <h1 class="mb-1">¡Bienvenida, {{ $usuario->nombre }}! 👋</h1>
           <p class="text-body-secondary small" id="todayText">Aquí está el resumen de hoy</p>
         </div>
 
