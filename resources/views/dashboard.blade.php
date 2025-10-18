@@ -41,8 +41,8 @@
               <div class="d-flex justify-content-between align-items-start">
                 <div>
                   <div class="text-body-secondary small mb-1">Mascotas (Vets)</div>
-                  <div class="h4 mb-1" id="mascotasRegistradas">21</div>
-                  <div class="small text-success" id="porcentajeMascotasRegistradas">+8%</div>
+                  <div class="h4 mb-1" id="mascotasRegistradas">0</div>
+                  <div class="small text-success" id="porcentajeMascotasRegistradas">+0%</div>
                 </div>
                 <div class="icon-bubble bg-opacity-25 bg-info-subtle text-info"><i class="bi bi-heart"></i></div>
               </div>
@@ -53,8 +53,8 @@
               <div class="d-flex justify-content-between align-items-start">
                 <div>
                   <div class="text-body-secondary small mb-1">Clientes Nuevos (Mtz)</div>
-                  <div class="h4 mb-1" id="clientesNuevos">12</div>
-                  <div class="small text-success" id="porcentajeClientesNuevos">+15%</div>
+                  <div class="h4 mb-1" id="clientesNuevos">0</div>
+                  <div class="small text-success" id="porcentajeClientesNuevos">+0%</div>
                 </div>
                 <div class="icon-bubble bg-opacity-25 bg-warning-subtle text-warning"><i class="bi bi-person-plus"></i></div>
               </div>
