@@ -92,8 +92,8 @@
       <div class="brand">
         <div class="brand-icon"><i class="bi bi-heart-fill"></i></div>
         <div class="brand-text">
-          <div class="fw-semibold">VetCare</div>
-          <div class="small" style="opacity:.85">Centro de atención</div>
+          <div class="fw-semibold">Laika</div>
+          {{-- <div class="small" style="opacity:.85">Centro de atención</div> --}}
         </div>
       </div>
       <nav class="d-grid gap-2">
@@ -134,11 +134,14 @@
             <div class="d-flex align-items-center gap-2">
               <div class="avatar"><span>SO</span></div>
               <div>
-                <div class="small fw-semibold">Sofia</div>
-                <div class="small text-body-secondary">Veterinaria</div>
+                <div class="small fw-semibold">{{$usuario->nombre}}</div>
+                <div class="small text-body-secondary">Administrador</div>
               </div>
             </div>
-            <button class="btn" aria-label="Salir"><i class="bi bi-box-arrow-right text-danger"></i></button>
+            <form action="{{ route('logout') }}" method="POST">
+              @csrf
+              <button class="btn" aria-label="Salir"><i class="bi bi-box-arrow-right text-danger"></i></button>
+            </form>
           </div>
         </div>
       </header>
