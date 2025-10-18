@@ -22,10 +22,14 @@ class DashboardController extends Controller
         //datos de hoy
         $hoy = Carbon::today();
 
-        $citasHoy = Cita::whereDay('fecha', $hoy->day)
-                            ->whereMonth('fecha', $hoy->month)
-                            ->whereYear('fecha', $hoy->year)
-                            ->count();
+        $citas = Cita::with(['mascota.user'])
+            ->whereDay('fecha', $hoy->day)
+            ->whereMonth('fecha', $hoy->month)
+            ->whereYear('fecha', $hoy->year)
+            ->orderBy('fecha', 'asc');
+
+        $citasHoy = $citas->count();
+        
         $citasCompletadas = Cita::where('status', 'completada')
                                 ->whereDay('fecha', $hoy->day)
                                 ->whereMonth('fecha', $hoy->month)
@@ -86,6 +90,21 @@ class DashboardController extends Controller
 
             'comparacionporcentaje' => $comparacionporcentaje,
             'citasPorDia' => $citasPorDia,
+
+            'citas' => $citas->get()->map(function($cita) {
+                return [
+                    'time' => Carbon::parse($cita->fecha)->format('h:i A'), // ej. 06:00 AM
+                    'pet' => $cita->mascota->nombre ?? 'Sin nombre',
+                    'owner' => $cita->mascota && $cita->mascota->user
+                        ? $cita->mascota->user->nombre . ' ' . $cita->mascota->user->apellido_paterno
+                        : 'Sin dueño',
+                    'breed' => $cita->mascota->raza ?? '-',
+                    'reason' => $cita->servicio->nombre ?? '-',
+                    'clinic' => $cita->clinica->nombre ?? '-', // si tienes relación con la clínica
+                    'status' => $cita->status,
+                ];
+            }),
         ]);
+
     }
 }

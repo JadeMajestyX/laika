@@ -25,6 +25,10 @@ class Cita extends Model
         'status',
     ];
 
+    protected $casts = [
+    'fecha' => 'datetime',
+    ];
+
     /**
      * Relación: una cita pertenece a una clínica.
      */
@@ -56,4 +60,5 @@ class Cita extends Model
     {
         return $this->belongsTo(User::class, 'creada_por');
     }
+
 }

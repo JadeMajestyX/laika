@@ -241,25 +241,7 @@ fetch('/dashboard/data')
       });
     }
 
-    renderChart();
-
-  })
-  .catch(error => {
-    console.error('Error al obtener los datos del dashboard:', error);
-  });
-
-
-</script>
-
-  <script>
-    //Formatear fecha de hoy
-    function setTodayTexts(){
-      const date = new Date();
-      const fmtDate = date.toLocaleDateString('es-ES',{ day:'2-digit', month:'2-digit', year:'numeric' });
-      const fmtLong = new Intl.DateTimeFormat('es-ES', { weekday:'long', day:'numeric', month:'long', year:'numeric' }).format(date);
-      document.getElementById('todayDate').textContent = fmtDate;
-      document.getElementById('todayText').textContent = `Aquí está el resumen de hoy, ${fmtLong}`;
-    }
+    const appointments = data.citas;
 
     // Render tabla
     function renderAppointments(){
@@ -268,9 +250,9 @@ fetch('/dashboard/data')
       for(const apt of appointments){
   const badge = (status => {
           switch(status){
-            case 'Confirmado': return '<span class="badge text-bg-success-subtle border-0">Confirmado</span>';
-            case 'En Progreso': return '<span class="badge text-bg-warning-subtle border-0">En Progreso</span>';
-            case 'Programado': return '<span class="badge text-bg-primary-subtle border-0">Programado</span>';
+            case 'Completada': return '<span class="badge text-bg-success-subtle border-0">Completada</span>';
+            case 'confirmada': return '<span class="badge text-bg-warning-subtle border-0">Confirmada</span>';
+            case 'pendiente': return '<span class="badge text-bg-primary-subtle border-0">Pendiente</span>';
             default: return '<span class="badge text-bg-secondary border-0">-</span>';
           }
         })(apt.status);
@@ -296,10 +278,34 @@ fetch('/dashboard/data')
       }
     }
 
+
+
+
+    renderChart();
+    renderAppointments();
+
+  })
+  .catch(error => {
+    console.error('Error al obtener los datos del dashboard:', error);
+  });
+
+
+</script>
+
+  <script>
+    //Formatear fecha de hoy
+    function setTodayTexts(){
+      const date = new Date();
+      const fmtDate = date.toLocaleDateString('es-ES',{ day:'2-digit', month:'2-digit', year:'numeric' });
+      const fmtLong = new Intl.DateTimeFormat('es-ES', { weekday:'long', day:'numeric', month:'long', year:'numeric' }).format(date);
+      document.getElementById('todayDate').textContent = fmtDate;
+      document.getElementById('todayText').textContent = `Aquí está el resumen de hoy, ${fmtLong}`;
+    }
+
     // Init
-    document.addEventListener('DOMContentLoaded', () =>{
-      setTodayTexts();
-      renderAppointments();
-    });
+    // document.addEventListener('DOMContentLoaded', () =>{
+    //   setTodayTexts();
+    //   renderAppointments();
+    // });
   </script>
 @endpush
