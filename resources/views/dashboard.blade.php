@@ -17,8 +17,8 @@
               <div class="d-flex justify-content-between align-items-start">
                 <div>
                   <div class="text-body-secondary small mb-1">Citas de Hoy</div>
-                  <div class="h4 mb-1">6</div>
-                  <div class="small text-success">+10%</div>
+                  <div class="h4 mb-1" id="citasHoy">0</div>
+                  <div class="small text-success" id="porcentajeCitas">+0%</div>
                 </div>
                 <div class="icon-bubble bg-opacity-25 bg-primary-subtle text-primary"><i class="bi bi-calendar3"></i></div>
               </div>
@@ -29,8 +29,8 @@
               <div class="d-flex justify-content-between align-items-start">
                 <div>
                   <div class="text-body-secondary small mb-1">Citas Completadas</div>
-                  <div class="h4 mb-1">3</div>
-                  <div class="small text-success">+8%</div>
+                  <div class="h4 mb-1" id="citasCompletadas">0</div>
+                  <div class="small text-success" id="porcentajeCitasCompletadas">+0%</div>
                 </div>
                 <div class="icon-bubble bg-opacity-25 bg-success-subtle text-success"><i class="bi bi-check-circle"></i></div>
               </div>
@@ -41,8 +41,8 @@
               <div class="d-flex justify-content-between align-items-start">
                 <div>
                   <div class="text-body-secondary small mb-1">Mascotas (Vets)</div>
-                  <div class="h4 mb-1">21</div>
-                  <div class="small text-success">+8%</div>
+                  <div class="h4 mb-1" id="mascotasRegistradas">21</div>
+                  <div class="small text-success" id="porcentajeMascotasRegistradas">+8%</div>
                 </div>
                 <div class="icon-bubble bg-opacity-25 bg-info-subtle text-info"><i class="bi bi-heart"></i></div>
               </div>
@@ -53,8 +53,8 @@
               <div class="d-flex justify-content-between align-items-start">
                 <div>
                   <div class="text-body-secondary small mb-1">Clientes Nuevos (Mtz)</div>
-                  <div class="h4 mb-1">12</div>
-                  <div class="small text-success">+15%</div>
+                  <div class="h4 mb-1" id="clientesNuevos">12</div>
+                  <div class="small text-success" id="porcentajeClientesNuevos">+15%</div>
                 </div>
                 <div class="icon-bubble bg-opacity-25 bg-warning-subtle text-warning"><i class="bi bi-person-plus"></i></div>
               </div>
@@ -139,6 +139,57 @@
 @push('scripts')
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+
+  <script>
+    //obtener la información del dashboard desde el servidor (citas de hoy, citas completadas, mascotas, clientes nuevos)
+
+fetch('/dashboard/data')
+  .then(response => response.json())
+  .then(data => {
+    //citas
+    
+    const citasHoy = document.getElementById('citasHoy');
+    const porcentajeCitasElem = document.getElementById('porcentajeCitas');
+      const citas = data.citasHoy;
+      citasHoy.textContent = citas;
+      const cambio = data.comparacionporcentaje['citasHoy'];
+      porcentajeCitasElem.textContent = (cambio >= 0 ? '+' : '') + cambio + '%';
+      porcentajeCitasElem.className = 'small ' + (cambio >= 0 ? 'text-success' : 'text-danger');
+
+      //citas completadas
+      const citasCompletadas = document.getElementById('citasCompletadas');
+      const porcentajeCitasCompletadasElem = document.getElementById('porcentajeCitasCompletadas');
+      const citasComp = data.citasCompletadas;
+      citasCompletadas.textContent = citasComp;
+      const cambioComp = data.comparacionporcentaje['citasCompletadas'];
+      porcentajeCitasCompletadasElem.textContent = (cambioComp >= 0 ? '+' : '') + cambioComp + '%';
+      porcentajeCitasCompletadasElem.className = 'small ' + (cambioComp >= 0 ? 'text-success' : 'text-danger');
+
+      //mascotas registradas
+      const mascotasRegistradas = document.getElementById('mascotasRegistradas');
+      const porcentajeMascotasRegistradasElem = document.getElementById('porcentajeMascotasRegistradas');
+      const mascotas = data.mascotasRegistradas;
+      mascotasRegistradas.textContent = mascotas;
+      const cambioMascotas = data.comparacionporcentaje['mascotasRegistradas'];
+      porcentajeMascotasRegistradasElem.textContent = (cambioMascotas >= 0 ? '+' : '') + cambioMascotas + '%';
+      porcentajeMascotasRegistradasElem.className = 'small ' + (cambioMascotas >= 0 ? 'text-success' : 'text-danger');
+
+      //clientes nuevos
+      const clientesNuevos = document.getElementById('clientesNuevos');
+      const porcentajeClientesNuevosElem = document.getElementById('porcentajeClientesNuevos');
+      const clientes = data.clientesNuevos;
+      clientesNuevos.textContent = clientes;
+      const cambioClientes = data.comparacionporcentaje['clientesNuevos'];
+      porcentajeClientesNuevosElem.textContent = (cambioClientes >= 0 ? '+' : '') + cambioClientes + '%';
+      porcentajeClientesNuevosElem.className = 'small ' + (cambioClientes >= 0 ? 'text-success' : 'text-danger');
+
+  }).catch(error => {
+    console.error('Error al obtener los datos del dashboard:', error);
+  });
+
+</script>
+
   <script>
     // Datos de ejemplo (equivalentes a los del proyecto React)
     const chartData = [12, 15, 8, 18, 14, 6, 3];

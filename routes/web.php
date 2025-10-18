@@ -49,6 +49,10 @@ Route::middleware(EnsureUserHasRole::class.':A')->group(function () {
     Route::get('/configuracion', [ConfiguracionController::class, 'index'])->name('configuracion');
 
     //Route::get('/buscar', [SearchController::class, 'buscar'])->name('buscar');
+
+
+    //obtener datos del dashboard
+    Route::get('/dashboard/data', [DashboardController::class, 'getDashboardData'])->name('dashboard.data');
 });
 
 
