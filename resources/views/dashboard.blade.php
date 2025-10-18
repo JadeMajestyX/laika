@@ -303,10 +303,7 @@ default: return '<span class="badge bg-secondary text-dark border-0">-</span>';
       document.getElementById('todayText').textContent = `Aquí está el resumen de hoy, ${fmtLong}`;
     }
 
-    // Init
-    // document.addEventListener('DOMContentLoaded', () =>{
-    //   setTodayTexts();
-    //   renderAppointments();
-    // });
+      setTodayTexts();
+
   </script>
 @endpush
