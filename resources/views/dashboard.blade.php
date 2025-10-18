@@ -250,10 +250,11 @@ fetch('/dashboard/data')
       for(const apt of appointments){
   const badge = (status => {
           switch(status){
-            case 'completada': return '<span class="badge text-bg-success-subtle border-0">Completada</span>';
-            case 'confirmada': return '<span class="badge text-bg-warning-subtle border-0">Confirmada</span>';
-            case 'pendiente': return '<span class="badge text-bg-primary-subtle border-0">Pendiente</span>';
-            default: return '<span class="badge text-bg-secondary border-0">-</span>';
+case 'completada': return '<span class="badge bg-success-subtle text-success border-0">Completada</span>';
+case 'confirmada': return '<span class="badge bg-warning-subtle text-warning border-0">Confirmada</span>';
+case 'pendiente': return '<span class="badge bg-primary-subtle text-primary border-0">Pendiente</span>';
+default: return '<span class="badge bg-secondary text-dark border-0">-</span>';
+
           }
         })(apt.status);
   const petIcon = 'bi-heart';
