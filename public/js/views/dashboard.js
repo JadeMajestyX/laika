@@ -276,7 +276,7 @@ function renderSection(section, data) {
           <div class="card card-soft p-4">
             <div class="d-flex justify-content-between align-items-start">
               <div>
-                <div class="text-body-secondary small mb-1">Mascotas (Vets)</div>
+                <div class="text-body-secondary small mb-1">Mascotas</div>
                 <div class="h4 mb-1" id="mascotasRegistradas">0</div>
                 <div class="small text-success" id="porcentajeMascotasRegistradas">+0%</div>
               </div>
@@ -288,7 +288,7 @@ function renderSection(section, data) {
           <div class="card card-soft p-4">
             <div class="d-flex justify-content-between align-items-start">
               <div>
-                <div class="text-body-secondary small mb-1">Clientes Nuevos (Mtz)</div>
+                <div class="text-body-secondary small mb-1">Clientes Nuevos</div>
                 <div class="h4 mb-1" id="clientesNuevos">0</div>
                 <div class="small text-success" id="porcentajeClientesNuevos">+0%</div>
               </div>
