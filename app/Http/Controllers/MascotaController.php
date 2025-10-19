@@ -65,13 +65,56 @@ class MascotaController extends Controller
     public function getAllMascotas(Request $request)
     {
         $perPage = (int) $request->query('per_page', 10);
-        if ($perPage < 5) $perPage = 5;
-        if ($perPage > 50) $perPage = 50;
+        $perPage = max(5, min(50, $perPage));
 
-        $mascotas = Mascota::with('user')
-            ->orderByDesc('created_at')
-            ->paginate($perPage);
+        $scope = $request->get('scope', 'today'); // today | past
+        $q = trim((string) $request->get('q', ''));
+        $from = $request->get('from');
+        $to = $request->get('to');
 
+        $query = Mascota::with('user');
+
+        // Filtro por fechas de registro (created_at)
+        $hasDateFilter = false;
+        if ($from) {
+            try {
+                $fromDate = \Carbon\Carbon::parse($from)->startOfDay();
+                $query->where('created_at', '>=', $fromDate);
+                $hasDateFilter = true;
+            } catch (\Exception $e) { /* ignorar */ }
+        }
+        if ($to) {
+            try {
+                $toDate = \Carbon\Carbon::parse($to)->endOfDay();
+                $query->where('created_at', '<=', $toDate);
+                $hasDateFilter = true;
+            } catch (\Exception $e) { /* ignorar */ }
+        }
+        if (!$hasDateFilter) {
+            $today = \Carbon\Carbon::today();
+            if ($scope === 'past') {
+                $query->whereDate('created_at', '<', $today);
+            } else { // today por defecto
+                $query->whereDate('created_at', '=', $today);
+            }
+        }
+
+        // Búsqueda por texto
+        if ($q !== '') {
+            $query->where(function ($sub) use ($q) {
+                $like = '%' . str_replace(['%','_'], ['\%','\_'], $q) . '%';
+                $sub->where('nombre', 'like', $like)
+                    ->orWhere('especie', 'like', $like)
+                    ->orWhere('raza', 'like', $like)
+                    ->orWhereHas('user', function ($q2) use ($like) {
+                        $q2->where('nombre', 'like', $like)
+                           ->orWhere('apellido_paterno', 'like', $like)
+                           ->orWhere('apellido_materno', 'like', $like);
+                    });
+            });
+        }
+
+        $mascotas = $query->orderByDesc('created_at')->paginate($perPage);
         return response()->json($mascotas);
     }
 }

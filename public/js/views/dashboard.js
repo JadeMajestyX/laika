@@ -199,7 +199,15 @@ function renderMascotasPagination(meta) {
 }
 
 function fetchMascotasAndRender(page = 1, perPage = 10) {
-  const url = `/mascotas/json?page=${page}&per_page=${perPage}`;
+  const q = document.getElementById('mascotasSearch')?.value?.trim() || '';
+  const scope = document.querySelector('input[name="mascotasScope"]:checked')?.value || 'today';
+  const from = document.getElementById('mascotasFrom')?.value || '';
+  const to = document.getElementById('mascotasTo')?.value || '';
+  const params = new URLSearchParams({ page: String(page), per_page: String(perPage), scope });
+  if (q) params.set('q', q);
+  if (from) params.set('from', from);
+  if (to) params.set('to', to);
+  const url = `/mascotas/json?${params.toString()}`;
   fetch(url, { headers: { Accept: 'application/json' } })
     .then((res) => {
       if (!res.ok) {
@@ -372,7 +380,28 @@ function renderSection(section, data) {
   } else if (section === 'mascotas') {
     mainContent.innerHTML = `
       <div class="card shadow-sm mt-4">
-        <div class="card-body p-0">
+        <div class="card-body">
+          <div class="d-flex flex-column flex-md-row gap-2 justify-content-between align-items-md-center mb-3">
+            <div class="input-group" style="max-width: 420px;">
+              <span class="input-group-text"><i class="bi bi-search"></i></span>
+              <input id="mascotasSearch" type="text" class="form-control" placeholder="Buscar por nombre, especie, raza o dueño">
+              <button id="mascotasSearchBtn" class="btn btn-primary">Buscar</button>
+            </div>
+            <div class="d-flex flex-column flex-md-row gap-2">
+              <div class="btn-group" role="group" aria-label="ScopeMascotas">
+                <input type="radio" class="btn-check" name="mascotasScope" id="mScopeToday" autocomplete="off" value="today" checked>
+                <label class="btn btn-outline-secondary" for="mScopeToday">Registradas hoy</label>
+                <input type="radio" class="btn-check" name="mascotasScope" id="mScopePast" autocomplete="off" value="past">
+                <label class="btn btn-outline-secondary" for="mScopePast">Anteriores</label>
+              </div>
+              <div class="input-group" style="max-width: 360px;">
+                <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
+                <input type="date" id="mascotasFrom" class="form-control" placeholder="Desde">
+                <input type="date" id="mascotasTo" class="form-control" placeholder="Hasta">
+                <button id="mascotasRangeBtn" class="btn btn-outline-primary">Filtrar</button>
+              </div>
+            </div>
+          </div>
           <div class="table-responsive">
             <table class="table table-hover mb-0 align-middle">
               <thead class="table-light">
@@ -389,10 +418,20 @@ function renderSection(section, data) {
               <tbody id="mascotasBody"></tbody>
             </table>
           </div>
+          <div id="mascotasPagination" class="d-flex justify-content-center my-3"></div>
         </div>
-        <div id="mascotasPagination" class="d-flex justify-content-center my-3"></div>
       </div>
     `;
+    // eventos y carga inicial
+    const mSearchBtn = document.getElementById('mascotasSearchBtn');
+    const mRangeBtn = document.getElementById('mascotasRangeBtn');
+    const mSearchInput = document.getElementById('mascotasSearch');
+    const mRadios = document.querySelectorAll('input[name="mascotasScope"]');
+    mSearchBtn?.addEventListener('click', () => fetchMascotasAndRender(1));
+    mRangeBtn?.addEventListener('click', () => fetchMascotasAndRender(1));
+    mSearchInput?.addEventListener('keydown', (e) => { if (e.key === 'Enter') fetchMascotasAndRender(1); });
+    mRadios.forEach(r => r.addEventListener('change', () => fetchMascotasAndRender(1)));
+    fetchMascotasAndRender();
   } else if (section === 'citas') {
     mainContent.innerHTML = `
       <div class="card shadow-sm mt-4">
@@ -482,7 +521,6 @@ function initNavHandlers() {
 
       if (section === 'mascotas') {
         renderSection('mascotas');
-        fetchMascotasAndRender();
         history.pushState({ section: 'mascotas' }, '', '/dashboard/mascotas');
         return;
       }
