@@ -8,6 +8,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Testing\Fluent\Concerns\Has;
 use Laravel\Sanctum\HasApiTokens;
+    use App\Notifications\ResetPasswordNotification as CustomResetPasswordNotification;
 
 class User extends Authenticatable
 {
@@ -67,4 +68,11 @@ class User extends Authenticatable
     {
         return $this->rol === $rol; // si solo tienes un campo 'rol' en la tabla users
     }
+
+
+
+public function sendPasswordResetNotification($token)
+{
+    $this->notify(new CustomResetPasswordNotification($token));
+}
 }
