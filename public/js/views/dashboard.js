@@ -394,7 +394,60 @@ function renderSection(section, data) {
       </div>
     `;
   } else if (section === 'citas') {
-    // TODO: render citas
+    mainContent.innerHTML = `
+      <div class="card shadow-sm mt-4">
+        <div class="card-body">
+          <div class="d-flex flex-column flex-md-row gap-2 justify-content-between align-items-md-center mb-3">
+            <div class="input-group" style="max-width: 420px;">
+              <span class="input-group-text"><i class="bi bi-search"></i></span>
+              <input id="citasSearch" type="text" class="form-control" placeholder="Buscar por clínica, servicio, mascota o propietario">
+              <button id="citasSearchBtn" class="btn btn-primary">Buscar</button>
+            </div>
+            <div class="d-flex flex-column flex-md-row gap-2">
+              <div class="btn-group" role="group" aria-label="Scope">
+                <input type="radio" class="btn-check" name="citasScope" id="scopeToday" autocomplete="off" value="today" checked>
+                <label class="btn btn-outline-secondary" for="scopeToday">Hoy</label>
+                <input type="radio" class="btn-check" name="citasScope" id="scopePast" autocomplete="off" value="past">
+                <label class="btn btn-outline-secondary" for="scopePast">Pasadas</label>
+              </div>
+              <div class="input-group" style="max-width: 360px;">
+                <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
+                <input type="date" id="citasFrom" class="form-control" placeholder="Desde">
+                <input type="date" id="citasTo" class="form-control" placeholder="Hasta">
+                <button id="citasRangeBtn" class="btn btn-outline-primary">Filtrar</button>
+              </div>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover table-striped align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Fecha</th>
+                  <th>Clínica</th>
+                  <th>Servicio</th>
+                  <th>Mascota</th>
+                  <th>Propietario</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody id="citasBody"></tbody>
+            </table>
+          </div>
+          <div id="citasPagination" class="d-flex justify-content-center my-3"></div>
+        </div>
+      </div>
+    `;
+    // eventos
+    const searchBtn = document.getElementById('citasSearchBtn');
+    const rangeBtn = document.getElementById('citasRangeBtn');
+    const searchInput = document.getElementById('citasSearch');
+    const radios = document.querySelectorAll('input[name="citasScope"]');
+    searchBtn?.addEventListener('click', () => fetchCitasAndRender(1));
+    rangeBtn?.addEventListener('click', () => fetchCitasAndRender(1));
+    searchInput?.addEventListener('keydown', (e) => { if (e.key === 'Enter') fetchCitasAndRender(1); });
+    radios.forEach(r => r.addEventListener('change', () => fetchCitasAndRender(1)));
+    // carga inicial
+    fetchCitasAndRender();
   } else if (section === 'trabajadores') {
     // TODO: render trabajadores
   } else if (section === 'reportes') {
@@ -434,6 +487,13 @@ function initNavHandlers() {
         return;
       }
 
+      if (section === 'citas') {
+        renderSection('citas');
+        fetchCitasAndRender();
+        history.pushState({ section: 'citas' }, '', '/dashboard/citas');
+        return;
+      }
+
       renderSection(section);
       history.pushState({ section }, '', `/dashboard/${section}`);
     });
@@ -458,6 +518,9 @@ function handlePopState() {
     } else if (section === 'mascotas') {
       renderSection('mascotas');
       fetchMascotasAndRender();
+    } else if (section === 'citas') {
+      renderSection('citas');
+      fetchCitasAndRender();
     } else {
       renderSection(section);
     }
@@ -488,6 +551,10 @@ function handlePopState() {
       renderSection('mascotas');
       fetchMascotasAndRender();
       history.replaceState({ section: 'mascotas' }, '', location.pathname);
+    } else if (initialSection === 'citas') {
+      renderSection('citas');
+      fetchCitasAndRender();
+      history.replaceState({ section: 'citas' }, '', location.pathname);
     } else {
       renderSection(initialSection);
       history.replaceState({ section: initialSection }, '', location.pathname);
@@ -497,3 +564,86 @@ function handlePopState() {
     handlePopState();
   });
 })();
+
+// ---- Citas: helpers y fetch ----
+function renderCitasTable(items) {
+  const tbody = document.getElementById('citasBody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  const list = Array.isArray(items) ? items : (Array.isArray(items.data) ? items.data : []);
+  if (list.length === 0) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td colspan="6" class="text-center text-body-secondary py-4">No hay citas</td>`;
+    tbody.appendChild(tr);
+    return;
+  }
+  list.forEach((c) => {
+    const fecha = c.fecha ? new Date(c.fecha) : null;
+    const fmt = (d) => (d ? `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}` : '-');
+    const propietario = c.mascota?.user ? [c.mascota.user.nombre, c.mascota.user.apellido_paterno, c.mascota.user.apellido_materno].filter(Boolean).join(' ') : '-';
+    const badge = ((s) => {
+      if (s === 'pendiente') return '<span class="badge bg-warning text-dark">Pendiente</span>';
+      if (s === 'completada') return '<span class="badge bg-success">Completada</span>';
+      if (s === 'cancelada') return '<span class="badge bg-danger">Cancelada</span>';
+      return '<span class="badge bg-secondary">-</span>';
+    })(c.status);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${fmt(fecha)}</td>
+      <td>${c.clinica?.nombre ?? '-'}</td>
+      <td>${c.servicio?.nombre ?? '-'}</td>
+      <td>${c.mascota?.nombre ?? '-'}</td>
+      <td>${propietario}</td>
+      <td>${badge}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderCitasPagination(meta) {
+  const pag = document.getElementById('citasPagination');
+  if (!pag) return;
+  pag.innerHTML = '';
+  if (!meta || meta.last_page <= 1) return;
+  const ul = document.createElement('ul');
+  ul.className = 'pagination m-0';
+  const addItem = (label, page, disabled = false, active = false) => {
+    const li = document.createElement('li');
+    li.className = `page-item ${disabled ? 'disabled' : ''} ${active ? 'active' : ''}`;
+    const a = document.createElement('a');
+    a.className = 'page-link';
+    a.href = '#';
+    a.textContent = label;
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (!disabled && !active) fetchCitasAndRender(page);
+    });
+    li.appendChild(a);
+    ul.appendChild(li);
+  };
+  addItem('«', meta.current_page - 1, meta.current_page === 1);
+  for (let p = 1; p <= meta.last_page; p++) addItem(String(p), p, false, p === meta.current_page);
+  addItem('»', meta.current_page + 1, meta.current_page === meta.last_page);
+  pag.appendChild(ul);
+}
+
+function fetchCitasAndRender(page = 1, perPage = 10) {
+  const q = document.getElementById('citasSearch')?.value?.trim() || '';
+  const scope = document.querySelector('input[name="citasScope"]:checked')?.value || 'today';
+  const from = document.getElementById('citasFrom')?.value || '';
+  const to = document.getElementById('citasTo')?.value || '';
+  const params = new URLSearchParams({ page: String(page), per_page: String(perPage), scope });
+  if (q) params.set('q', q);
+  if (from) params.set('from', from);
+  if (to) params.set('to', to);
+  fetch(`/citas/json?${params.toString()}`, { headers: { Accept: 'application/json' } })
+    .then((r) => {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then((data) => {
+      renderCitasTable(data);
+      renderCitasPagination({ current_page: data.current_page, last_page: data.last_page });
+    })
+    .catch((err) => console.error('Error al cargar citas:', err));
+}

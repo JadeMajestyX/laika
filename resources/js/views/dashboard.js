@@ -398,7 +398,77 @@ function renderSection(section, data) {
       </div>
     `;
   } else if (section === 'citas') {
-    // TODO: render citas
+    mainContent.innerHTML = `
+    <div class="card shadow-sm mt-4">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table id="tablaCitas" class="table table-hover table-striped align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Clínica</th>
+                        <th>Servicio</th>
+                        <th>Mascota</th>
+                        <th>Propietario</th>
+                        <th>Fecha</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($citas as $cita)
+                    <tr>
+                        <td>{{ $cita->id }}</td>
+                        <td>{{ $cita->clinica->nombre ?? 'N/A' }}</td>
+                        <td>{{ $cita->servicio->nombre ?? 'N/A' }}</td>
+                        <td>{{ $cita->mascota->nombre ?? 'N/A' }}</td>
+                        <td>{{ $cita->mascota->usuario->nombre ?? 'N/A' }}</td>
+                        <td>{{ \Carbon\Carbon::parse($cita->fecha)->format('d/m/Y H:i') }}</td>
+                        <td>
+                            @if($cita->status === 'pendiente')
+                                <span class="badge bg-warning text-dark">Pendiente</span>
+                            @elseif($cita->status === 'completada')
+                                <span class="badge bg-success">Completada</span>
+                            @elseif($cita->status === 'cancelada')
+                                <span class="badge bg-danger">Cancelada</span>
+                            @else
+                                <span class="badge bg-secondary">Desconocido</span>
+                            @endif
+                        </td>
+                        <td>
+                            <div class="d-inline-flex gap-1">
+                                <!-- Ver -->
+                                <a href="" class="btn btn-warning btn-sm" data-bs-toggle="tooltip" title="Ver detalles">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+
+                                <!-- Editar -->
+                                <a href="" class="btn btn-info btn-sm text-white" data-bs-toggle="tooltip" title="Editar cita">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+
+                                <!-- Eliminar -->
+                                <form action="" >
+                                    {{-- @csrf
+                                    @method('DELETE') --}}
+                                    <button type="submit" class="btn btn-danger btn-sm" data-bs-toggle="tooltip" title="Eliminar cita">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">No hay citas registradas.</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+    `
   } else if (section === 'trabajadores') {
     // TODO: render trabajadores
   } else if (section === 'reportes') {
@@ -435,6 +505,13 @@ function initNavHandlers() {
         renderSection('mascotas');
         fetchMascotasAndRender();
         history.pushState({ section: 'mascotas' }, '', '/dashboard/mascotas');
+        return;
+      }
+
+      if (section === 'citas') {
+        renderSection('citas');
+        fetchCitasAndRender();
+        history.pushState({ section: 'citas' }, '', '/dashboard/citas');
         return;
       }
 
