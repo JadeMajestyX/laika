@@ -26,15 +26,15 @@
       font-size: 1.4rem;
       margin-bottom: 1rem;
     }
-    .btn {
-      display: inline-block;
-      background: #3A7CA5;
-      color: white;
-      padding: 0.8rem 1.4rem;
-      border-radius: 6px;
-      text-decoration: none;
-      font-weight: 500;
-    }
+.btn {
+  display: inline-block;
+  background: #3A7CA5;
+  color: white; /* <- Esto ya hace que el texto sea blanco */
+  padding: 0.8rem 1.4rem;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 500;
+}
     .btn:hover {
       background: #2f6485;
     }
