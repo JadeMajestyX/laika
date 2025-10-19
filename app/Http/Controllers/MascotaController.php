@@ -6,6 +6,8 @@ use App\Models\Mascota;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+use function Pest\Laravel\json;
+
 class MascotaController extends Controller
 {
     public function index()
@@ -58,6 +60,19 @@ class MascotaController extends Controller
         $mascota->delete();
 
         return redirect()->route('mascotas')->with('success', 'Mascota eliminada correctamente.');
+    }
+
+    public function getAllMascotas(Request $request)
+    {
+        $perPage = (int) $request->query('per_page', 10);
+        if ($perPage < 5) $perPage = 5;
+        if ($perPage > 50) $perPage = 50;
+
+        $mascotas = Mascota::with('user')
+            ->orderByDesc('created_at')
+            ->paginate($perPage);
+
+        return response()->json($mascotas);
     }
 }
 

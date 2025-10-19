@@ -34,6 +34,8 @@ Route::middleware(EnsureUserHasRole::class.':A')->group(function () {
     Route::get('/citas', [App\Http\Controllers\CitaController::class, 'index'])->name('citas');
 
     Route::get('/mascotas', [MascotaController::class, 'index'])->name('mascotas');
+    // Primero la ruta JSON para que no la capture /mascotas/{id}
+    Route::get('/mascotas/json', [MascotaController::class, 'getAllMascotas'])->name('mascotas.json');
     Route::get('/mascotas/{id}', [MascotaController::class, 'show'])->name('mascotas.show');
     Route::get('/mascotas/{id}/editar', [MascotaController::class, 'edit'])->name('mascotas.edit');
     Route::put('/mascotas/{id}', [MascotaController::class, 'update'])->name('mascotas.update');
@@ -62,6 +64,7 @@ Route::middleware(EnsureUserHasRole::class.':A')->group(function () {
     // Capturar cualquier subruta de dashboard para SPA y evitar 404 al refrescar
     Route::get('/dashboard/{any}', [DashboardController::class, 'index'])
         ->where('any', '^(?!data$).+');
+
 });
 
 
