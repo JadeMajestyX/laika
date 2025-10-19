@@ -14,7 +14,7 @@ class AuthController extends Controller
     {
         $idToken = $request->input('token');
 
-        $client = new Google_Client(['client_id' => '486812368955-qlths1145kvnplofoj1nu58lojn1defg.apps.googleusercontent.com']);
+        $client = new Google_Client(['client_id' => '486812368955-g2lqfgf19duj42ch3kmh57il53videto.apps.googleusercontent.com']);
         $payload = $client->verifyIdToken($idToken);
 
         if ($payload) {
