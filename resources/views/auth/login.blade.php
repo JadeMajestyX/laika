@@ -1,287 +1,154 @@
-<!DOCTYPE html>
-<html lang="es">
+<!doctype html>
+<html lang="es" data-bs-theme="light">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pet care - Login</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
-</head>
-<style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Iniciar Sesión - VetCare</title>
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Poppins', sans-serif;
-}
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 
-body {
-    background-color: #f0f0f0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-}
+  <!-- Fuente -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
-.container {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    padding: 20px;
-}
-
-.login-card {
-    width: 350px;
-    background: #fff;
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15);
-    transition: all 0.3s ease;
-}
-
-.header {
-    background-color: #7b2fff;
-    color: white;
-    text-align: center;
-    padding: 30px 20px 45px;
-    position: relative;
-    border-bottom-left-radius: 50% 5px;
-    border-bottom-right-radius: 50% 20px;
-}
-
-.header::after {
-    content: "";
-    position: absolute;
-    bottom: -10px;
-    left: 0;
-    width: 100%;
-    height: 30px;
-    background-color: white;
-    border-top-right-radius: 100% 20px;
-    border-top-left-radius: 50% 20px;
-}
-
-.circle {
-    background: #eee;
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    margin: 0 auto 15px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    border: 3px solid white;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-.circle img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.header h3 {
-    font-size: 24px;
-    font-weight: 500;
-    letter-spacing: 1px;
-}
-
-.content {
-    padding: 20px 25px 30px;
-}
-
-.content h4 {
-    text-align: center;
-    margin-bottom: 20px;
-    color: #333;
-    font-weight: 500;
-}
-
-.input-group {
-    display: flex;
-    align-items: center;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    margin-bottom: 15px;
-    overflow: hidden;
-    background-color: #fff;
-}
-
-.input-icon {
-    background-color: #7B2CF2;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 42px;
-    height: 100%;
-    padding: 11px;
-}
-
-.input-icon img {
-    width: 22px;
-    height: 22px;
-}
-
-.input-group input {
-    border: none;
-    outline: none;
-    width: 100%;
-    font-size: 14px;
-    color: #333;
-    padding: 10px;
-}
-
-.input-group input::placeholder {
-    color: #999;
-}
-
-.forgot {
-    text-align: right;
-    margin-bottom: 15px;
-}
-
-.forgot a {
-    color: #333;
-    text-decoration: none;
-    font-size: 12px;
-}
-
-.forgot a:hover {
-    text-decoration: underline;
-}
-
-.btn {
-    width: 100%;
-    border: none;
-    padding: 10px;
-    border-radius: 6px;
-    font-size: 14px;
-    cursor: pointer;
-    margin-bottom: 10px;
-    transition: 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-}
-
-.btn.primary {
-    background-color: #7B2CF2;
-    color: white;
-}
-
-.btn.primary:hover {
-    background-color: #6925d9;
-}
-.error-message {
-    display: flex;
-    align-items: center;
-    background-color: #ffe5e5; /* fondo rojo claro */
-    color: #d8000c; /* texto rojo */
-    border: 1px solid #d8000c;
-    border-radius: 6px;
-    padding: 10px 15px;
-    margin-bottom: 15px;
-    font-size: 14px;
-    gap: 10px;
-}
-
-.error-message .error-icon {
-    width: 20px;
-    height: 20px;
-}
-
-@media (max-width: 768px) {
-    .login-card {
-        width: 85%;
+  <style>
+    :root {
+      --brand: #3A7CA5;
+      --brand-dark: #2f6485;
     }
-    .circle {
-        width: 70px;
-        height: 70px;
-    }
-    .content {
-        padding: 15px 20px;
-    }
-    .btn {
-        font-size: 13px;
-        padding: 9px;
-    }
-}
-
-@media (max-width: 480px) {
     body {
-        background-color: #ffffff;
-        height: auto;
+      background: linear-gradient(135deg, var(--brand), var(--brand-dark));
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     .login-card {
-        width: 100%;
-        border-radius: 0;
-        box-shadow: none;
+      background: #fff;
+      border-radius: 1rem;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+      padding: 2.5rem;
+      width: 100%;
+      max-width: 420px;
+      position: relative;
     }
-    .header {
-        padding: 25px 10px 40px;
+    .login-logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: .6rem;
+      color: var(--brand);
+      margin-bottom: 1.8rem;
     }
-    .content {
-        padding: 20px 15px;
+    .login-logo i {
+      background: var(--brand);
+      color: #fff;
+      padding: .6rem;
+      border-radius: .75rem;
+      font-size: 1.3rem;
     }
-    .circle {
-        width: 60px;
-        height: 60px;
+    h4 {
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 1rem;
+      color: #212529;
     }
-    .divider::before, .divider::after {
-        width: 30%;
+    .form-label {
+      font-weight: 500;
     }
-}
-</style>
+    .form-control {
+      border-radius: 0.5rem;
+      padding: 0.65rem 0.9rem;
+    }
+    .btn-primary {
+      background: var(--brand);
+      border: none;
+      font-weight: 500;
+      padding: .65rem;
+    }
+    .btn-primary:hover {
+      background: var(--brand-dark);
+    }
+    .text-muted a {
+      color: var(--brand);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .text-muted a:hover {
+      text-decoration: underline;
+    }
+    .alert-danger {
+      font-size: .9rem;
+      border-radius: .5rem;
+    }
+    .form-check-label {
+      font-size: .9rem;
+    }
+  </style>
+</head>
 <body>
-    <div class="container">
-        <div class="login-card">
-            <div class="header">
-                <div class="circle">
-                    <img src="{{ asset('images/logopetcare.png') }}" alt="Logo">
-                </div>
-                <h3>Laika</h3>
-            </div>
-
-            <div class="content">
-                <h4>Welcome</h4>
-
-                <form method="POST" action="{{ route('login') }}">
-                    @csrf
-                    <div class="input-group">
-                        <div class="input-icon">
-                            <img src="{{ asset('images/gmail.png') }}" alt="icon email">
-                        </div>
-                        <input type="email" name="email" placeholder="Email address:" required>
-                    </div>
-
-                    <div class="input-group">
-                        <div class="input-icon">
-                            <img src="{{ asset("images/password.png") }}" alt="icon password">
-                        </div>
-                        <input type="password" name="password" placeholder="Password:" required>
-                    </div>
-                    {{-- Credenciales incorrectas --}}
-                    @if ($errors->any())
-                        <div class="error-message">
-                            <img src="../drawable/warning.png" alt="Warning" class="error-icon">
-                            <span>Email o contraseña incorrectos</span>
-                        </div>
-                    @endif
-
-                    <div class="forgot">
-                        <a href="#">¿Forgot the password?</a>
-                    </div>
-
-                    <button type="submit" class="btn primary">Sign In</button>
-                </form>
-
-            </div>
-        </div>
+  <div class="login-card">
+    <div class="login-logo">
+      <i class="bi bi-heart-fill"></i>
+      <h5 class="m-0 fw-semibold">VetCare</h5>
     </div>
+
+    <h4>Iniciar sesión</h4>
+    <p class="text-muted text-center small mb-4">Accede al panel de administración</p>
+
+    @if ($errors->any())
+      <div class="alert alert-danger d-flex align-items-center" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <div>Email o contraseña incorrectos</div>
+      </div>
+    @endif
+
+    <form method="POST" action="{{ route('login') }}">
+      @csrf
+
+      <div class="mb-3">
+        <label for="email" class="form-label">Correo electrónico</label>
+        <input type="email" name="email" id="email" class="form-control @error('email') is-invalid @enderror"
+               value="{{ old('email') }}" required autofocus>
+        @error('email')
+          <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+      </div>
+
+      <div class="mb-3">
+        <label for="password" class="form-label">Contraseña</label>
+        <input type="password" name="password" id="password" class="form-control @error('password') is-invalid @enderror"
+               required>
+        @error('password')
+          <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+      </div>
+
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="remember" id="remember">
+          <label class="form-check-label" for="remember">Recuérdame</label>
+        </div>
+        <a href="{{ route('password.request') }}" class="small text-decoration-none text-muted">
+          ¿Olvidaste tu contraseña?
+        </a>
+      </div>
+
+      <button type="submit" class="btn btn-primary w-100">
+        <i class="bi bi-box-arrow-in-right me-1"></i> Entrar
+      </button>
+    </form>
+
+    <div class="text-center mt-4 small text-muted">
+      ¿No tienes cuenta? <a href="{{ route('register') }}">Regístrate</a>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

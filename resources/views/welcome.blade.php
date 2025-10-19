@@ -1,353 +1,280 @@
-<!DOCTYPE html>
-<html lang="es">
+<!doctype html>
+<html lang="es" data-bs-theme="light">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laika - Clínica Veterinaria</title>
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    
-    <style>
-        .carousel-image {
-            transition: opacity 700ms ease-in-out;
-        }
-        
-        .carousel-dot {
-            transition: all 300ms ease-in-out;
-        }
-        
-        .hover-scale {
-            transition: transform 500ms ease-in-out;
-        }
-        
-        .hover-scale:hover {
-            transform: scale(1.05);
-        }
-        
-        .card-hover {
-            transition: all 300ms ease-in-out;
-        }
-        
-        .card-hover:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-        }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Laika - Clínica Veterinaria</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --brand: #3A7CA5;
+      --brand-dark: #2f6485;
+      --bs-primary: var(--brand);
+      --bs-link-color: var(--brand);
+      --bs-link-hover-color: var(--brand-dark);
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background-color: #f8f9fa;
+      color: #333;
+    }
+
+    /* Navbar */
+    .navbar {
+      background: linear-gradient(90deg, var(--brand), var(--brand-dark));
+    }
+    .navbar .nav-link {
+      color: #fff;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .navbar .nav-link:hover {
+      color: #d7eaf4;
+    }
+
+    /* Hero */
+    .hero {
+      position: relative;
+      background: url('{{ asset('images/home_veterinarios.jpg') }}') center/cover no-repeat;
+      color: #fff;
+      height: 90vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(58, 124, 165, 0.7);
+    }
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      max-width: 700px;
+    }
+
+    /* Cards */
+    .card {
+      border-radius: 1rem;
+      border: 1px solid #e0e0e0;
+      transition: transform .3s, box-shadow .3s;
+    }
+    .card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 16px 35px -5px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Section titles */
+    .section-title {
+      color: var(--brand);
+      font-weight: 700;
+    }
+
+    /* Footer */
+    footer {
+      background-color: #f0f4f7;
+      border-top: 1px solid #dbe2e8;
+    }
+    footer a {
+      color: var(--brand);
+      text-decoration: none;
+    }
+    footer a:hover {
+      color: var(--brand-dark);
+    }
+  </style>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50/30">
-    
-    <!-- Header -->
-    <header class="bg-gradient-to-r from-purple-600 to-purple-700 text-white mb-8">
-        <div class="container mx-auto px-4 py-12 text-center">
-            <div class="inline-flex items-center justify-center w-20 h-20 bg-white rounded-full shadow-lg mb-4">
-                <i data-lucide="heart-pulse" class="text-purple-600" style="width: 40px; height: 40px;"></i>
+
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark fixed-top shadow-sm">
+    <div class="container">
+      <a class="navbar-brand fw-bold d-flex align-items-center" href="#">
+        <i class="bi bi-heart-pulse-fill me-2"></i> Laika
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navMenu">
+        <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+          <li class="nav-item"><a class="nav-link" href="#inicio">Inicio</a></li>
+          <li class="nav-item"><a class="nav-link" href="#dispensador">Dispensador</a></li>
+          <li class="nav-item"><a class="nav-link" href="#servicios">Servicios</a></li>
+          <li class="nav-item"><a class="nav-link" href="#equipo">Equipo</a></li>
+          <li class="nav-item"><a class="nav-link" href="#contacto">Contacto</a></li>
+        </ul>
+        <a href="#contacto" class="btn btn-light ms-lg-3 fw-semibold">Agendar cita</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section id="inicio" class="hero">
+    <div class="hero-content text-white">
+      <h1 class="display-4 fw-bold mb-3">Cuidamos lo que más amas ❤️</h1>
+      <p class="lead mb-4">En Laika, tu mascota recibe atención profesional, cariño y tecnología avanzada para su bienestar.</p>
+      <a href="#servicios" class="btn btn-light btn-lg fw-semibold">Conoce nuestros servicios</a>
+    </div>
+  </section>
+
+  <!-- ¿Quiénes somos? -->
+  <section class="py-5 container">
+    <div class="row align-items-center g-4">
+      <div class="col-md-6">
+        <img src="https://images.unsplash.com/photo-1601758064228-0c3a9a45ff93?auto=format&fit=crop&q=80&w=1200"
+             alt="Clínica veterinaria moderna" class="img-fluid rounded-4 shadow-sm">
+      </div>
+      <div class="col-md-6">
+        <h2 class="section-title mb-3">¿Quiénes somos?</h2>
+        <p>En <strong>Laika</strong> somos una clínica veterinaria comprometida con la salud de tus mascotas. Nuestro equipo ofrece atención médica de alta calidad, tratamientos especializados y un ambiente amigable.</p>
+        <p>Además, integramos tecnología moderna en nuestros servicios, como dispensadores automáticos, monitoreo remoto y una app para agendar tus citas con facilidad.</p>
+      </div>
+    </div>
+  </section>
+  <!-- Dispensador Automático -->
+<section id="dispensador" class="py-5 container">
+  <div class="row align-items-center g-4">
+    <div class="col-md-6 order-md-2">
+      <img src="https://images.unsplash.com/photo-1592194996308-7b43878e84a6?auto=format&fit=crop&q=80&w=1200" 
+           alt="Dispensador automático de comida para mascotas" class="img-fluid rounded-4 shadow-sm">
+    </div>
+    <div class="col-md-6 order-md-1">
+      <h2 class="section-title mb-3">Dispensador Automático</h2>
+      <p>En <strong>Laika</strong> contamos con dispensadores automáticos de comida y agua que permiten cuidar la alimentación de tu mascota incluso cuando no estás en casa.</p>
+      <ul class="list-unstyled">
+        <li><i class="bi bi-check-circle-fill text-primary me-2"></i> Control remoto desde nuestra app.</li>
+        <li><i class="bi bi-check-circle-fill text-primary me-2"></i> Porciones personalizadas según el tipo y peso de tu mascota.</li>
+        <li><i class="bi bi-check-circle-fill text-primary me-2"></i> Monitoreo en tiempo real del nivel de comida y agua.</li>
+        <li><i class="bi bi-check-circle-fill text-primary me-2"></i> Alertas automáticas cuando se requiere recarga.</li>
+      </ul>
+      {{-- <a href="#contacto" class="btn btn-primary mt-3">Consulta disponibilidad</a> --}}
+    </div>
+  </div>
+</section>
+
+
+  <!-- Servicios -->
+  <section id="servicios" class="py-5 bg-body-tertiary">
+    <div class="container text-center">
+      <h2 class="section-title mb-4">Nuestros Servicios</h2>
+      <p class="text-muted mb-5">Atención veterinaria integral con profesionales apasionados por el bienestar animal.</p>
+      <div class="row g-4">
+        <div class="col-md-4">
+          <div class="card h-100">
+            <img src="https://images.unsplash.com/photo-1601758174983-95a30e2f5a3d?auto=format&fit=crop&q=80&w=1000" class="card-img-top" alt="Consulta veterinaria">
+            <div class="card-body">
+              <h5 class="card-title text-primary">Consultas médicas</h5>
+              <p class="card-text">Evaluaciones generales, diagnóstico y tratamiento para tus mascotas.</p>
             </div>
-            <h1 class="text-4xl font-bold mb-2">Laika</h1>
-            <p class="text-lg opacity-90">
-                Clínica veterinaria · Manzanillo, Colima
-            </p>
+          </div>
         </div>
-    </header>
-
-    <!-- Carousel -->
-    <section class="container mx-auto px-4 mb-12">
-        <div class="bg-white shadow-lg rounded-xl overflow-hidden">
-            <div class="relative h-96 md:h-[480px]">
-                <!-- Carousel Images -->
-                <div class="carousel-slide absolute inset-0 carousel-image opacity-100">
-                    <img src="https://images.unsplash.com/photo-1654895716780-b4664497420d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx2ZXRlcmluYXJ5JTIwY2xpbmljfGVufDF8fHx8MTc2MDY5MTk4M3ww&ixlib=rb-4.1.0&q=80&w=1080" 
-                         alt="Clínica Veterinaria Laika" 
-                         class="w-full h-full object-cover">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent"></div>
-                </div>
-
-                <div class="carousel-slide absolute inset-0 carousel-image opacity-0">
-                    <img src="https://images.unsplash.com/photo-1572987372598-fcd543795afb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwZXQlMjBjb25zdWx0YXRpb24lMjBkb2d8ZW58MXx8fHwxNzYwNzUzNTI2fDA&ixlib=rb-4.1.0&q=80&w=1080" 
-                         alt="Atención profesional" 
-                         class="w-full h-full object-cover">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent"></div>
-                </div>
-
-                <div class="carousel-slide absolute inset-0 carousel-image opacity-0">
-                    <img src="https://images.unsplash.com/photo-1730677769210-7b5a39d0635e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxoYXBweSUyMGRvZyUyMHZldGVyaW5hcmlhbnxlbnwxfHx8fDE3NjA2NzkxODl8MA&ixlib=rb-4.1.0&q=80&w=1080" 
-                         alt="Mascotas felices" 
-                         class="w-full h-full object-cover">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent"></div>
-                </div>
-
-                <!-- Previous Button -->
-                <button onclick="previousSlide()" 
-                        class="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-purple-700 rounded-full w-11 h-11 shadow-md flex items-center justify-center transition-colors">
-                    <i data-lucide="chevron-left" style="width: 20px; height: 20px;"></i>
-                </button>
-
-                <!-- Next Button -->
-                <button onclick="nextSlide()" 
-                        class="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-purple-700 rounded-full w-11 h-11 shadow-md flex items-center justify-center transition-colors">
-                    <i data-lucide="chevron-right" style="width: 20px; height: 20px;"></i>
-                </button>
-
-                <!-- Carousel Dots -->
-                <div class="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-2">
-                    <button onclick="goToSlide(0)" class="carousel-dot h-2 rounded-full bg-white w-8"></button>
-                    <button onclick="goToSlide(1)" class="carousel-dot h-2 rounded-full bg-white/60 hover:bg-white/80 w-2"></button>
-                    <button onclick="goToSlide(2)" class="carousel-dot h-2 rounded-full bg-white/60 hover:bg-white/80 w-2"></button>
-                </div>
+        <div class="col-md-4">
+          <div class="card h-100">
+            <img src="https://images.unsplash.com/photo-1583337130417-3346a1afdd3c?auto=format&fit=crop&q=80&w=1000" class="card-img-top" alt="Vacunación">
+            <div class="card-body">
+              <h5 class="card-title text-primary">Vacunación y desparasitación</h5>
+              <p class="card-text">Previene enfermedades y asegura la salud duradera de tus amigos peludos.</p>
             </div>
+          </div>
         </div>
-    </section>
-
-    <!-- Main Content -->
-    <main class="container mx-auto px-4 py-12">
-        <div class="grid md:grid-cols-2 gap-8 mb-12">
-            
-            <!-- ¿Quiénes somos? -->
-            <div class="overflow-hidden border border-purple-100 shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-lg bg-white">
-                <div class="p-6">
-                    <div class="flex items-center gap-3 mb-4">
-                        <div class="flex items-center justify-center w-12 h-12 bg-purple-100 text-purple-700 rounded-xl">
-                            <i data-lucide="info" style="width: 24px; height: 24px;"></i>
-                        </div>
-                        <h2 class="text-2xl font-bold">¿Quiénes somos?</h2>
-                    </div>
-                    <div class="mb-4 rounded-xl overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1654895716780-b4664497420d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx2ZXRlcmluYXJ5JTIwY2xpbmljfGVufDF8fHx8MTc2MDY5MTk4M3ww&ixlib=rb-4.1.0&q=80&w=1080" 
-                             alt="Laika clínica veterinaria"
-                             class="w-full h-52 object-cover hover-scale">
-                    </div>
-                    <p class="text-gray-600 leading-relaxed">
-                        Laika es una clínica veterinaria en Manzanillo, Colima. 
-                        Hacemos fácil el cuidado de tu mascota con atención profesional y 
-                        herramientas como nuestra app de citas y un dispensador 
-                        de comida automatizado.
-                    </p>
-                </div>
+        <div class="col-md-4">
+          <div class="card h-100">
+            <img src="https://images.unsplash.com/photo-1583336669431-3b2b5f9cce9b?auto=format&fit=crop&q=80&w=1000" class="card-img-top" alt="Cirugía veterinaria">
+            <div class="card-body">
+              <h5 class="card-title text-primary">Cirugías menores</h5>
+              <p class="card-text">Procedimientos seguros con equipamiento moderno y profesionales experimentados.</p>
             </div>
-
-            <!-- Dispensador automatizado -->
-            <div class="overflow-hidden border border-purple-100 shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-lg bg-white">
-                <div class="p-6">
-                    <div class="flex items-center gap-3 mb-4">
-                        <div class="flex items-center justify-center w-12 h-12 bg-purple-100 text-purple-700 rounded-xl">
-                            <i data-lucide="bot" style="width: 24px; height: 24px;"></i>
-                        </div>
-                        <h2 class="text-2xl font-bold">Dispensador automatizado</h2>
-                    </div>
-                    <div class="mb-4 rounded-xl overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1710322827318-ad371a1821c6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhdXRvbWF0aWMlMjBwZXQlMjBmZWVkZXJ8ZW58MXx8fHwxNzYwNzUzNTI3fDA&ixlib=rb-4.1.0&q=80&w=1080" 
-                             alt="Dispensador automatizado"
-                             class="w-full h-52 object-cover hover-scale">
-                    </div>
-                    <p class="text-gray-600 leading-relaxed">
-                        Sistema inteligente para dispensar alimento en cantidades
-                        exactas en horarios programados. Mantén a tu mascota bien alimentada
-                        incluso cuando no estés en casa.
-                    </p>
-                </div>
-            </div>
+          </div>
         </div>
+      </div>
+    </div>
+  </section>
 
-        <!-- Servicios -->
-        <section class="mb-16">
-            <div class="text-center mb-10">
-                <h2 class="text-3xl font-bold mb-3">Nuestros Servicios</h2>
-                <p class="text-gray-600 max-w-2xl mx-auto">
-                    Ofrecemos atención veterinaria integral con tecnología de punta y profesionales dedicados
-                </p>
-            </div>
-
-            <div class="grid md:grid-cols-3 gap-8">
-                
-                <!-- Servicio: Consultas -->
-                <div class="overflow-hidden border border-purple-100 shadow-lg rounded-lg bg-white card-hover group">
-                    <div class="relative h-56 overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1572987372598-fcd543795afb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwZXQlMjBjb25zdWx0YXRpb24lMjBkb2d8ZW58MXx8fHwxNzYwNzUzNTI2fDA&ixlib=rb-4.1.0&q=80&w=1080" 
-                             alt="Consultas"
-                             class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
-                        <div class="absolute bottom-4 left-4 right-4">
-                            <div class="flex items-center gap-2 text-white">
-                                <div class="flex items-center justify-center w-10 h-10 bg-white/20 backdrop-blur-md rounded-lg">
-                                    <i data-lucide="check-circle-2" style="width: 24px; height: 24px;"></i>
-                                </div>
-                                <h3 class="text-xl font-bold text-white">Consultas</h3>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="p-6">
-                        <p class="text-gray-600">
-                            Atención médica profesional para tu mascota
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Servicio: Vacunación -->
-                <div class="overflow-hidden border border-purple-100 shadow-lg rounded-lg bg-white card-hover group">
-                    <div class="relative h-56 overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1541887796712-054f4b0f8e5d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkb2clMjB2YWNjaW5hdGlvbnxlbnwxfHx8fDE3NjA2ODQ1NTN8MA&ixlib=rb-4.1.0&q=80&w=1080" 
-                             alt="Vacunación"
-                             class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
-                        <div class="absolute bottom-4 left-4 right-4">
-                            <div class="flex items-center gap-2 text-white">
-                                <div class="flex items-center justify-center w-10 h-10 bg-white/20 backdrop-blur-md rounded-lg">
-                                    <i data-lucide="check-circle-2" style="width: 24px; height: 24px;"></i>
-                                </div>
-                                <h3 class="text-xl font-bold text-white">Vacunación</h3>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="p-6">
-                        <p class="text-gray-600">
-                            Protección completa para la salud de tu compañero
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Servicio: Cirugías menores -->
-                <div class="overflow-hidden border border-purple-100 shadow-lg rounded-lg bg-white card-hover group">
-                    <div class="relative h-56 overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1759164955427-14ca448a839d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx2ZXRlcmluYXJ5JTIwc3VyZ2VyeXxlbnwxfHx8fDE3NjA3NDc3Mjl8MA&ixlib=rb-4.1.0&q=80&w=1080" 
-                             alt="Cirugías menores"
-                             class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
-                        <div class="absolute bottom-4 left-4 right-4">
-                            <div class="flex items-center gap-2 text-white">
-                                <div class="flex items-center justify-center w-10 h-10 bg-white/20 backdrop-blur-md rounded-lg">
-                                    <i data-lucide="check-circle-2" style="width: 24px; height: 24px;"></i>
-                                </div>
-                                <h3 class="text-xl font-bold text-white">Cirugías menores</h3>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="p-6">
-                        <p class="text-gray-600">
-                            Procedimientos especializados con equipo moderno
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <!-- Footer -->
-    <footer class="bg-purple-50 border-t border-purple-100">
-        <div class="container mx-auto px-4 py-12">
-            <div class="grid md:grid-cols-3 gap-8 mb-8">
-                
-                <!-- Horarios -->
-                <div>
-                    <div class="flex items-center gap-2 mb-4">
-                        <i data-lucide="clock" class="text-purple-600" style="width: 20px; height: 20px;"></i>
-                        <h3 class="text-xl font-bold text-purple-900">Horarios</h3>
-                    </div>
-                    <ul class="space-y-2 text-gray-700">
-                        <li>Lun – Vie: 9:00–14:00, 16:00–20:00</li>
-                        <li>Sábado: 9:00–14:00</li>
-                        <li class="text-purple-700 font-semibold">Domingo: Cerrado</li>
-                    </ul>
-                </div>
-
-                <!-- Contacto -->
-                <div>
-                    <h3 class="text-xl font-bold text-purple-900 mb-4">Contacto</h3>
-                    <ul class="space-y-3">
-                        <li>
-                            <a href="tel:+523120000000" 
-                               class="flex items-center gap-2 text-gray-700 hover:text-purple-700 transition-colors">
-                                <i data-lucide="phone" style="width: 16px; height: 16px;"></i>
-                                +52 312 000 0000
-                            </a>
-                        </li>
-                        <li>
-                            <a href="mailto:laika@gmail.com" 
-                               class="flex items-center gap-2 text-gray-700 hover:text-purple-700 transition-colors">
-                                <i data-lucide="mail" style="width: 16px; height: 16px;"></i>
-                                laika@gmail.com
-                            </a>
-                        </li>
-                        <li class="flex items-start gap-2 text-gray-700">
-                            <i data-lucide="map-pin" style="width: 16px; height: 16px; margin-top: 4px;" class="flex-shrink-0"></i>
-                            <span>Manzanillo, Colima<br>Calle tal tal tal</span>
-                        </li>
-                    </ul>
-                </div>
-
-                <!-- Enlaces legales -->
-                <div>
-                    <h3 class="text-xl font-bold text-purple-900 mb-4">Legal</h3>
-                    <ul class="space-y-2">
-                        <li>
-                            <a href="#" class="text-gray-700 hover:text-purple-700 transition-colors">
-                                Política de privacidad
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#" class="text-gray-700 hover:text-purple-700 transition-colors">
-                                Términos y condiciones
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="border-t border-purple-200 pt-8 text-center">
-                <p class="text-gray-600">
-                    &copy; 2025 Laika. Todos los derechos reservados.
-                </p>
-            </div>
+  <!-- Equipo -->
+  <section id="equipo" class="py-5 container">
+    <div class="text-center mb-5">
+      <h2 class="section-title mb-3">Nuestro equipo</h2>
+      <p class="text-muted">Conoce a los veterinarios y técnicos que hacen de Laika un lugar especial.</p>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="card text-center border-0 shadow-sm p-4">
+          <img src="https://images.unsplash.com/photo-1607746882042-944635dfe10e?auto=format&fit=crop&q=80&w=400"
+               class="rounded-circle mx-auto mb-3" width="100" height="100" alt="Dra. Pérez">
+          <h5 class="fw-semibold text-primary">Dra. Ana Pérez</h5>
+          <p class="text-muted small">Cirujana veterinaria</p>
         </div>
-    </footer>
+      </div>
+      <div class="col-md-4">
+        <div class="card text-center border-0 shadow-sm p-4">
+          <img src="https://images.unsplash.com/photo-1590080875832-56a3b2991c71?auto=format&fit=crop&q=80&w=400"
+               class="rounded-circle mx-auto mb-3" width="100" height="100" alt="Dr. López">
+          <h5 class="fw-semibold text-primary">Dr. Carlos López</h5>
+          <p class="text-muted small">Especialista en nutrición animal</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card text-center border-0 shadow-sm p-4">
+          <img src="https://images.unsplash.com/photo-1599577183888-5f46d4b2f46b?auto=format&fit=crop&q=80&w=400"
+               class="rounded-circle mx-auto mb-3" width="100" height="100" alt="Téc. Gómez">
+          <h5 class="fw-semibold text-primary">Laura Gómez</h5>
+          <p class="text-muted small">Asistente veterinaria</p>
+        </div>
+      </div>
+    </div>
+  </section>
 
-    <!-- JavaScript para el carrusel -->
-    <script>
-        let currentSlide = 0;
-        const slides = document.querySelectorAll('.carousel-slide');
-        const dots = document.querySelectorAll('.carousel-dot');
-        const totalSlides = slides.length;
+  <!-- CTA -->
+  <section class="text-center py-5 text-white" style="background: linear-gradient(90deg,var(--brand),var(--brand-dark));">
+    <div class="container">
+      <h2 class="fw-bold mb-3">¿Listo para agendar una cita?</h2>
+      <p class="mb-4">Tu mascota merece lo mejor. Agenda hoy mismo con nuestros expertos veterinarios.</p>
+      <a href="#contacto" class="btn btn-light fw-semibold">Contáctanos</a>
+    </div>
+  </section>
 
-        function showSlide(index) {
-            // Asegurar que el índice esté dentro del rango
-            currentSlide = (index + totalSlides) % totalSlides;
-            
-            // Ocultar todas las slides
-            slides.forEach((slide, i) => {
-                slide.style.opacity = i === currentSlide ? '1' : '0';
-            });
-            
-            // Actualizar dots
-            dots.forEach((dot, i) => {
-                if (i === currentSlide) {
-                    dot.classList.remove('w-2', 'bg-white/60');
-                    dot.classList.add('w-8', 'bg-white');
-                } else {
-                    dot.classList.remove('w-8', 'bg-white');
-                    dot.classList.add('w-2', 'bg-white/60');
-                }
-            });
-        }
+  <!-- Footer -->
+  <footer id="contacto" class="pt-5">
+    <div class="container pb-4">
+      <div class="row g-4">
+        <div class="col-md-4">
+          <h5 class="fw-bold text-primary">Contacto</h5>
+          <ul class="list-unstyled small">
+            <li><i class="bi bi-telephone me-2 text-primary"></i> +52 312 000 0000</li>
+            <li><i class="bi bi-envelope me-2 text-primary"></i> laika@gmail.com</li>
+            <li><i class="bi bi-geo-alt me-2 text-primary"></i> Manzanillo, Colima</li>
+          </ul>
+        </div>
+        <div class="col-md-4">
+          <h5 class="fw-bold text-primary">Horarios</h5>
+          <p class="small">Lun–Vie: 9:00–20:00<br>Sáb: 9:00–14:00<br><span class="fw-semibold text-primary">Domingo cerrado</span></p>
+        </div>
+        <div class="col-md-4">
+          <h5 class="fw-bold text-primary">Síguenos</h5>
+          <div class="d-flex gap-3 fs-4 text-primary">
+            <i class="bi bi-facebook"></i>
+            <i class="bi bi-instagram"></i>
+            <i class="bi bi-twitter-x"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="text-center py-3 border-top small text-muted">
+      © 2025 Laika · Todos los derechos reservados
+    </div>
+  </footer>
 
-        function nextSlide() {
-            showSlide(currentSlide + 1);
-        }
-
-        function previousSlide() {
-            showSlide(currentSlide - 1);
-        }
-
-        function goToSlide(index) {
-            showSlide(index);
-        }
-
-        // Auto-advance carousel every 4 seconds
-        setInterval(nextSlide, 4000);
-
-        // Initialize Lucide icons
-        lucide.createIcons();
-    </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

@@ -64,6 +64,10 @@ Route::middleware('auth')->group(function () {
 });
 
 
+Route::get('/olvidar-password', function () {
+    return view('auth.forgot-password');
+})->name('password.request');
+
 
 
 Route::get('/login', function () {
