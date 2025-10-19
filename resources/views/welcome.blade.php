@@ -164,6 +164,8 @@
 </section>
 
 
+
+
   <!-- Servicios -->
   <section id="servicios" class="py-5 bg-body-tertiary">
     <div class="container text-center">
@@ -234,6 +236,27 @@
       </div>
     </div>
   </section>
+
+  <!-- Aplicación Móvil -->
+<section id="app" class="py-5 bg-light">
+  <div class="container text-center">
+    <h2 class="section-title mb-3">¡Lleva Laika en tu bolsillo!</h2>
+    <p class="mb-4">Con nuestra app móvil, podrás agendar citas, monitorear la alimentación de tu mascota y recibir alertas en tiempo real.</p>
+    <div class="d-flex justify-content-center gap-3 flex-wrap">
+      <a href="#" class="btn btn-primary btn-lg d-flex align-items-center gap-2">
+        <i class="bi bi-google-play"></i> Google Play
+      </a>
+      {{-- <a href="#" class="btn btn-dark btn-lg d-flex align-items-center gap-2">
+        <i class="bi bi-apple"></i> App Store
+      </a> --}}
+    </div>
+    <div class="mt-4">
+      <img src="https://images.unsplash.com/photo-1585079549630-5f74a2fa065b?auto=format&fit=crop&q=80&w=600"
+           alt="App móvil Laika" class="img-fluid rounded-4 shadow-sm">
+    </div>
+  </div>
+</section>
+
 
   <!-- CTA -->
   <section class="text-center py-5 text-white" style="background: linear-gradient(90deg,var(--brand),var(--brand-dark));">
