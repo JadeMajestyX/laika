@@ -53,9 +53,14 @@
     <p>Hola {{ $user->nombre ?? 'usuario' }},</p>
     <p>Recibimos una solicitud para restablecer tu contraseña. Puedes hacerlo haciendo clic en el siguiente botón:</p>
 
-    <p style="text-align:center;">
-      <a href="{{ $url }}" class="btn">Restablecer contraseña</a>
-    </p>
+<p style="text-align:center;">
+  <a href="{{ $url }}" 
+     style="display:inline-block; background:#3A7CA5; color:#ffffff; padding:0.8rem 1.4rem; border-radius:6px; text-decoration:none; font-weight:500;"
+  >
+    Restablecer contraseña
+  </a>
+</p>
+
 
     <p>Si no solicitaste este cambio, puedes ignorar este mensaje.</p>
 
