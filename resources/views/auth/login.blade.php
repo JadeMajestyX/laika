@@ -114,18 +114,18 @@
         <label for="email" class="form-label">Correo electrónico</label>
         <input type="email" name="email" id="email" class="form-control @error('email') is-invalid @enderror"
                value="{{ old('email') }}" required autofocus>
-        @error('email')
+        {{-- @error('email')
           <div class="invalid-feedback">{{ $message }}</div>
-        @enderror
+        @enderror --}}
       </div>
 
       <div class="mb-3">
         <label for="password" class="form-label">Contraseña</label>
         <input type="password" name="password" id="password" class="form-control @error('password') is-invalid @enderror"
                required>
-        @error('password')
+        {{-- @error('password')
           <div class="invalid-feedback">{{ $message }}</div>
-        @enderror
+        @enderror --}}
       </div>
 
       <div class="d-flex justify-content-between align-items-center mb-3">
