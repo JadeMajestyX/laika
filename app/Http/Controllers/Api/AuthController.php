@@ -23,9 +23,13 @@ class AuthController extends Controller
             $apellido = $payload['family_name'] ?? '';
             $imagen = $payload['picture'] ?? null;
 
-            $user = User::updateOrCreate(
-                ['email' => $email],
-                [
+            // Buscar usuario existente
+            $user = User::where('email', $email)->first();
+
+            if (!$user) {
+                // Crear usuario solo si no existe
+                $user = User::create([
+                    'email' => $email,
                     'nombre' => $nombre,
                     'apellido_paterno' => $apellido,
                     'imagen_perfil' => $imagen,
@@ -34,10 +38,10 @@ class AuthController extends Controller
                     'fecha_nacimiento' => now(),
                     'telefono' => null,
                     'password' => Hash::make(str()->random(16)),
-                ]
-            );
+                ]);
+            }
 
-            // Si usas Laravel Sanctum
+            // Generar token
             $token = $user->createToken('mobile')->plainTextToken;
 
             return response()->json([
