@@ -32,7 +32,7 @@ class AuthController extends Controller
                     'rol' => 'U',
                     'genero' => 'O',
                     'fecha_nacimiento' => now(),
-                    'telefono' => '0000000000',
+                    'telefono' => null,
                     'password' => Hash::make(str()->random(16)),
                 ]
             );

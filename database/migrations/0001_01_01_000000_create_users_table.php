@@ -20,7 +20,7 @@ return new class extends Migration
             $table->date('fecha_nacimiento');
             $table->char('genero', 1); // 'M' para masculino, 'F' para femenino, 'O' para otro
             $table->string('email', 150)->unique();
-            $table->string('telefono', 15)->unique();
+            $table->string('telefono', 15)->unique()->nullable();
             $table->string('imagen_perfil', 100)->nullable();
             $table->boolean('is_active')->default(true);
             $table->string('password');
