@@ -111,13 +111,13 @@
         </div>
       </div>
       <nav class="d-grid gap-2">
-        <button class="nav-btn active"><i class="bi bi-calendar3"></i><span>Dashboard</span></button>
-        <button class="nav-btn"><i class="bi bi-people"></i><span>Clientes</span></button>
-        <button class="nav-btn"><i class="bi bi-heart"></i><span>Mascotas</span></button>
-        <button class="nav-btn"><i class="bi bi-clipboard-check"></i><span>Citas</span></button>
-        <button class="nav-btn"><i class="bi bi-file-earmark-text"></i><span>Trabajadores</span></button>
-        <button class="nav-btn"><i class="bi bi-graph-up"></i><span>Reportes</span></button>
-        <button class="nav-btn"><i class="bi bi-gear"></i><span>Configuración</span></button>
+        <button class="nav-btn"><i class="bi bi-house" data-section="home"></i><span>Home</span></button>
+        <button class="nav-btn"><i class="bi bi-people" data-section="clientes"></i><span>Clientes</span></button>
+        <button class="nav-btn"><i class="bi bi-heart" data-section="mascotas"></i><span>Mascotas</span></button>
+        <button class="nav-btn"><i class="bi bi-clipboard-check" data-section="citas"></i><span>Citas</span></button>
+        <button class="nav-btn"><i class="bi bi-file-earmark-text" data-section="trabajadores"></i><span>Trabajadores</span></button>
+        <button class="nav-btn"><i class="bi bi-graph-up" data-section="reportes"></i><span>Reportes</span></button>
+        <button class="nav-btn"><i class="bi bi-gear" data-section="configuracion"></i><span>Configuración</span></button>
       </nav>
       <div class="foot pt-4">
         <div>Soporte 24/7</div>

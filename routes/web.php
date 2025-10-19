@@ -20,7 +20,12 @@ Route::get('/', function () {
 });
 
 Route::middleware(EnsureUserHasRole::class.':A')->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    // Página principal del panel -> /dashboard/home
+    Route::get('/dashboard/home', [DashboardController::class, 'index'])->name('dashboard');
+    // Redirección desde /dashboard a /dashboard/home
+    Route::get('/dashboard', function(){
+        return redirect('/dashboard/home');
+    });
     Route::get('/usuarios', [UserController::class, 'index'])->name('usuarios');
     Route::get('/usuarios/{id}', [UserController::class, 'show'])->name('usuarios.show');
     Route::get('/usuarios/{id}/editar', [UserController::class, 'edit'])->name('usuarios.edit');
@@ -53,6 +58,10 @@ Route::middleware(EnsureUserHasRole::class.':A')->group(function () {
 
     //obtener datos del dashboard
     Route::get('/dashboard/data', [DashboardController::class, 'getDashboardData'])->name('dashboard.data');
+
+    // Capturar cualquier subruta de dashboard para SPA y evitar 404 al refrescar
+    Route::get('/dashboard/{any}', [DashboardController::class, 'index'])
+        ->where('any', '^(?!data$).+');
 });
 
 
