@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AuthController;
 use App\Models\Cita;
 use App\Models\CodigoDispensador;
 use App\Models\Dispensador;
@@ -372,3 +373,6 @@ Route::get('/servicios', function(){
         'servicios' => $servicios
     ]);
 });
+
+
+Route::post('/auth/google', [AuthController::class, 'loginWithGoogle']);
