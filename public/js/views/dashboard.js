@@ -112,35 +112,42 @@ function renderActividades(actividades) {
   if(!container) return;
 
   container.innerHTML = '';
-  (actividades || []).forEach((actividad) => {
+
+  if (!actividades || actividades.length === 0) {
+    // Mensaje cuando no hay registros
+    const mensaje = document.createElement('div');
+    mensaje.className = 'text-center text-body-secondary py-3';
+    mensaje.textContent = 'No hay actividades recientes';
+    container.appendChild(mensaje);
+    return;
+  }
+
+  actividades.forEach((actividad) => {
     const row = document.createElement('div');
     row.className = 'd-flex gap-3 align-items-start border-bottom pb-3';
 
     if(actividad.modelo === 'User'){
       row.innerHTML = `
-
-                <div class="icon-bubble bg-opacity-25 bg-warning text-warning"><i class="bi bi-person-plus"></i></div>
-                <div>
-                  <div>Nuevo cliente registrado: ${actividad.user.nombre}</div>
-                  <div class="small text-body-secondary">${actividad.created_at}</div>
-                </div>
-    `;
-        container.appendChild(row);
-    } else if(actividad.modelo === 'Mascota'){
-
-      row.innerHTML = `
-                <div class="icon-bubble bg-opacity-25 bg-info text-info"><i class="bi bi-heart"></i></div>
-                <div>
-                  <div>Nueva mascota registrada: ${actividad.user.nombre}</div>
-                  <div class="small text-body-secondary">${actividad.created_at}</div>
-                </div>
+        <div class="icon-bubble bg-opacity-25 bg-warning text-warning"><i class="bi bi-person-plus"></i></div>
+        <div>
+          <div>Nuevo cliente registrado: ${actividad.user.nombre}</div>
+          <div class="small text-body-secondary">${actividad.created_at}</div>
+        </div>
       `;
-          container.appendChild(row);
+      container.appendChild(row);
+    } else if(actividad.modelo === 'Mascota'){
+      row.innerHTML = `
+        <div class="icon-bubble bg-opacity-25 bg-info text-info"><i class="bi bi-heart"></i></div>
+        <div>
+          <div>Nueva mascota registrada: ${actividad.user.nombre}</div>
+          <div class="small text-body-secondary">${actividad.created_at}</div>
+        </div>
+      `;
+      container.appendChild(row);
     }
-
-
   });
 }
+
 
 function getCsrfToken() {
   const meta = document.querySelector('meta[name="csrf-token"]');
