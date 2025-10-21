@@ -117,7 +117,7 @@ function renderActividades(actividades) {
     // Mensaje cuando no hay registros
     const mensaje = document.createElement('div');
     mensaje.className = 'text-center text-body-secondary py-3';
-    mensaje.textContent = 'No hay actividades recientes';
+    mensaje.textContent = 'No hay actividad reciente';
     container.appendChild(mensaje);
     return;
   }
