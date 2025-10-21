@@ -132,7 +132,7 @@
   <section class="py-5 container">
     <div class="row align-items-center g-4">
       <div class="col-md-6">
-        <img src="https://images.unsplash.com/photo-1601758064228-0c3a9a45ff93?auto=format&fit=crop&q=80&w=1200"
+        <img src="{{ asset('images/VetPet.png') }}"
              alt="Clínica veterinaria moderna" class="img-fluid rounded-4 shadow-sm">
       </div>
       <div class="col-md-6">
@@ -174,7 +174,7 @@
       <div class="row g-4">
         <div class="col-md-4">
           <div class="card h-100">
-            <img src="https://images.unsplash.com/photo-1601758174983-95a30e2f5a3d?auto=format&fit=crop&q=80&w=1000" class="card-img-top" alt="Consulta veterinaria">
+            <img src="{{ asset('images/consultas_medicas.png') }}" class="card-img-top" alt="Consulta veterinaria">
             <div class="card-body">
               <h5 class="card-title text-primary">Consultas médicas</h5>
               <p class="card-text">Evaluaciones generales, diagnóstico y tratamiento para tus mascotas.</p>
@@ -183,7 +183,7 @@
         </div>
         <div class="col-md-4">
           <div class="card h-100">
-            <img src="https://images.unsplash.com/photo-1583337130417-3346a1afdd3c?auto=format&fit=crop&q=80&w=1000" class="card-img-top" alt="Vacunación">
+            <img src="{{ asset('images/vacunacion.png') }}" class="card-img-top" alt="Vacunación">
             <div class="card-body">
               <h5 class="card-title text-primary">Vacunación y desparasitación</h5>
               <p class="card-text">Previene enfermedades y asegura la salud duradera de tus amigos peludos.</p>
@@ -192,7 +192,7 @@
         </div>
         <div class="col-md-4">
           <div class="card h-100">
-            <img src="https://images.unsplash.com/photo-1583336669431-3b2b5f9cce9b?auto=format&fit=crop&q=80&w=1000" class="card-img-top" alt="Cirugía veterinaria">
+            <img src="{{ asset('images/cirugia.png') }}" class="card-img-top" alt="Cirugía veterinaria">
             <div class="card-body">
               <h5 class="card-title text-primary">Cirugías menores</h5>
               <p class="card-text">Procedimientos seguros con equipamiento moderno y profesionales experimentados.</p>
@@ -244,7 +244,8 @@
     <p class="mb-4">Con nuestra app móvil, podrás agendar citas, monitorear la alimentación de tu mascota y recibir alertas en tiempo real.</p>
     <div class="d-flex justify-content-center gap-3 flex-wrap">
       <a href="#" class="btn btn-primary btn-lg d-flex align-items-center gap-2">
-        <i class="bi bi-google-play"></i> Google Play
+        {{-- <i class="bi bi-google-play"></i> Google Play --}}
+        Descargar App
       </a>
       {{-- <a href="#" class="btn btn-dark btn-lg d-flex align-items-center gap-2">
         <i class="bi bi-apple"></i> App Store
