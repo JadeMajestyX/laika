@@ -532,6 +532,7 @@ function handlePopState() {
           renderSection('home', data);
           const { labels, data: series } = buildChartSeries(data.citasPorDia);
           updateDashboardMetrics(data);
+          renderActividades(data.actividades);
           renderChart(labels, series);
           renderAppointments(data.citas);
           setTodayTexts();

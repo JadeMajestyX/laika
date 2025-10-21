@@ -2,6 +2,7 @@
 
 // use App\Http\Controllers\Dashboard;
 
+use App\Http\Controllers\Admin\ActividadController;
 use App\Http\Controllers\ConfiguracionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
@@ -66,6 +67,10 @@ Route::middleware(EnsureUserHasRole::class.':A')->group(function () {
     // Capturar cualquier subruta de dashboard para SPA y evitar 404 al refrescar
     Route::get('/dashboard/{any}', [DashboardController::class, 'index'])
         ->where('any', '^(?!data$).+');
+
+
+    //actividad
+    Route::get('/actividades', [ActividadController::class, 'index'])->name('actividades');
 
 });
 

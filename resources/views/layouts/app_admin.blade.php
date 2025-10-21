@@ -81,6 +81,7 @@
 
     .chart-container{ position:relative; height:250px; }
     .chart-container canvas{ width:100% !important; height:100% !important; display:block; }
+    
 
     /* Dark mode */
     [data-bs-theme="dark"] body { background-color: #1e1f25; color: #e2e2e2; }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Actividad;
 use App\Models\Cita;
 use App\Models\Mascota;
 use App\Models\User;
@@ -82,6 +83,29 @@ class DashboardController extends Controller
                             ->get();
 
 
+        //obtener las ultimas 5 actividades de hoy
+        $actividades = Actividad::with('user')
+            ->whereDay('created_at', $hoy->day)
+            ->whereMonth('created_at', $hoy->month)
+            ->whereYear('created_at', $hoy->year)
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get()
+            ->map(function ($actividad) {
+                return [
+                    'id' => $actividad->id,
+                    'accion' => $actividad->accion,
+                    'modelo' => $actividad->modelo,
+                    'detalles' => $actividad->detalles,
+                    'user' => $actividad->user ? [
+                        'id' => $actividad->user->id,
+                        'nombre' => $actividad->user->nombre,
+                    ] : null,
+                    'created_at' => $actividad->created_at->diffForHumans(), // 💥 aquí la magia
+                ];
+            });
+
+
         return response()->json([
             'citasHoy' => $citasHoy,
             'citasCompletadas' => $citasCompletadas,
@@ -90,6 +114,7 @@ class DashboardController extends Controller
 
             'comparacionporcentaje' => $comparacionporcentaje,
             'citasPorDia' => $citasPorDia,
+            'actividades' => $actividades,
 
             'citas' => $citas->get()->map(function($cita) {
                 return [

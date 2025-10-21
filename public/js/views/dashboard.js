@@ -107,6 +107,41 @@ function renderAppointments(appointments) {
   });
 }
 
+function renderActividades(actividades) {
+  const container = document.getElementById('actividadReciente');
+  if(!container) return;
+
+  container.innerHTML = '';
+  (actividades || []).forEach((actividad) => {
+    const row = document.createElement('div');
+    row.className = 'd-flex gap-3 align-items-start border-bottom pb-3';
+
+    if(actividad.modelo === 'User'){
+      row.innerHTML = `
+
+                <div class="icon-bubble bg-opacity-25 bg-warning text-warning"><i class="bi bi-person-plus"></i></div>
+                <div>
+                  <div>Nuevo cliente registrado: ${actividad.user.nombre}</div>
+                  <div class="small text-body-secondary">${actividad.created_at}</div>
+                </div>
+    `;
+        container.appendChild(row);
+    } else if(actividad.modelo === 'Mascota'){
+
+      row.innerHTML = `
+                <div class="icon-bubble bg-opacity-25 bg-info text-info"><i class="bi bi-heart"></i></div>
+                <div>
+                  <div>Nueva mascota registrada: ${actividad.user.nombre}</div>
+                  <div class="small text-body-secondary">${actividad.created_at}</div>
+                </div>
+      `;
+          container.appendChild(row);
+    }
+
+
+  });
+}
+
 function getCsrfToken() {
   const meta = document.querySelector('meta[name="csrf-token"]');
   return meta?.getAttribute('content') || '';
@@ -276,7 +311,7 @@ function renderSection(section, data) {
                 <div class="h4 mb-1" id="citasCompletadas">0</div>
                 <div class="small text-success" id="porcentajeCitasCompletadas">+0%</div>
               </div>
-              <div class="icon-bubble bg-opacity-25 bg-success-subtle text-success"><i class="bi bi-check-circle"></i></div>
+              <div class="icon-bubble bg-opacity-25 bg-success text-success"><i class="bi bi-check-circle"></i></div>
             </div>
           </div>
         </div>
@@ -288,7 +323,7 @@ function renderSection(section, data) {
                 <div class="h4 mb-1" id="mascotasRegistradas">0</div>
                 <div class="small text-success" id="porcentajeMascotasRegistradas">+0%</div>
               </div>
-              <div class="icon-bubble bg-opacity-25 bg-info-subtle text-info"><i class="bi bi-heart"></i></div>
+              <div class="icon-bubble bg-opacity-25 bg-info text-info"><i class="bi bi-heart"></i></div>
             </div>
           </div>
         </div>
@@ -300,7 +335,7 @@ function renderSection(section, data) {
                 <div class="h4 mb-1" id="clientesNuevos">0</div>
                 <div class="small text-success" id="porcentajeClientesNuevos">+0%</div>
               </div>
-              <div class="icon-bubble bg-opacity-25 bg-warning-subtle text-warning"><i class="bi bi-person-plus"></i></div>
+              <div class="icon-bubble bg-opacity-25 bg-warning text-warning"><i class="bi bi-person-plus"></i></div>
             </div>
           </div>
         </div>
@@ -317,35 +352,9 @@ function renderSection(section, data) {
         <div class="col-12 col-lg-4">
           <div class="card card-soft p-4 h-100">
             <h3 class="h6 mb-3">Actividad Reciente</h3>
-            <div class="vstack gap-3">
-              <div class="d-flex gap-3 align-items-start">
-                <div class="icon-bubble bg-opacity-25 bg-primary-subtle text-primary"><i class="bi bi-calendar3"></i></div>
-                <div>
-                  <div>Cita completada para Max - Vacunación</div>
-                  <div class="small text-body-secondary">Hace 30 min</div>
-                </div>
-              </div>
-              <div class="d-flex gap-3 align-items-start">
-                <div class="icon-bubble bg-opacity-25 bg-info-subtle text-info"><i class="bi bi-syringe"></i></div>
-                <div>
-                  <div>Nuevo cliente registrado: Ana López</div>
-                  <div class="small text-body-secondary">Hace 1 hora</div>
-                </div>
-              </div>
-              <div class="d-flex gap-3 align-items-start">
-                <div class="icon-bubble bg-opacity-25 bg-danger-subtle text-danger"><i class="bi bi-credit-card"></i></div>
-                <div>
-                  <div>Pago recibido: $150 - Carlos García</div>
-                  <div class="small text-body-secondary">Hace 2 horas</div>
-                </div>
-              </div>
-              <div class="d-flex gap-3 align-items-start">
-                <div class="icon-bubble bg-opacity-25 bg-warning-subtle text-warning"><i class="bi bi-capsule"></i></div>
-                <div>
-                  <div>Nueva mascota registrada: Coco (Canario)</div>
-                  <div class="small text-body-secondary">Hace 3 horas</div>
-                </div>
-              </div>
+            <div class="vstack gap-3" id="actividadReciente">
+              "No hay actividad reciente"
+
             </div>
           </div>
         </div>
@@ -512,6 +521,7 @@ function initNavHandlers() {
             const { labels, data: series } = buildChartSeries(data.citasPorDia);
             updateDashboardMetrics(data);
             renderChart(labels, series);
+            renderActividades(data.actividades);
             renderAppointments(data.citas);
             setTodayTexts();
             history.pushState({ section: 'home' }, '', '/dashboard/home');
@@ -551,6 +561,7 @@ function handlePopState() {
           updateDashboardMetrics(data);
           renderChart(labels, series);
           renderAppointments(data.citas);
+          renderActividades(data.actividades);
           setTodayTexts();
         });
     } else if (section === 'mascotas') {
@@ -580,6 +591,7 @@ function handlePopState() {
           const { labels, data: series } = buildChartSeries(data.citasPorDia);
           updateDashboardMetrics(data);
           renderChart(labels, series);
+          renderActividades(data.actividades);
           renderAppointments(data.citas);
           setTodayTexts();
           history.replaceState({ section: 'home' }, '', location.pathname);

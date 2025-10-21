@@ -264,7 +264,7 @@
     <div class="container">
       <h2 class="fw-bold mb-3">¿Listo para agendar una cita?</h2>
       <p class="mb-4">Tu mascota merece lo mejor. Agenda hoy mismo con nuestros expertos veterinarios.</p>
-      <a href="#contacto" class="btn btn-light fw-semibold">Contáctanos</a>
+      <a href="#contacto" class="btn btn-light fw-semibold">Agendar Cita</a>
     </div>
   </section>
 
@@ -276,7 +276,7 @@
           <h5 class="fw-bold text-primary">Contacto</h5>
           <ul class="list-unstyled small">
             <li><i class="bi bi-telephone me-2 text-primary"></i> +52 312 000 0000</li>
-            <li><i class="bi bi-envelope me-2 text-primary"></i> laika@gmail.com</li>
+            <li><i class="bi bi-envelope me-2 text-primary"></i> help.vetpet@jademajesty.com</li>
             <li><i class="bi bi-geo-alt me-2 text-primary"></i> Manzanillo, Colima</li>
           </ul>
         </div>
@@ -295,7 +295,7 @@
       </div>
     </div>
     <div class="text-center py-3 border-top small text-muted">
-      © 2025 Laika · Todos los derechos reservados
+      © {{ date('Y') }} Laika · Todos los derechos reservados
     </div>
   </footer>
 
