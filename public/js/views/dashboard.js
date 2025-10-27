@@ -392,51 +392,118 @@ function renderSection(section, data) {
       </div>
     `;
   } else if (section === 'clientes') {
-    // TODO: render clientes
+    mainContent.innerHTML = `
+    <div class="card shadow-sm mt-4">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Listado de Clientes</h5>
+        <a href="/clientes/crear" class="btn btn-success">
+          <i class="bi bi-plus-lg me-1"></i> Agregar Cliente
+        </a>
+      </div>
+
+      <div class="card-body">
+        <div class="d-flex flex-column flex-md-row gap-2 justify-content-between align-items-md-center mb-3">
+          <div class="input-group" style="max-width: 420px;">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input id="mascotasSearch" type="text" class="form-control" placeholder="Buscar por nombre">
+            <button id="mascotasSearchBtn" class="btn btn-primary">Buscar</button>
+          </div>
+
+          <div class="d-flex flex-column flex-md-row gap-2">
+            <div class="btn-group" role="group" aria-label="ScopeMascotas">
+              <input type="radio" class="btn-check" name="mascotasScope" id="mScopeToday" autocomplete="off" value="today" checked>
+              <label class="btn btn-outline-secondary" for="mScopeToday">Registradas hoy</label>
+              <input type="radio" class="btn-check" name="mascotasScope" id="mScopePast" autocomplete="off" value="past">
+              <label class="btn btn-outline-secondary" for="mScopePast">Anteriores</label>
+            </div>
+
+            <div class="input-group" style="max-width: 360px;">
+              <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
+              <input type="date" id="mascotasFrom" class="form-control" placeholder="Desde">
+              <input type="date" id="mascotasTo" class="form-control" placeholder="Hasta">
+              <button id="mascotasRangeBtn" class="btn btn-outline-primary">Filtrar</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Nombre</th>
+                <th>Apellido</th>
+                <th>Genero</th>
+                <th>Edad</th>
+                <th>Email</th>
+                <th>Telefono</th>
+                <th class="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="mascotasBody"></tbody>
+          </table>
+        </div>
+
+        <div id="mascotasPagination" class="d-flex justify-content-center my-3"></div>
+      </div>
+    </div>
+
+    `;
   } else if (section === 'mascotas') {
     mainContent.innerHTML = `
-      <div class="card shadow-sm mt-4">
-        <div class="card-body">
-          <div class="d-flex flex-column flex-md-row gap-2 justify-content-between align-items-md-center mb-3">
-            <div class="input-group" style="max-width: 420px;">
-              <span class="input-group-text"><i class="bi bi-search"></i></span>
-              <input id="mascotasSearch" type="text" class="form-control" placeholder="Buscar por nombre, especie, raza o dueño">
-              <button id="mascotasSearchBtn" class="btn btn-primary">Buscar</button>
-            </div>
-            <div class="d-flex flex-column flex-md-row gap-2">
-              <div class="btn-group" role="group" aria-label="ScopeMascotas">
-                <input type="radio" class="btn-check" name="mascotasScope" id="mScopeToday" autocomplete="off" value="today" checked>
-                <label class="btn btn-outline-secondary" for="mScopeToday">Registradas hoy</label>
-                <input type="radio" class="btn-check" name="mascotasScope" id="mScopePast" autocomplete="off" value="past">
-                <label class="btn btn-outline-secondary" for="mScopePast">Anteriores</label>
-              </div>
-              <div class="input-group" style="max-width: 360px;">
-                <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
-                <input type="date" id="mascotasFrom" class="form-control" placeholder="Desde">
-                <input type="date" id="mascotasTo" class="form-control" placeholder="Hasta">
-                <button id="mascotasRangeBtn" class="btn btn-outline-primary">Filtrar</button>
-              </div>
-            </div>
-          </div>
-          <div class="table-responsive">
-            <table class="table table-hover mb-0 align-middle">
-              <thead class="table-light">
-                <tr>
-                  <th>Nombre</th>
-                  <th>Especie</th>
-                  <th>Raza</th>
-                  <th>Edad</th>
-                  <th>Peso</th>
-                  <th>Dueño</th>
-                  <th class="text-center">Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="mascotasBody"></tbody>
-            </table>
-          </div>
-          <div id="mascotasPagination" class="d-flex justify-content-center my-3"></div>
-        </div>
+    <div class="card shadow-sm mt-4">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Listado de Mascotas</h5>
+        <a href="/mascotas/crear" class="btn btn-success">
+          <i class="bi bi-plus-lg me-1"></i> Agregar Mascota
+        </a>
       </div>
+
+      <div class="card-body">
+        <div class="d-flex flex-column flex-md-row gap-2 justify-content-between align-items-md-center mb-3">
+          <div class="input-group" style="max-width: 420px;">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input id="mascotasSearch" type="text" class="form-control" placeholder="Buscar por nombre, especie, raza o dueño">
+            <button id="mascotasSearchBtn" class="btn btn-primary">Buscar</button>
+          </div>
+
+          <div class="d-flex flex-column flex-md-row gap-2">
+            <div class="btn-group" role="group" aria-label="ScopeMascotas">
+              <input type="radio" class="btn-check" name="mascotasScope" id="mScopeToday" autocomplete="off" value="today" checked>
+              <label class="btn btn-outline-secondary" for="mScopeToday">Registradas hoy</label>
+              <input type="radio" class="btn-check" name="mascotasScope" id="mScopePast" autocomplete="off" value="past">
+              <label class="btn btn-outline-secondary" for="mScopePast">Anteriores</label>
+            </div>
+
+            <div class="input-group" style="max-width: 360px;">
+              <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
+              <input type="date" id="mascotasFrom" class="form-control" placeholder="Desde">
+              <input type="date" id="mascotasTo" class="form-control" placeholder="Hasta">
+              <button id="mascotasRangeBtn" class="btn btn-outline-primary">Filtrar</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Nombre</th>
+                <th>Especie</th>
+                <th>Raza</th>
+                <th>Edad</th>
+                <th>Peso</th>
+                <th>Dueño</th>
+                <th class="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="mascotasBody"></tbody>
+          </table>
+        </div>
+
+        <div id="mascotasPagination" class="d-flex justify-content-center my-3"></div>
+      </div>
+    </div>
+
     `;
     // eventos y carga inicial
     const mSearchBtn = document.getElementById('mascotasSearchBtn');
