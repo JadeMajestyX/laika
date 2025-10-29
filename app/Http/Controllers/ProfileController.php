@@ -22,6 +22,20 @@ class ProfileController extends Controller
     }
 
     /**
+     * Display the user's public profile or redirect to edit.
+     *
+     * Added to avoid "Call to undefined method ProfileController::show()" when
+     * the route points to `show`. For now we redirect to the edit form which
+     * is protected by the `auth` middleware in routes.
+     */
+    public function show(Request $request)
+    {
+        // If you prefer a dedicated view, replace this redirect with:
+        // return view('profile.show', ['user' => $request->user()]);
+        return Redirect::route('profile.edit');
+    }
+
+    /**
      * Update the user's profile information.
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
