@@ -240,7 +240,74 @@ function renderMascotasPagination(meta) {
   pag.appendChild(ul);
 }
 
+/**
+ * Render a simple skeleton placeholder for lists/tables while data is loading.
+ * section: 'mascotas' | 'citas' | 'home' (partial support)
+ * rows: number of placeholder rows to render for table-like sections
+ */
+function renderSkeleton(section, rows = 5) {
+  if (section === 'mascotas') {
+    const tbody = document.getElementById('mascotasBody');
+    const pag = document.getElementById('mascotasPagination');
+    if (tbody) {
+      tbody.innerHTML = '';
+      for (let i = 0; i < rows; i++) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><div class="placeholder-glow"><span class="placeholder col-6"></span></div></td>
+          <td><div class="placeholder-glow"><span class="placeholder col-4"></span></div></td>
+          <td><div class="placeholder-glow"><span class="placeholder col-4"></span></div></td>
+          <td><div class="placeholder-glow"><span class="placeholder col-3"></span></div></td>
+          <td><div class="placeholder-glow"><span class="placeholder col-3"></span></div></td>
+          <td><div class="placeholder-glow"><span class="placeholder col-6"></span></div></td>
+          <td class="text-center"><div class="placeholder-glow"><span class="placeholder col-2"></span></div></td>
+        `;
+        tbody.appendChild(tr);
+      }
+    }
+    if (pag) pag.innerHTML = '';
+    return;
+  }
+
+  if (section === 'citas') {
+    const tbody = document.getElementById('citasBody');
+    const pag = document.getElementById('citasPagination');
+    if (tbody) {
+      tbody.innerHTML = '';
+      for (let i = 0; i < rows; i++) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><div class="placeholder-glow"><span class="placeholder col-6"></span></div></td>
+          <td><div class="placeholder-glow"><span class="placeholder col-5"></span></div></td>
+          <td><div class="placeholder-glow"><span class="placeholder col-4"></span></div></td>
+          <td><div class="placeholder-glow"><span class="placeholder col-4"></span></div></td>
+          <td><div class="placeholder-glow"><span class="placeholder col-6"></span></div></td>
+          <td><div class="placeholder-glow"><span class="placeholder col-2"></span></div></td>
+        `;
+        tbody.appendChild(tr);
+      }
+    }
+    if (pag) pag.innerHTML = '';
+    return;
+  }
+
+  if (section === 'home') {
+    const chart = document.getElementById('appointmentsChart');
+    const actividad = document.getElementById('actividadReciente');
+    if (chart) {
+      // replace canvas with a simple placeholder box
+      const parent = chart.parentElement;
+      if (parent) {
+        parent.innerHTML = '<div class="bg-light border" style="height:220px;border-radius:6px;"></div>';
+      }
+    }
+    if (actividad) actividad.innerHTML = '<div class="text-center text-body-secondary py-3">Cargando actividad...</div>';
+  }
+}
+
 function fetchMascotasAndRender(page = 1, perPage = 10) {
+  // show skeleton while loading
+  renderSkeleton('mascotas', 6);
   const q = document.getElementById('mascotasSearch')?.value?.trim() || '';
   const scope = document.querySelector('input[name="mascotasScope"]:checked')?.value || 'today';
   const from = document.getElementById('mascotasFrom')?.value || '';
@@ -752,6 +819,8 @@ function renderCitasPagination(meta) {
 }
 
 function fetchCitasAndRender(page = 1, perPage = 10) {
+  // show skeleton while loading
+  renderSkeleton('citas', 6);
   const q = document.getElementById('citasSearch')?.value?.trim() || '';
   const scope = document.querySelector('input[name="citasScope"]:checked')?.value || 'today';
   const from = document.getElementById('citasFrom')?.value || '';

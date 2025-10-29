@@ -134,10 +134,10 @@
         <div class="d-flex align-items-center justify-content-between gap-3">
           <div class="d-flex align-items-center gap-2">
             <button class="btn btn-outline-secondary" id="btnToggleSidebar" aria-label="Alternar menú"><i class="bi bi-list"></i></button>
-            <div class="search-wrap w-100">
+            {{-- <div class="search-wrap w-100">
               <i class="bi bi-search"></i>
               <input class="form-control" type="text" placeholder="Buscar mascotas, clientes, citas...">
-            </div>
+            </div> --}}
           </div>
           <div class="header-right">
             <div class="form-check form-switch m-0">

@@ -27,6 +27,9 @@ class AuthController extends Controller
             $user = User::where('email', $email)->first();
 
             if (!$user) {
+
+         
+
                 // Crear usuario solo si no existe
                 $user = User::create([
                     'email' => $email,

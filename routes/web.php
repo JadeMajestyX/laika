@@ -94,4 +94,23 @@ Route::get('/login', function () {
 })->name('login');
 
 
+
+
+
+
+
+
+
+
+
+
+//eliminar cuenta
+Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+
+//ver perfil
+Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+
+
+
 require __DIR__.'/auth.php';
