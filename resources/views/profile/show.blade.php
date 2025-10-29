@@ -7,7 +7,7 @@
 @section('content')
 <div class="card mt-4 shadow-sm p-4">
     <h3 class="text-lg font-semibold mb-2">{{ $user->name ?? 'Usuario' }}</h3>
-    <p><strong>Correo:</strong> {{ $user->email }}</p>
+    <p><strong>Correo:</strong> {{ $user->correo }}</p>
 
     <div class="mt-4">
         <a href="" class="btn btn-primary">Editar perfil</a>
