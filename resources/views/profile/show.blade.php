@@ -10,7 +10,7 @@
     <p><strong>Correo:</strong> {{ $user->email }}</p>
 
     <div class="mt-4">
-        <a href="{{ route('profile.edit') }}" class="btn btn-primary">Editar perfil</a>
+        <a href="" class="btn btn-primary">Editar perfil</a>
         <form action="{{ route('profile.destroy') }}" method="POST" class="inline-block ml-2">
             @csrf
             @method('DELETE')
