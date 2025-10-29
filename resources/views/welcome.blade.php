@@ -223,7 +223,7 @@
           <img src="https://images.unsplash.com/photo-1590080875832-56a3b2991c71?auto=format&fit=crop&q=80&w=400"
                class="rounded-circle mx-auto mb-3" width="100" height="100" alt="Dr. López">
           <h5 class="fw-semibold text-primary">Dr. Gabriel Mancillas</h5>
-          <p class="text-muted small">Especialista en nutrición animal</p>
+          <p class="text-muted small">Especialista en salud animal</p>
         </div>
       </div>
       <div class="col-md-4">
