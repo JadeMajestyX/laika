@@ -375,4 +375,22 @@ Route::get('/servicios', function(){
 });
 
 
+//subir imagenes
+Route::middleware('auth:sanctum')->post('/upload-image', function(Request $request){
+    $request->validate([
+        'image' => 'required|image|max:2048', // max 2MB
+    ]);
+
+
+    $file = $request->file('image');
+    $filename = time() . '.' . $file->getClientOriginalExtension();
+    $file->move(public_path('uploads/mascotas'), $filename);
+
+    return response()->json([
+        'message' => 'Imagen subida exitosamente',
+        'filename' => $filename
+    ]);
+});
+
+
 Route::post('/auth/google', [AuthController::class, 'loginWithGoogle']);
