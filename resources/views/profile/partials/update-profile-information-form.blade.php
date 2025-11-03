@@ -1,11 +1,11 @@
 <section>
     <header>
         <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
-            {{ __('Profile Information') }}
+            {{ __('Información del perfil') }}
         </h2>
 
         <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            {{ __("Update your account's profile information and email address.") }}
+            {{ __("Actualiza la información del perfil y la dirección de correo electrónico de tu cuenta.") }}
         </p>
     </header>
 
@@ -21,6 +21,20 @@
             <x-input-label for="nombre" :value="__('Nombre')" />
             <x-text-input id="nombre" name="nombre" type="text" class="mt-1 block w-full" :value="old('nombre', $user->nombre)" required autofocus autocomplete="nombre" />
             <x-input-error class="mt-2" :messages="$errors->get('nombre')" />
+        </div>
+
+        {{-- apellido paterno --}}
+        <div>
+            <x-input-label for="apellido_paterno" :value="__('Apellido Paterno')" />
+            <x-text-input id="apellido_paterno" name="apellido_paterno" type="text" class="mt-1 block w-full" :value="old('apellido_paterno', $user->apellido_paterno)" required autofocus autocomplete="apellido_paterno" />
+            <x-input-error class="mt-2" :messages="$errors->get('apellido_paterno')" />
+        </div>
+
+        {{-- apellido materno --}}
+        <div>
+            <x-input-label for="apellido_materno" :value="__('Apellido Materno')" />
+            <x-text-input id="apellido_materno" name="apellido_materno" type="text" class="mt-1 block w-full" :value="old('apellido_materno', $user->apellido_materno)" required autofocus autocomplete="apellido_materno" />
+            <x-input-error class="mt-2" :messages="$errors->get('apellido_materno')" />
         </div>
 
         <div>
@@ -48,7 +62,7 @@
         </div>
 
         <div class="flex items-center gap-4">
-            <x-primary-button>{{ __('Save') }}</x-primary-button>
+            <x-primary-button>{{ __('Guardar') }}</x-primary-button>
 
             @if (session('status') === 'profile-updated')
                 <p
