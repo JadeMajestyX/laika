@@ -31,7 +31,7 @@
     <header>
       <div>
         <h1>Política de Privacidad y Uso de Datos</h1>
-        <p class="lead">Última actualización: <strong id="fecha">--</strong></p>
+        <p class="lead">Última actualización: <strong id="fecha">3/11/2025</strong></p>
       </div>
       <div class="controls">
         <button id="btnPrint" title="Imprimir">Imprimir</button>
