@@ -35,7 +35,7 @@
       </div>
       <div class="controls">
         <button id="btnPrint" title="Imprimir">Imprimir</button>
-        <button id="btnDownload" class="secondary" title="Descargar HTML">Descargar HTML</button>
+        
       </div>
     </header>
 
@@ -115,7 +115,7 @@
       </section>
 
       <footer>
-        <p class="small">Si tienes preguntas sobre esta política o deseas ejercer tus derechos, contáctanos en: <a href="mailto:privacidad@tudominio.com">privacidad@tudominio.com</a>.</p>
+        <p class="small">Si tienes preguntas sobre esta política o deseas ejercer tus derechos, contáctanos en: <a href="mailto:help.vetpet@jademajesty.com">help.vetpet@jademajesty.com</a>.</p>
       </footer>
     </main>
   </div>
@@ -130,10 +130,7 @@
     // Imprimir
     document.getElementById('btnPrint').addEventListener('click', ()=> window.print());
 
-    // Descargar HTML
-    document.getElementById('btnDownload').addEventListener('click', ()=>{
-      const html = '<!doctype html>\n' + document.documentElement.outerHTML;
-      const blob = new Blob([html], { type: 'text/html' });
+    
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url; a.download = 'politica-privacidad.html';
