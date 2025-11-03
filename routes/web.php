@@ -99,7 +99,9 @@ Route::get('/login', function () {
 
 
 
-
+Route::get('/politica-privacidad', function () {
+    return view('politica-privacidad');
+})->name('politica-privacidad');
 
 
 
