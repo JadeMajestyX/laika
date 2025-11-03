@@ -221,7 +221,7 @@
       <div class="col-md-4">
         <div class="card text-center border-0 shadow-sm p-4">
           <img src="{{ asset('images/mancillas.jpg') }}"
-               class="rounded-circle mx-auto mb-3" width="100" height="100" alt="Dr. López">
+               class="rounded-circle mx-auto mb-3" width="100" height="100" alt="Dr. Mancillas">
           <h5 class="fw-semibold text-primary">Dr. Gabriel Mancillas</h5>
           <p class="text-muted small">Especialista en salud animal</p>
         </div>
