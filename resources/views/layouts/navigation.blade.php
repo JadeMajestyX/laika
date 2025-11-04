@@ -5,11 +5,12 @@
         <div class="flex justify-between h-16">
             <div class="flex">
                 <!-- Logo -->
-                <div class="shrink-0 flex items-center color-white">
-                    <a href="{{ route('dashboard') }}">
-                        <i class="bi bi-heart-pulse-fill me-2"></i> Laika
+                <div class="shrink-0 flex items-center">
+                    <a href="{{ route('dashboard') }}" class="text-white flex items-center">
+                        <i class="bi bi-heart-pulse-fill me-2 text-white"></i> Laika
                     </a>
                 </div>
+
 
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
