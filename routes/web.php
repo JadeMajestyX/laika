@@ -18,7 +18,7 @@ use App\Http\Controllers\SearchController;
 
 Route::get('/', function () {
     return view('welcome');
-});
+})->name('welcome');
 
 Route::middleware(EnsureUserHasRole::class.':A')->group(function () {
     // Página principal del panel -> /dashboard/home
