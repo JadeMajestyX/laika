@@ -6,7 +6,7 @@
             <div class="flex">
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}" class="text-white flex items-center">
+                    <a href="{{ route('welcome') }}" class="text-white flex items-center">
                         <i class="bi bi-heart-pulse-fill me-2 text-white"></i> Laika
                     </a>
                 </div>
