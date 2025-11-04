@@ -5,7 +5,7 @@
         <div class="flex justify-between h-16">
             <div class="flex">
                 <!-- Logo -->
-                <div class="shrink-0 flex items-center">
+                <div class="shrink-0 flex items-center color-white">
                     <a href="{{ route('dashboard') }}">
                         <i class="bi bi-heart-pulse-fill me-2"></i> Laika
                     </a>
