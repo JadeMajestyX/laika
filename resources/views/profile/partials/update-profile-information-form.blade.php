@@ -37,12 +37,14 @@
             <x-input-error class="mt-2" :messages="$errors->get('apellido_materno')" />
         </div>
 
-        {{-- <div>
-            
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" name="email" type="email" class="mt-1 block w-full" :value="old('email', $user->email)" required autocomplete="username" />
-            <x-input-error class="mt-2" :messages="$errors->get('email')" />
+        <div>
 
+            <x-input-label for="email" :value="__('Email')" />
+
+            {{-- Mostrar el email actual como no editable. No hay atributo "name" para que no se envíe en el form. --}}
+            <x-text-input id="email" type="email" class="mt-1 block w-full" :value="old('email', $user->email)" disabled />
+
+            {{-- Mantener el bloque de verificación de email en caso de necesitar reenvío de link --}}
             @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
                 <div>
                     <p class="text-sm mt-2 text-gray-800 dark:text-gray-200">
@@ -60,7 +62,7 @@
                     @endif
                 </div>
             @endif
-        </div> --}}
+        </div>
 
         <div class="flex items-center gap-4">
             <x-primary-button>{{ __('Guardar') }}</x-primary-button>

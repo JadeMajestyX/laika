@@ -19,8 +19,11 @@ class ProfileUpdateRequest extends FormRequest
             'nombre' => ['required', 'string', 'max:255'],
             'apellido_paterno' => ['required', 'string', 'max:100'],
             'apellido_materno' => ['nullable', 'string', 'max:100'],
+            // No forzamos la actualización del correo desde el formulario de perfil.
+            // Hacemos el campo nullable para que, si no se envía, no falle la validación
+            // y no se modifique el email en la base.
             'email' => [
-                'required',
+                'nullable',
                 'string',
                 'lowercase',
                 'email',
