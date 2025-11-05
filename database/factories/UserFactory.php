@@ -24,9 +24,16 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->name(),
+            'nombre' => fake()->firstName(),
+            'apellido_paterno' => fake()->lastName(),
+            'apellido_materno' => fake()->optional()->lastName(),
+            'rol' => fake()->randomElement(['U','A','R','V']),
+            'fecha_nacimiento' => fake()->date('Y-m-d', '-18 years'),
+            'genero' => fake()->randomElement(['M','F','O']),
             'email' => fake()->unique()->safeEmail(),
-            'email_verified_at' => now(),
+            'telefono' => fake()->optional()->numerify('3#########'),
+            'imagen_perfil' => null,
+            'is_active' => true,
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
         ];
@@ -38,7 +45,8 @@ class UserFactory extends Factory
     public function unverified(): static
     {
         return $this->state(fn (array $attributes) => [
-            'email_verified_at' => null,
+            // Si se llegara a usar un campo de verificación en el futuro,
+            // aquí se podría ajustar el estado correspondiente.
         ]);
     }
 }
