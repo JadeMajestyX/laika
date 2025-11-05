@@ -134,7 +134,7 @@
           El responsable del tratamiento de los datos personales recabados a través de esta aplicación es
           Laika.
           Para consultas o mas información, puede contactarnos en
-          <a href="mailto:contacto@laika.vet">contacto@laika.vet</a>.
+          <a href="mailto:help.vetpet@jademajesty.com">help.vetpet@jademajesty.com</a>.
         </p>
 
         <h3>2. Datos que recopilamos</h3>
@@ -187,7 +187,7 @@
         <h3>9. Contacto</h3>
         <p>
           Para dudas o reportes sobre privacidad, escriba a
-          <a href="mailto:contacto@laika.vet">contacto@laika.vet</a>.
+          <a href="mailto:help.vetpet@jademajesty.com">help.vetpet@jademajesty.com</a>.
         </p>
 
         <h3>10. Aceptación</h3>
@@ -206,7 +206,7 @@
         <div class="col-md-4">
           <h5 class="fw-bold text-primary">Contacto</h5>
           <ul class="list-unstyled small">
-            <li><i class="bi bi-telephone me-2 text-primary"></i> +52 312 000 0000</li>
+            <li><i class="bi bi-telephone me-2 text-primary"></i> +52 314 160 9870</li>
             <li><i class="bi bi-envelope me-2 text-primary"></i> help.vetpet@jademajesty.com</li>
             <li><i class="bi bi-geo-alt me-2 text-primary"></i> Manzanillo, Colima</li>
           </ul>
