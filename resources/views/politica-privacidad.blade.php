@@ -1,142 +1,235 @@
 <!doctype html>
-<html lang="es">
+<html lang="es" data-bs-theme="light">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Política de Privacidad y Uso de Datos</title>
+  <title>Laika - Política de Privacidad</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
   <style>
-    :root{--bg:#f7fafc;--card:#ffffff;--muted:#6b7280;--accent:#0f62fe}
-    html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; background:var(--bg);color:#0b1220}
-    .container{max-width:900px;margin:36px auto;padding:24px}
-    header{display:flex;justify-content:space-between;align-items:center;gap:16px}
-    h1{margin:0;font-size:1.6rem}
-    p.lead{margin:8px 0 0;color:var(--muted)}
-    .controls{display:flex;gap:8px}
-    button{background:var(--accent);color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer}
-    button.secondary{background:transparent;color:var(--accent);border:1px solid rgba(15,98,254,0.12)}
-    main{margin-top:18px;background:var(--card);padding:20px;border-radius:12px;box-shadow:0 6px 18px rgba(11,18,32,0.06)}
-    nav.toc{margin-bottom:18px}
-    nav.toc ul{list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:8px}
-    nav.toc a{display:inline-block;padding:6px 10px;border-radius:8px;background:#f1f5f9;text-decoration:none;color:var(--muted);font-size:0.95rem}
-    section{margin:18px 0}
-    section h2{font-size:1.1rem;margin:0 0 8px}
-    ul{margin:8px 0 0 20px}
-    footer{margin-top:18px;color:var(--muted);font-size:0.9rem}
-    .small{font-size:0.95rem;color:var(--muted)}
-    @media (max-width:600px){.container{margin:18px;padding:16px}}
+    :root {
+      --brand: #3A7CA5;
+      --brand-dark: #2f6485;
+      --bs-primary: var(--brand);
+      --bs-link-color: var(--brand);
+      --bs-link-hover-color: var(--brand-dark);
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+      background-color: #f8f9fa;
+      color: #333;
+    }
+
+    /* Navbar */
+    .navbar {
+      background: linear-gradient(90deg, var(--brand), var(--brand-dark));
+    }
+    .navbar .nav-link {
+      color: #fff;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .navbar .nav-link:hover {
+      color: #d7eaf4;
+    }
+
+    /* Hero */
+    .hero {
+      position: relative;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      background: linear-gradient(90deg, var(--brand), var(--brand-dark));
+      margin-top: 56px; 
+    }
+    .hero .hero-content {
+      position: relative;
+      z-index: 1;
+      max-width: 840px;
+      padding: 2rem 1.25rem;
+    }
+
+    /* Card */
+    .card-policy {
+      border-radius: 1rem;
+      border: 1px solid #e0e0e0;
+      background: #fff;
+      box-shadow: 0 12px 30px -10px rgba(0,0,0,.15);
+    }
+    .card-policy h3 {
+      color: var(--brand-dark);
+      font-weight: 700;
+      font-size: 1.25rem;
+      margin-top: 1.5rem;
+    }
+    .card-policy p, .card-policy li {
+      color: #555;
+      font-size: 1rem;
+      line-height: 1.7;
+    }
+    .section-title {
+      color: #0b2d42;
+      letter-spacing: .2px;
+    }
+
+    /* Footer */
+    footer {
+      background-color: #f0f4f7;
+      border-top: 1px solid #dbe2e8;
+    }
+    footer a { color: var(--brand); text-decoration: none; }
+    footer a:hover { color: var(--brand-dark); }
   </style>
 </head>
+
 <body>
-  <div class="container">
-    <header>
-      <div>
-        <h1>Política de Privacidad y Uso de Datos</h1>
-        <p class="lead">Última actualización: <strong id="fecha">3/11/2025</strong></p>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark fixed-top shadow-sm">
+    <div class="container">
+      <a class="navbar-brand fw-bold d-flex align-items-center" href="{{ url('/') }}">
+        <i class="bi bi-heart-pulse-fill me-2"></i> Laika
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navMenu">
+        <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+          <li class="nav-item"><a class="nav-link" href="{{ url('/#inicio') }}">Inicio</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url('/#dispensador') }}">Dispensador</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url('/#servicios') }}">Servicios</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url('/#equipo') }}">Equipo</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url('/#contacto') }}">Contacto</a></li>
+        </ul>
+        <a href="{{ url('/#contacto') }}" class="btn btn-light ms-lg-3 fw-semibold">Agendar cita</a>
       </div>
-      <div class="controls">
-        <button id="btnPrint" title="Imprimir">Imprimir</button>
-        
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-content">
+      <h1 class="display-6 fw-bold mb-2">Política de Privacidad</h1>
+      <p class="lead mb-0">Transparencia y protección de tus datos personales en Laika.</p>
+    </div>
+  </section>
+
+  <!-- Contenido -->
+  <section class="py-5">
+    <div class="container">
+      <div class="card card-policy p-4 p-md-5">
+        <h3 class="section-title mb-3">Política de Privacidad</h3>
+
+        <h3>1. Responsable del tratamiento</h3>
+        <p>
+          El responsable del tratamiento de los datos personales recabados a través de esta aplicación es
+          Laika.
+          Para consultas o mas información, puede contactarnos en
+          <a href="mailto:contacto@laika.vet">contacto@laika.vet</a>.
+        </p>
+
+        <h3>2. Datos que recopilamos</h3>
+        <ul>
+          <li><strong>Datos de usuario:</strong> nombre completo, correo electrónico, teléfono y contraseña (almacenada cifrada).</li>
+          <li><strong>Datos de mascotas:</strong> nombre, especie, edad, peso, historial médico y registros de vacunación.</li>
+          <li><strong>Datos del dispensador:</strong> porciones dispensadas, horarios programados y estado de conexión.</li>
+        </ul>
+
+        <h3>3. Finalidad del tratamiento</h3>
+        <ul>
+          <li>Gestionar y administrar citas veterinarias.</li>
+          <li>Mantener y consultar el historial clínico digital de las mascotas.</li>
+          <li>Controlar y monitorear el dispensador de alimento.</li>
+          <li>Mejorar la seguridad y funcionalidad de la aplicación.</li>
+        </ul>
+
+        <h3>4. Cesión y transferencia de datos</h3>
+        <p>
+          Laika no vende ni alquila los datos personales de los usuarios. Los datos solo podrán compartirse con proveedores de servicios necesarios para el funcionamiento (hosting, bases de datos, mensajería), obligados a proteger los datos.
+        </p>
+
+        <h3>5. Medidas de seguridad</h3>
+        <ul>
+          <li>Transmisión cifrada mediante HTTPS.</li>
+          <li>Encriptación de contraseñas y datos sensibles.</li>
+          <li>Controles de acceso y autenticación.</li>
+          <li>Respaldos periódicos y monitoreo de accesos.</li>
+        </ul>
+
+        <h3>6. Conservación de datos</h3>
+        <p>
+          Los datos personales se conservarán únicamente durante el tiempo necesario para cumplir con los fines descritos,
+          mientras la cuenta esté activa o según lo establecido por la ley. Una vez cumplido el plazo, los datos se eliminarán
+          o anonimizarán de forma segura.
+        </p>
+
+        <h3>7. Datos de menores</h3>
+        <p>
+          Si el titular de los datos es menor de edad, el uso de la aplicación y el registro deben realizarse con el consentimiento
+          y supervisión de un padre o tutor.
+        </p>
+
+        <h3>8. Cambios en la Política</h3>
+        <p>
+          Esta Política de Privacidad puede actualizarse. Cuando se realicen cambios significativos,
+          se notificará a los usuarios mediante la aplicación o correo electrónico con antelación razonable.
+        </p>
+
+        <h3>9. Contacto</h3>
+        <p>
+          Para dudas o reportes sobre privacidad, escriba a
+          <a href="mailto:contacto@laika.vet">contacto@laika.vet</a>.
+        </p>
+
+        <h3>10. Aceptación</h3>
+        <p>
+          Al usar la aplicación, el panel administrativo o registrar un dispositivo dispensador de alimento,
+          usted acepta los términos de esta Política de Privacidad y consiente el tratamiento de sus datos conforme a lo aquí descrito.
+        </p>
       </div>
-    </header>
+    </div>
+  </section>
 
-    <main role="main">
-      <nav class="toc" aria-label="Índice de la política">
-        <ul>
-          <li><a href="#introduccion">1. Introducción</a></li>
-          <li><a href="#informacion">2. Información que recopilamos</a></li>
-          <li><a href="#como-usamos">3. Cómo usamos la información</a></li>
-          <li><a href="#compartimos">4. Con quién compartimos la información</a></li>
-          <li><a href="#conservacion">5. Conservación de datos</a></li>
-          <li><a href="#derechos">6. Derechos del usuario</a></li>
-          <li><a href="#seguridad">7. Seguridad de la información</a></li>
-          <li><a href="#cambios">8. Cambios en la política</a></li>
-        </ul>
-      </nav>
+  <!-- Footer -->
+  <footer id="contacto" class="pt-5">
+    <div class="container pb-4">
+      <div class="row g-4">
+        <div class="col-md-4">
+          <h5 class="fw-bold text-primary">Contacto</h5>
+          <ul class="list-unstyled small">
+            <li><i class="bi bi-telephone me-2 text-primary"></i> +52 312 000 0000</li>
+            <li><i class="bi bi-envelope me-2 text-primary"></i> help.vetpet@jademajesty.com</li>
+            <li><i class="bi bi-geo-alt me-2 text-primary"></i> Manzanillo, Colima</li>
+          </ul>
+        </div>
+        <div class="col-md-4">
+          <h5 class="fw-bold text-primary">Horarios</h5>
+          <p class="small">Lun–Vie: 9:00–20:00<br>Sáb: 9:00–14:00<br><span class="fw-semibold text-primary">Domingo cerrado</span></p>
+        </div>
+        <div class="col-md-4">
+          <h5 class="fw-bold text-primary">Síguenos</h5>
+          <div class="d-flex gap-3 fs-4 text-primary">
+            <i class="bi bi-facebook"></i>
+            <i class="bi bi-instagram"></i>
+            <i class="bi bi-twitter-x"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="text-center py-3 border-top small text-muted">
+      © {{ date('Y') }} Laika · Todos los derechos reservados
+    </div>
+  </footer>
 
-      <section id="introduccion">
-        <h2>1. Introducción</h2>
-        <p>Esta política explica cómo recopilamos, usamos, protegemos y compartimos tu información personal cuando utilizas nuestros servicios web y aplicación móvil.</p>
-      </section>
-
-      <section id="informacion">
-        <h2>2. Información que recopilamos</h2>
-        <p>Recopilamos distintos tipos de información según la interacción que tengas con nuestros servicios:</p>
-        <ul>
-          <li><strong>Al registrarte:</strong> correo electrónico, nombre completo, fecha de nacimiento, número de teléfono y contraseña cifrada.</li>
-          <li><strong>Perfil de usuario:</strong> ciudad de residencia, foto de perfil.</li>
-          <li><strong>Uso del servicio:</strong> información de tus mascotas, historial clínico, citas veterinarias, datos del dispensador IoT, imágenes y comentarios.</li>
-          <li><strong>Datos técnicos:</strong> dirección IP, tipo de dispositivo, sistema operativo, idioma, cookies y datos de geolocalización (si lo autorizas).</li>
-        </ul>
-      </section>
-
-      <section id="como-usamos">
-        <h2>3. Cómo usamos la información</h2>
-        <ul>
-          <li><strong>Brindar y mejorar el servicio:</strong> creación de cuenta, personalización de la experiencia, análisis de uso para mejoras.</li>
-          <li><strong>Comunicaciones:</strong> envío de notificaciones, recordatorios de citas y alertas relacionadas con el dispensador IoT.</li>
-          <li><strong>Seguridad:</strong> prevención de fraude, abusos y accesos no autorizados.</li>
-          <li><strong>Marketing y promociones:</strong> envío de novedades o recomendaciones, siempre con opción de cancelación (“opt-out”).</li>
-        </ul>
-      </section>
-
-      <section id="compartimos">
-        <h2>4. Con quién compartimos la información</h2>
-        <ul>
-          <li>Con proveedores de servicios tecnológicos que apoyan la operación de la aplicación (almacenamiento en la nube, servicios de mensajería, soporte técnico).</li>
-          <li>Con clínicas veterinarias asociadas, únicamente cuando sea necesario para la gestión de citas o historial clínico.</li>
-          <li>Con autoridades legales, si la ley lo exige.</li>
-          <li><strong>Nunca</strong> vendemos tu información personal a terceros.</li>
-        </ul>
-      </section>
-
-      <section id="conservacion">
-        <h2>5. Conservación de datos</h2>
-        <p>Los datos se conservarán mientras tengas una cuenta activa o mientras sean necesarios para brindarte el servicio. Puedes solicitar su eliminación en cualquier momento, salvo obligación legal de retención.</p>
-      </section>
-
-      <section id="derechos">
-        <h2>6. Derechos del usuario</h2>
-        <p>El usuario podrá:</p>
-        <ul>
-          <li>Acceder, rectificar o eliminar su información personal.</li>
-          <li>Solicitar la limitación de uso de datos.</li>
-          <li>Retirar el consentimiento para recibir comunicaciones promocionales.</li>
-        </ul>
-      </section>
-
-      <section id="seguridad">
-        <h2>7. Seguridad de la información</h2>
-        <p>Implementamos medidas técnicas y organizativas para proteger tus datos contra accesos no autorizados, pérdida o divulgación indebida.</p>
-      </section>
-
-      <section id="cambios">
-        <h2>8. Cambios en la política de privacidad</h2>
-        <p>Nos reservamos el derecho de modificar esta política. Notificaremos a los usuarios cualquier cambio relevante a través de la aplicación o por correo electrónico.</p>
-      </section>
-
-      <footer>
-        <p class="small">Si tienes preguntas sobre esta política o deseas ejercer tus derechos, contáctanos en: <a href="mailto:help.vetpet@jademajesty.com">help.vetpet@jademajesty.com</a>.</p>
-      </footer>
-    </main>
-  </div>
-
-  <script>
-    // Poner la fecha de hoy en formato legible
-    const fechaElem = document.getElementById('fecha');
-    const hoy = new Date();
-    const opciones = { year: 'numeric', month: 'long', day: 'numeric' };
-    fechaElem.textContent = hoy.toLocaleDateString('es-ES', opciones);
-
-    // Imprimir
-    document.getElementById('btnPrint').addEventListener('click', ()=> window.print());
-
-    
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = 'politica-privacidad.html';
-      document.body.appendChild(a); a.click(); a.remove();
-      URL.revokeObjectURL(url);
-    });
-  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
