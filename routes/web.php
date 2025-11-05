@@ -99,10 +99,15 @@ Route::get('/login', function () {
 
 
 
+//politica de privacidad
 Route::get('/politica-privacidad', function () {
     return view('politica-privacidad');
 })->name('politica-privacidad');
 
+//terminos y condiciones
+Route::get('/terms', function(){
+    return view('terms');
+})->name('terms');
 
 
 
