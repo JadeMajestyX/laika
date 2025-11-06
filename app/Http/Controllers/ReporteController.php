@@ -228,37 +228,40 @@ class ReporteController extends Controller
 
         $filename = 'citas_' . $from->format('Ymd') . '_' . $to->format('Ymd') . '.xlsx';
 
-        return response()->streamDownload(function () use ($query) {
-            $writer = WriterEntityFactory::createXLSXWriter();
-            $writer->openToOutput();
+        // Para evitar problemas de buffering/respuestas inválidas en algunos servidores,
+        // escribimos primero a un archivo temporal y luego lo servimos.
+        $tmpPath = tempnam(sys_get_temp_dir(), 'citas_');
+        $tmpXlsx = $tmpPath . '.xlsx';
+        // Spout requiere una ruta con extensión .xlsx
+        rename($tmpPath, $tmpXlsx);
 
-            // Estilos
-            $headerStyle = (new StyleBuilder())->setFontBold()->build();
+        $writer = WriterEntityFactory::createXLSXWriter();
+        $writer->openToFile($tmpXlsx);
 
-            // Encabezados
-            $headers = ['Fecha', 'Status', 'Servicio', 'Precio', 'Mascota', 'TrabajadorID'];
-            $rowFromValues = WriterEntityFactory::createRowFromArray($headers, $headerStyle);
-            $writer->addRow($rowFromValues);
+        $headerStyle = (new StyleBuilder())->setFontBold()->build();
+        $headers = ['Fecha', 'Status', 'Servicio', 'Precio', 'Mascota', 'TrabajadorID'];
+        $rowFromValues = WriterEntityFactory::createRowFromArray($headers, $headerStyle);
+        $writer->addRow($rowFromValues);
 
-            // Filas (chunk)
-            $query->chunk(500, function ($citas) use ($writer) {
-                foreach ($citas as $cita) {
-                    $values = [
-                        optional($cita->fecha)->format('Y-m-d H:i'),
-                        (string) $cita->status,
-                        optional($cita->servicio)->nombre,
-                        optional($cita->servicio)->precio,
-                        optional($cita->mascota)->nombre,
-                        $cita->creada_por,
-                    ];
-                    $writer->addRow(WriterEntityFactory::createRowFromArray($values));
-                }
-            });
+        $query->chunk(500, function ($citas) use ($writer) {
+            foreach ($citas as $cita) {
+                $values = [
+                    optional($cita->fecha)->format('Y-m-d H:i'),
+                    (string) $cita->status,
+                    optional($cita->servicio)->nombre,
+                    optional($cita->servicio)->precio,
+                    optional($cita->mascota)->nombre,
+                    $cita->creada_por,
+                ];
+                $writer->addRow(WriterEntityFactory::createRowFromArray($values));
+            }
+        });
 
-            $writer->close();
-        }, $filename, [
+        $writer->close();
+
+        return response()->download($tmpXlsx, $filename, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        ]);
+        ])->deleteFileAfterSend(true);
     }
 
     /**
