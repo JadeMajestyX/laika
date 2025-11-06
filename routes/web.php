@@ -55,6 +55,10 @@ Route::middleware(EnsureUserHasRole::class.':A')->group(function () {
     Route::post('/trabajadores', [TrabajadorController::class, 'store'])->name('trabajadores.store');
 
     Route::get('/reportes', [ReporteController::class, 'index'])->name('reportes');
+    Route::get('/reportes/data', [ReporteController::class, 'data'])->name('reportes.data');
+    Route::get('/reportes/citas/export', [ReporteController::class, 'exportCitas'])->name('reportes.citas.export');
+    Route::get('/reportes/citas/export/xlsx', [ReporteController::class, 'exportCitasXlsx'])->name('reportes.citas.export.xlsx');
+    Route::get('/reportes/citas/export/pdf', [ReporteController::class, 'exportCitasPdf'])->name('reportes.citas.export.pdf');
     Route::get('/inventario', [App\Http\Controllers\InventarioController::class, 'index'])->name('inventario');
     Route::get('/configuracion', [ConfiguracionController::class, 'index'])->name('configuracion');
 
@@ -64,7 +68,8 @@ Route::middleware(EnsureUserHasRole::class.':A')->group(function () {
     //obtener datos del dashboard
     Route::get('/dashboard/data', [DashboardController::class, 'getDashboardData'])->name('dashboard.data');
 
-    // Capturar cualquier subruta de dashboard para SPA y evitar 404 al refrescar
+    // Capturar cualquier subruta de dashboard para SPA y evitar 404 al refrescar,
+    // EXCEPTO rutas específicas como /dashboard/data
     Route::get('/dashboard/{any}', [DashboardController::class, 'index'])
         ->where('any', '^(?!data$).+');
 
