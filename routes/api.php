@@ -162,6 +162,10 @@ Route::middleware('auth:sanctum')->get('/mis-mascotas', function(Request $reques
                 'fecha_nacimiento' => $mascota->fecha_nacimiento,
                 'edad' => \Carbon\Carbon::parse($mascota->fecha_nacimiento)->age . ' años',
                 'peso' => $mascota->peso,
+                // nombre del archivo de la imagen (puede ser null)
+                'imagen' => $mascota->imagen,
+                // URL pública construida a partir de public/uploads/mascotas
+                'imagen_url' => $mascota->imagen ? asset('uploads/mascotas/' . $mascota->imagen) : null,
             ];
         });
 
