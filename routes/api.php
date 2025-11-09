@@ -104,11 +104,18 @@ Route::post('/register-mascota', function(Request $request) {
     ]);
 
     // 🔹 Procesar la imagen si viene en el request
-    $imagePath = null;
+    $imagePath = null; // ruta relativa (si se guarda)
+    $imageName = null; // nombre del archivo que guardaremos en BD
     if ($request->hasFile('imagen')) {
         $extension = $request->file('imagen')->getClientOriginalExtension();
-        $nombreArchivo = time() . '_' . uniqid() . '.' . $extension; // nombre único
-        $imagePath = $request->file('imagen')->storeAs('mascotas', $nombreArchivo, 'public');
+        $imageName = time() . '_' . uniqid() . '.' . $extension; // nombre único
+        $destinationPath = public_path('uploads/mascotas');
+        if (!file_exists($destinationPath)) {
+            mkdir($destinationPath, 0755, true);
+        }
+        // Mover el archivo directamente a public/uploads/mascotas
+        $request->file('imagen')->move($destinationPath, $imageName);
+        $imagePath = 'uploads/mascotas/' . $imageName;
     }
 
     // 🔹 Crear registro en base de datos
@@ -119,7 +126,8 @@ Route::post('/register-mascota', function(Request $request) {
         'fecha_nacimiento' => $request->fecha_nacimiento,
         'sexo' => $request->sexo,
         'peso' => $request->peso,
-        'imagen' => $imagePath, // se guarda la ruta de la imagen
+        // Guardamos SOLO el nombre del archivo en la BD, como solicitó el cliente
+        'imagen' => $imageName,
         'user_id' => $request->user_id
     ]);
 
@@ -134,7 +142,8 @@ Route::post('/register-mascota', function(Request $request) {
             'fecha_nacimiento' => $mascota->fecha_nacimiento,
             'sexo' => $mascota->sexo,
             'peso' => $mascota->peso,
-            'imagen_url' => $imagePath ? asset('storage/' . $imagePath) : null, // URL accesible
+            // Construimos la URL pública desde public/uploads/mascotas
+            'imagen_url' => $imagePath ? asset($imagePath) : null,
             'user_id' => $mascota->user_id,
         ]
     ]);
