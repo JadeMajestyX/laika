@@ -90,7 +90,8 @@ Route::post('/mediciones', function(Request $request){
     ]);
 });
 
-Route::post('/register-mascota', function(Request $request){
+Route::post('/register-mascota', function(Request $request) {
+    // 🔹 Validar los datos recibidos
     $request->validate([
         'nombre' => 'required|string|max:100',
         'especie' => 'required|in:Perro,Gato,Otro',
@@ -98,10 +99,19 @@ Route::post('/register-mascota', function(Request $request){
         'fecha_nacimiento' => 'required|date',
         'sexo' => 'required|in:M,F,O',
         'peso' => 'required|numeric|min:0|max:200',
-        'imagen' => 'nullable|string|max:100',
+        'imagen' => 'nullable|image|mimes:jpg,jpeg,png|max:2048', // imagen opcional
         'user_id' => 'required|exists:users,id'
     ]);
 
+    // 🔹 Procesar la imagen si viene en el request
+    $imagePath = null;
+    if ($request->hasFile('imagen')) {
+        $extension = $request->file('imagen')->getClientOriginalExtension();
+        $nombreArchivo = time() . '_' . uniqid() . '.' . $extension; // nombre único
+        $imagePath = $request->file('imagen')->storeAs('mascotas', $nombreArchivo, 'public');
+    }
+
+    // 🔹 Crear registro en base de datos
     $mascota = Mascota::create([
         'nombre' => $request->nombre,
         'especie' => $request->especie,
@@ -109,13 +119,24 @@ Route::post('/register-mascota', function(Request $request){
         'fecha_nacimiento' => $request->fecha_nacimiento,
         'sexo' => $request->sexo,
         'peso' => $request->peso,
-        'imagen' => $request->imagen,
+        'imagen' => $imagePath, // se guarda la ruta de la imagen
         'user_id' => $request->user_id
     ]);
 
+    // 🔹 Responder con JSON
     return response()->json([
-       'message' => 'Mascota registrada exitosamente',
-       'data' => $mascota
+        'message' => 'Mascota registrada exitosamente',
+        'data' => [
+            'id' => $mascota->id,
+            'nombre' => $mascota->nombre,
+            'especie' => $mascota->especie,
+            'raza' => $mascota->raza,
+            'fecha_nacimiento' => $mascota->fecha_nacimiento,
+            'sexo' => $mascota->sexo,
+            'peso' => $mascota->peso,
+            'imagen_url' => $imagePath ? asset('storage/' . $imagePath) : null, // URL accesible
+            'user_id' => $mascota->user_id,
+        ]
     ]);
 });
 
