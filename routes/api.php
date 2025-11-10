@@ -12,6 +12,10 @@ use Illuminate\Support\Facades\Route;
 use App\Models\Medicion;
 use App\Models\Status;
 use NunoMaduro\Collision\Adapters\Phpunit\State;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Str;
+use App\Notifications\ResetPasswordCodeNotification;
 
 Route::post('/login', function(Request $request){
     $request->validate([
@@ -427,4 +431,88 @@ Route::middleware('auth:sanctum')->post('/upload-image', function(Request $reque
 });
 
 
+
+
+
 Route::post('/auth/google', [AuthController::class, 'loginWithGoogle']);
+
+// ================== RESTABLECIMIENTO DE CONTRASEÑA POR CÓDIGO ==================
+// 1. Solicitar código: envía un correo con un código de 6 dígitos si el email existe
+Route::post('/password/forgot', function (Request $request) {
+    $request->validate([
+        'email' => 'required|email'
+    ]);
+
+    $user = User::where('email', $request->email)->first();
+
+    // Siempre responder 200 para no permitir enumeración de correos
+    if (!$user) {
+        return response()->json([
+            'message' => 'Si el correo existe, se enviará un código de verificación.'
+        ]);
+    }
+
+    // Generar código 6 dígitos
+    $code = (string) random_int(100000, 999999);
+    $expiresAt = now()->addMinutes(15);
+
+    // Limpiar códigos anteriores del mismo email (opcionales / expirados)
+    DB::table('password_reset_tokens')->where('email', $user->email)->delete();
+
+    // Guardar el código en la tabla existente reutilizando el campo token
+    DB::table('password_reset_tokens')->insert([
+        'email' => $user->email,
+        'token' => $code,
+        'created_at' => now(),
+    ]);
+
+    // Enviar correo
+    $user->notify(new ResetPasswordCodeNotification($code));
+
+    return response()->json([
+        'message' => 'Si el correo existe, se enviará un código de verificación.'
+    ]);
+});
+
+// 2. Restablecer contraseña usando código
+Route::post('/password/reset', function (Request $request) {
+    $request->validate([
+        'email' => 'required|email',
+        'code' => 'required|string',
+        'password' => 'required|string|min:8|confirmed'
+    ]);
+
+    $user = User::where('email', $request->email)->first();
+    if (!$user) {
+        return response()->json(['message' => 'Datos inválidos'], 422);
+    }
+
+    $record = DB::table('password_reset_tokens')
+        ->where('email', $user->email)
+        ->where('token', $request->code)
+        ->first();
+
+    if (!$record) {
+        return response()->json(['message' => 'Código inválido'], 422);
+    }
+
+    // Verificar expiración (15 minutos por diseño)
+    $created = \Carbon\Carbon::parse($record->created_at);
+    if ($created->addMinutes(15)->isPast()) {
+        // Borrar código expirado
+        DB::table('password_reset_tokens')->where('email', $user->email)->delete();
+        return response()->json(['message' => 'Código expirado'], 422);
+    }
+
+    // Actualizar contraseña
+    $user->password = Hash::make($request->password);
+    $user->save();
+
+    // Eliminar códigos usados
+    DB::table('password_reset_tokens')->where('email', $user->email)->delete();
+
+    return response()->json([
+        'message' => 'Contraseña restablecida correctamente'
+    ]);
+});
+// ===============================================================================
