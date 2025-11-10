@@ -270,7 +270,7 @@ Route::get('/activar-dispensador', function (Request $request) {
 
 
 
-//actualizar mascota
+//actualizar mascota (PUT multipart puede no detectar archivos en algunos entornos; se agrega también POST con _method spoofing)
 Route::middleware('auth:sanctum')->put('/actualizar-mascota/{id}', function(Request $request, $id){
     $mascota = Mascota::find($id);
 
@@ -309,6 +309,52 @@ Route::middleware('auth:sanctum')->put('/actualizar-mascota/{id}', function(Requ
         }
         $request->file('imagen')->move($destinationPath, $imageName);
         // Guardamos solo el nombre del archivo en BD (consistente con register-mascota)
+        $updateData['imagen'] = $imageName;
+    }
+
+    $mascota->update($updateData);
+
+    return response()->json([
+        'message' => 'Mascota actualizada exitosamente',
+        'data' => array_merge($mascota->toArray(), [
+            'imagen_url' => $mascota->imagen ? asset('uploads/mascotas/' . $mascota->imagen) : null,
+        ])
+    ]);
+});
+
+// Alternativa para clientes que envían multipart/form-data solo con POST.
+Route::middleware('auth:sanctum')->post('/actualizar-mascota/{id}', function(Request $request, $id){
+    // Permitir spoofing del método si viene _method=PUT, pero tratamos igual.
+    $mascota = Mascota::find($id);
+    if (!$mascota) {
+        return response()->json(['message' => 'Mascota no encontrada'], 404);
+    }
+
+    $request->validate([
+        'nombre' => 'nullable|string|max:100',
+        'especie' => 'nullable|string|max:100',
+        'raza' => 'nullable|string|max:100',
+        'fecha_nacimiento' => 'nullable|date',
+        'sexo' => 'nullable|string|in:M,F,O',
+        'peso' => 'nullable|numeric|min:0|max:200',
+        'imagen' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+    ]);
+
+    $updateData = $request->only([
+        'nombre', 'especie', 'raza', 'fecha_nacimiento', 'sexo', 'peso'
+    ]);
+
+    if ($request->hasFile('imagen')) {
+        // Eliminar imagen anterior si existe (limpieza opcional)
+        if ($mascota->imagen) {
+            $oldPath = public_path('uploads/mascotas/' . $mascota->imagen);
+            if (is_file($oldPath)) { @unlink($oldPath); }
+        }
+        $extension = $request->file('imagen')->getClientOriginalExtension();
+        $imageName = time() . '_' . uniqid() . '.' . $extension;
+        $destinationPath = public_path('uploads/mascotas');
+        if (!file_exists($destinationPath)) { mkdir($destinationPath, 0755, true); }
+        $request->file('imagen')->move($destinationPath, $imageName);
         $updateData['imagen'] = $imageName;
     }
 
