@@ -280,26 +280,45 @@ Route::middleware('auth:sanctum')->put('/actualizar-mascota/{id}', function(Requ
 
     $request->validate([
         'nombre' => 'nullable|string|max:100',
+        'especie' => 'nullable|string|max:100',
         'raza' => 'nullable|string|max:100',
         'fecha_nacimiento' => 'nullable|date',
         'sexo' => 'nullable|string|in:M,F,O',
         'peso' => 'nullable|numeric|min:0|max:200',
-        'imagen' => 'nullable|string|max:100',
+        // ahora permitimos subir imagen como en register-mascota
+        'imagen' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
     ]);
 
-    $mascota->update($request->only([
+    // Datos a actualizar (sin imagen por ahora)
+    $updateData = $request->only([
         'nombre',
         'especie',
         'raza',
         'fecha_nacimiento',
         'sexo',
         'peso',
-        'imagen'
-    ]));
+    ]);
+
+    // Procesar imagen si viene en el request (multipart/form-data)
+    if ($request->hasFile('imagen')) {
+        $extension = $request->file('imagen')->getClientOriginalExtension();
+        $imageName = time() . '_' . uniqid() . '.' . $extension; // nombre único
+        $destinationPath = public_path('uploads/mascotas');
+        if (!file_exists($destinationPath)) {
+            mkdir($destinationPath, 0755, true);
+        }
+        $request->file('imagen')->move($destinationPath, $imageName);
+        // Guardamos solo el nombre del archivo en BD (consistente con register-mascota)
+        $updateData['imagen'] = $imageName;
+    }
+
+    $mascota->update($updateData);
 
     return response()->json([
         'message' => 'Mascota actualizada exitosamente',
-        'data' => $mascota
+        'data' => array_merge($mascota->toArray(), [
+            'imagen_url' => $mascota->imagen ? asset('uploads/mascotas/' . $mascota->imagen) : null,
+        ])
     ]);
 });
 
