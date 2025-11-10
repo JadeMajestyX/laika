@@ -98,7 +98,7 @@ Route::post('/register-mascota', function(Request $request) {
     // 🔹 Validar los datos recibidos
     $request->validate([
         'nombre' => 'required|string|max:100',
-        'especie' => 'required|in:Perro,Gato,Otro',
+        'especie' => 'required|string|max:100',
         'raza' => 'nullable|string|max:100',
         'fecha_nacimiento' => 'required|date',
         'sexo' => 'required|in:M,F,O',
