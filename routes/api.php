@@ -539,7 +539,40 @@ Route::post('/password/forgot', function (Request $request) {
     ]);
 });
 
-// 2. Restablecer contraseña usando código
+// 2. Verificar código (paso intermedio antes de permitir establecer la nueva contraseña)
+Route::post('/password/verify-code', function (Request $request) {
+    $request->validate([
+        'email' => 'required|email',
+        'code' => 'required|string',
+    ]);
+
+    $user = User::where('email', $request->email)->first();
+    if (!$user) {
+        return response()->json(['message' => 'Datos inválidos'], 422);
+    }
+
+    $record = DB::table('password_reset_tokens')
+        ->where('email', $user->email)
+        ->where('token', $request->code)
+        ->first();
+
+    if (!$record) {
+        return response()->json(['message' => 'Código inválido'], 422);
+    }
+
+    $created = \Carbon\Carbon::parse($record->created_at);
+    if ($created->addMinutes(15)->isPast()) {
+        DB::table('password_reset_tokens')->where('email', $user->email)->delete();
+        return response()->json(['message' => 'Código expirado'], 422);
+    }
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Código válido'
+    ]);
+});
+
+// 3. Restablecer contraseña usando código
 Route::post('/password/reset', function (Request $request) {
     $request->validate([
         'email' => 'required|email',
