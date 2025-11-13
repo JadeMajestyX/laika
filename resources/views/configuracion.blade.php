@@ -43,6 +43,8 @@
               <a href="#" data-target="panel-clinica" class="list-group-item list-group-item-action mb-2"><i class="bi bi-hospital me-2"></i> Información de la clínica</a>
               <a href="#" data-target="panel-horario" class="list-group-item list-group-item-action mb-2"><i class="bi bi-clock me-2"></i> Horario de atención</a>
               <a href="#" data-target="panel-notificaciones" class="list-group-item list-group-item-action active"><i class="bi bi-bell me-2"></i> Notificaciones</a>
+              <a href="#" data-target="panel-sistema" class="list-group-item list-group-item-action mb-2"><i class="bi bi-sliders me-2"></i> Preferencias</a>
+
             </div>
           </div>
         </div>
@@ -90,7 +92,28 @@
                   <thead>
                     <tr><th>Día</th><th>Apertura</th><th>Cierre</th><th>Activo</th></tr>
                   </thead>
-                  <tbody id="tablaHorario"></tbody>
+                <tbody id="tablaHorario">
+                  @foreach($horarios as $horario)
+                    <tr data-id="{{ $horario->id }}">
+                      <td style="width:180px;">{{ ucfirst($horario->dia_semana) }}</td>
+                      <td style="width:160px;">
+                        <input type="time" name="hora_inicio" class="form-control hora-input" value="{{ \Carbon\Carbon::parse($horario->hora_inicio)->format('H:i') }}" />
+                      </td>
+                      <td style="width:160px;">
+                        <input type="time" name="hora_fin" class="form-control hora-input" value="{{ \Carbon\Carbon::parse($horario->hora_fin)->format('H:i') }}" />
+                      </td>
+                      <td style="width:80px;">
+                        @php
+                          $activo = property_exists($horario, 'activo') ? (bool)$horario->activo : true;
+                        @endphp
+                        <div class="form-check form-switch">
+                          <input class="form-check-input activo-checkbox" type="checkbox" {{ $activo ? 'checked' : '' }}>
+                        </div>
+                      </td>
+                    </tr>
+                  @endforeach
+                </tbody>
+
                 </table>
               </div>
               <button type="submit" class="btn btn-primary"><i class="bi bi-save me-2"></i>Guardar horario</button>
@@ -136,6 +159,7 @@
             </form>
           </div>
 
+          
           <div id="alertPlaceholder" class="mt-3"></div>
         </div>
       </div>
