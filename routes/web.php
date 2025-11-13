@@ -3,6 +3,7 @@
 // use App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Admin\ActividadController;
+use App\Http\Controllers\CitaController;
 use App\Http\Controllers\ConfiguracionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
@@ -112,7 +113,8 @@ Route::get('/login', function () {
 
 
 
-
+//ruta para la vista de agendar citas
+Route::get('/agendar-cita', CitaController::class . '@index')->name('agendar.cita');
 
 
 

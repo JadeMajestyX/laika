@@ -114,7 +114,7 @@
           <li class="nav-item"><a class="nav-link" href="#equipo">Equipo</a></li>
           <li class="nav-item"><a class="nav-link" href="#contacto">Contacto</a></li>
         </ul>
-        <a href="#contacto" class="btn btn-light ms-lg-3 fw-semibold">Agendar cita</a>
+        <a href="{{ route('agendar.cita') }}" class="btn btn-light ms-lg-3 fw-semibold">Agendar cita</a>
       </div>
     </div>
   </nav>
@@ -247,6 +247,13 @@
         {{-- <i class="bi bi-google-play"></i> Google Play --}}
         Descargar App
       </a>
+    <div class="hero-content text-white">
+      <h1 class="display-4 fw-bold mb-3">Cuidamos lo que más amas ❤️</h1>
+      <p class="lead mb-4">En Laika, tu mascota recibe atención profesional, cariño y tecnología avanzada para su bienestar.</p>
+      <a href="#servicios" class="btn btn-light btn-lg fw-semibold">Conoce nuestros servicios</a>
+    </div>
+  </section>
+
       {{-- <a href="#" class="btn btn-dark btn-lg d-flex align-items-center gap-2">
         <i class="bi bi-apple"></i> App Store
       </a> --}}
@@ -264,7 +271,7 @@
     <div class="container">
       <h2 class="fw-bold mb-3">¿Listo para agendar una cita?</h2>
       <p class="mb-4">Tu mascota merece lo mejor. Agenda hoy mismo con nuestros expertos veterinarios.</p>
-      <a href="#contacto" class="btn btn-light fw-semibold">Agendar Cita</a>
+      <a href="{{ route('agendar.cita') }}" class="btn btn-light fw-semibold">Agendar Cita</a>
     </div>
   </section>
 
@@ -302,3 +309,26 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
