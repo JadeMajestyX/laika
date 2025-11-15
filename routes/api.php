@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use App\Notifications\ResetPasswordCodeNotification;
+use App\Notifications\WelcomeNotification;
 
 Route::post('/login', function(Request $request){
     $request->validate([
@@ -65,6 +66,14 @@ Route::post('/register', function(Request $request){
         'imagen_perfil' => $request->imagen_perfil,
         'password' => Hash::make($request->password)
     ]);
+
+    // Enviar correo de bienvenida
+    try {
+        $user->notify(new WelcomeNotification());
+    } catch (\Throwable $e) {
+        // Evitar que un fallo de correo rompa el registro
+        \Log::warning('Fallo al enviar correo de bienvenida: ' . $e->getMessage());
+    }
 
     $token = $user->createToken('auth_token')->plainTextToken;
 
