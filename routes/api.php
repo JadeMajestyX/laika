@@ -388,6 +388,25 @@ Route::middleware('auth:sanctum')->get('/mediciones-dispensador/{id}', function(
 });
 
 
+//mediciones por rango de fechas
+Route::middleware('auth:sanctum')->get('/mediciones-rango/{id}', function(Request $request, $id){
+    $dispensador = Dispensador::find($id);
+    if (!$dispensador) {
+        return response()->json(['message' => 'Dispensador no encontrado'], 404);
+    }
+    $startDate = $request->query('start_date');
+    $endDate = $request->query('end_date');
+    $mediciones = Medicion::where('dispensador_id', $dispensador->id)
+        ->whereBetween('created_at', [$startDate, $endDate])
+        ->orderBy('created_at', 'desc')
+        ->get();
+    return response()->json([
+        'success' => true,
+        'mediciones' => $mediciones
+    ]);
+});
+
+
 //obtener citas de una mascota
 Route::middleware('auth:sanctum')->get('/citas-mascota/{id}', function(Request $request, $id){
     $mascota = Mascota::find($id);

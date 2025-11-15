@@ -18,6 +18,7 @@ use App\Http\Controllers\SearchController;
 
 
 
+
 Route::get('/', function () {
     return view('welcome');
 })->name('welcome');
@@ -74,6 +75,7 @@ Route::middleware(EnsureUserHasRole::class.':A')->group(function () {
     Route::get('/reportes/citas/export/pdf', [ReporteController::class, 'exportCitasPdf'])->name('reportes.citas.export.pdf');
     Route::get('/inventario', [App\Http\Controllers\InventarioController::class, 'index'])->name('inventario');
     Route::get('/configuracion', [ConfiguracionController::class, 'index'])->name('configuracion');
+    Route::put('/configuracion/horarios', [ConfiguracionController::class, 'updateHorarios'])->name('configuracion.horarios.update');
 
     //Route::get('/buscar', [SearchController::class, 'buscar'])->name('buscar');
 
