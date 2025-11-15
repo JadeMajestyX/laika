@@ -82,7 +82,7 @@ Route::post('/register', function(Request $request){
        'token_type' => 'Bearer',
        'user' => $user
     ]);
-});
+})->middleware('throttle:3,1');
 
 Route::post('/mediciones', function(Request $request){
     $request->validate([
