@@ -237,6 +237,44 @@ Route::get('/estado-dispensador', function (Request $request) {
 });
 
 
+// calibrar sensor (misma lógica que estado-dispensador pero usando el campo 'calibrar')
+Route::get('/calibrar', function (Request $request) {
+    $codigo = $request->query('codigo');
+
+    if (!$codigo) {
+        return response()->json(['success' => false, 'message' => 'Código no proporcionado'], 400);
+    }
+
+    // Buscar el dispensador por su código
+    $dispensador = CodigoDispensador::where('codigo', $codigo)->first();
+
+    if (!$dispensador) {
+        return response()->json(['success' => false, 'message' => 'Dispensador no encontrado'], 404);
+    }
+
+    // Buscar o crear el estado con calibrar=false por defecto
+    $statuss = Status::firstOrCreate(
+        ['dispensador_id' => $dispensador->id],
+        ['status' => false, 'calibrar' => false]
+    );
+
+    // Guardamos el estado actual de calibrar antes de modificarlo
+    $calibrarActual = (bool) $statuss->calibrar;
+
+    // Si estaba en true, cambiarlo a false y guardar en BD
+    if ($calibrarActual === true) {
+        $statuss->calibrar = false;
+        $statuss->save();
+    }
+
+    return response()->json([
+        'success' => true,
+        'calibrar' => $calibrarActual ? 1 : 0,
+        'message' => $calibrarActual ? 'Calibrar cambiado a false' : 'Calibrar ya era false'
+    ]);
+});
+
+
 //activar dispensador
 Route::get('/activar-dispensador', function (Request $request) {
     $codigo = $request->query('codigo');
