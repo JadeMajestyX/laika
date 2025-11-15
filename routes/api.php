@@ -14,6 +14,8 @@ use App\Models\Status;
 use NunoMaduro\Collision\Adapters\Phpunit\State;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use App\Notifications\ResetPasswordCodeNotification;
 use App\Notifications\WelcomeNotification;
@@ -43,6 +45,16 @@ Route::post('/login', function(Request $request){
 
 
 Route::post('/register', function(Request $request){
+    // Soporte de Idempotency-Key para evitar doble envío desde el cliente (p. ej. reintentos de red)
+    $idempotencyKey = $request->header('Idempotency-Key');
+    if ($idempotencyKey) {
+        $cacheKey = 'idemp:register:' . $idempotencyKey;
+        if (Cache::has($cacheKey)) {
+            // Devolver la misma respuesta exitosa previamente generada
+            return response()->json(Cache::get($cacheKey));
+        }
+    }
+
     $request->validate([
         'nombre' => 'required|string|max:100',
         'apellido_paterno' => 'required|string|max:100',
@@ -72,17 +84,24 @@ Route::post('/register', function(Request $request){
         $user->notify(new WelcomeNotification());
     } catch (\Throwable $e) {
         // Evitar que un fallo de correo rompa el registro
-        \Log::warning('Fallo al enviar correo de bienvenida: ' . $e->getMessage());
+        Log::warning('Fallo al enviar correo de bienvenida: ' . $e->getMessage());
     }
 
     $token = $user->createToken('auth_token')->plainTextToken;
 
-    return response()->json([
-       'access_token' => $token,
-       'token_type' => 'Bearer',
-       'user' => $user
-    ]);
-})->middleware('throttle:3,1');
+    $responsePayload = [
+        'access_token' => $token,
+        'token_type' => 'Bearer',
+        'user' => $user
+    ];
+
+    // Guardar respuesta en caché si se envió Idempotency-Key (válido por 10 min)
+    if (isset($cacheKey)) {
+        Cache::put($cacheKey, $responsePayload, now()->addMinutes(10));
+    }
+
+    return response()->json($responsePayload);
+})->middleware('throttle:1,10');
 
 Route::post('/mediciones', function(Request $request){
     $request->validate([
