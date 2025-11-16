@@ -139,7 +139,7 @@
 
         <h3>2. Datos que recopilamos</h3>
         <ul>
-          <li><strong>Datos de usuario:</strong> nombre completo, correo electrónico, teléfono y contraseña (almacenada cifrada).</li>
+          <li><strong>Datos de usuario:</strong> nombre completo, correo electrónico, fecha de nacimiento, imagen de perfil, teléfono y contraseña (almacenada cifrada).</li>
           <li><strong>Datos de mascotas:</strong> nombre, especie, edad, peso, historial médico y registros de vacunación.</li>
           <li><strong>Datos del dispensador:</strong> porciones dispensadas, horarios programados y estado de conexión.</li>
         </ul>
