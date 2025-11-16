@@ -17,4 +17,8 @@ class Horario extends Model
     ];
 
     public $timestamps = true;
+     public function clinica()
+    {
+        return $this->belongsTo(\App\Models\Clinica::class, 'clinica_id');
+    }
 }

@@ -85,40 +85,47 @@
           </div>
 
           <div id="panel-horario" class="config-panel card shadow-sm p-4 d-none">
-            <h4 class="mb-4">Horario de atención</h4>
-            <form id="formHorario">
-              <div class="table-responsive">
-                <table class="table align-middle">
-                  <thead>
-                    <tr><th>Día</th><th>Apertura</th><th>Cierre</th><th>Activo</th></tr>
-                  </thead>
-                <tbody id="tablaHorario">
-                  @foreach($horarios as $horario)
-                    <tr data-id="{{ $horario->id }}">
-                      <td style="width:180px;">{{ ucfirst($horario->dia_semana) }}</td>
-                      <td style="width:160px;">
-                        <input type="time" name="hora_inicio" class="form-control hora-input" value="{{ \Carbon\Carbon::parse($horario->hora_inicio)->format('H:i') }}" />
-                      </td>
-                      <td style="width:160px;">
-                        <input type="time" name="hora_fin" class="form-control hora-input" value="{{ \Carbon\Carbon::parse($horario->hora_fin)->format('H:i') }}" />
-                      </td>
-                      <td style="width:80px;">
-                        @php
-                          $activo = property_exists($horario, 'activo') ? (bool)$horario->activo : true;
-                        @endphp
-                        <div class="form-check form-switch">
-                          <input class="form-check-input activo-checkbox" type="checkbox" {{ $activo ? 'checked' : '' }}>
-                        </div>
-                      </td>
-                    </tr>
-                  @endforeach
-                </tbody>
+              <h4 class="mb-4">Horario de atención</h4>
 
-                </table>
-              </div>
-              <button type="submit" class="btn btn-primary"><i class="bi bi-save me-2"></i>Guardar horario</button>
-            </form>
-          </div>
+              <form id="formHorario" method="POST" action="{{ route('configuracion.horarios.update') }}">
+                @csrf
+                @method('PUT')
+
+                <div class="table-responsive">
+                  <table class="table align-middle">
+                    <thead>
+                      <tr><th>Día</th><th>Apertura</th><th>Cierre</th><th>Activo</th></tr>
+                    </thead>
+                    <tbody id="tablaHorario">
+                      @if($horarios->isEmpty())
+                        <tr><td colspan="4" class="text-center text-muted">No hay horarios configurados.</td></tr>
+                      @else
+                        @foreach($horarios as $horario)
+                          <tr data-id="{{ $horario->id }}">
+                            <td style="width:180px;">{{ ucfirst($horario->dia_semana) }}</td>
+                            <td style="width:160px;">
+                              <input type="time" name="horarios[{{ $horario->id }}][hora_inicio]" class="form-control hora-input" value="{{ \Carbon\Carbon::parse($horario->hora_inicio)->format('H:i') }}" />
+                            </td>
+                            <td style="width:160px;">
+                              <input type="time" name="horarios[{{ $horario->id }}][hora_fin]" class="form-control hora-input" value="{{ \Carbon\Carbon::parse($horario->hora_fin)->format('H:i') }}" />
+                            </td>
+                            <td style="width:80px;">
+                              <div class="form-check form-switch">
+                                <input class="form-check-input activo-checkbox" type="checkbox" name="horarios[{{ $horario->id }}][activo]" value="1" {{ $horario->activo ? 'checked' : '' }}>
+                              </div>
+                            </td>
+                          </tr>
+                        @endforeach
+                      @endif
+                    </tbody>
+                  </table>
+                </div>
+
+                <button type="submit" class="btn btn-primary"><i class="bi bi-save me-2"></i>Guardar horario</button>
+              </form>
+            </div>
+
+
 
           <div id="panel-notificaciones" class="config-panel card shadow-sm p-4">
             <h4 class="mb-4">Configuración de notificaciones</h4>

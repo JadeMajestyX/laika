@@ -37,4 +37,9 @@ class Clinica extends Model
     {
         return $this->hasMany(Cita::class);
     }
+
+    public function horarios()
+    {
+    return $this->hasMany(\App\Models\Horario::class, 'clinica_id');
+    }
 }

@@ -225,6 +225,7 @@
       setupTheme();
     });
   </script>
-  @stack('scripts')
+  @stack('scripts') 
+  @yield('scripts')
 </body>
 </html>
