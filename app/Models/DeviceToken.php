@@ -15,7 +15,11 @@ class DeviceToken extends Model
         'user_id', 'token', 'platform', 'device_id', 'app_version', 'lang', 'last_seen_at'
     ];
 
-    protected $dates = ['last_seen_at', 'created_at', 'updated_at'];
+    protected $casts = [
+        'last_seen_at' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
 
     public function user()
     {
