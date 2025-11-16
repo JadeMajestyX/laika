@@ -46,6 +46,8 @@ Route::middleware(EnsureUserHasRole::class.':A')->group(function () {
     Route::get('/usuarios/{id}/editar', [UserController::class, 'edit'])->name('usuarios.edit');
     Route::put('/usuarios/{id}', [UserController::class, 'update'])->name('usuarios.update');
     Route::delete('/usuarios/{id}', [UserController::class, 'destroy'])->name('usuarios.destroy');
+    // JSON para SPA clientes
+    Route::get('/usuarios/json', [UserController::class, 'getUsuariosJson'])->name('usuarios.json');
     Route::get('/citas', [App\Http\Controllers\CitaController::class, 'index'])->name('citas');
     // Endpoint JSON paginado para citas (hoy por defecto, soporte búsqueda en pasadas)
     Route::get('/citas/json', [App\Http\Controllers\CitaController::class, 'getCitasJson'])->name('citas.json');

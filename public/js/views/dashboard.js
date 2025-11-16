@@ -291,6 +291,28 @@ function renderSkeleton(section, rows = 5) {
     return;
   }
 
+  if (section === 'clientes') {
+    const tbody = document.getElementById('clientesBody');
+    const pag = document.getElementById('clientesPagination');
+    if (tbody) {
+      tbody.innerHTML = '';
+      for (let i = 0; i < rows; i++) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><div class="placeholder-glow"><span class="placeholder col-6"></span></div></td>
+          <td><div class="placeholder-glow"><span class="placeholder col-5"></span></div></td>
+          <td><div class="placeholder-glow"><span class="placeholder col-3"></span></div></td>
+          <td><div class="placeholder-glow"><span class="placeholder col-2"></span></div></td>
+          <td><div class="placeholder-glow"><span class="placeholder col-6"></span></div></td>
+          <td><div class="placeholder-glow"><span class="placeholder col-4"></span></div></td>
+          <td class="text-center"><div class="placeholder-glow"><span class="placeholder col-2"></span></div></td>`;
+        tbody.appendChild(tr);
+      }
+    }
+    if (pag) pag.innerHTML = '';
+    return;
+  }
+
   if (section === 'home') {
     const chart = document.getElementById('appointmentsChart');
     const actividad = document.getElementById('actividadReciente');
@@ -334,6 +356,93 @@ function fetchMascotasAndRender(page = 1, perPage = 10) {
       renderMascotasPagination(meta);
     })
     .catch((err) => console.error('Error al cargar mascotas:', err));
+}
+
+// ---- Clientes: helpers y fetch ----
+function renderClientesTable(items) {
+  const tbody = document.getElementById('clientesBody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  const list = Array.isArray(items) ? items : (Array.isArray(items.data) ? items.data : []);
+  if (list.length === 0) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td colspan="7" class="text-center text-body-secondary py-4">No hay clientes</td>`;
+    tbody.appendChild(tr);
+    return;
+  }
+  const csrf = getCsrfToken();
+  list.forEach(u => {
+    const apellido = [u.apellido_paterno, u.apellido_materno].filter(Boolean).join(' ');
+    const generoMap = { M: 'Masculino', F: 'Femenino', O: 'Otro' };
+    const genero = generoMap[u.genero] || (u.genero || '-');
+    const edad = formatAge(u.fecha_nacimiento);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${u.nombre ?? '-'}</td>
+      <td>${apellido || '-'}</td>
+      <td>${genero}</td>
+      <td>${edad}</td>
+      <td>${u.email ?? '-'}</td>
+      <td>${u.telefono ?? '-'}</td>
+      <td class="text-center">
+        <div class="d-inline-flex gap-1">
+          <a href="/usuarios/${u.id}" class="btn btn-warning btn-sm" data-bs-toggle="tooltip" title="Ver"><i class="bi bi-eye"></i></a>
+          <a href="/usuarios/${u.id}/editar" class="btn btn-info btn-sm text-white" data-bs-toggle="tooltip" title="Editar"><i class="bi bi-pencil-square"></i></a>
+          <form method="POST" action="/usuarios/${u.id}" onsubmit="return confirm('¿Seguro que deseas eliminar este usuario?')">
+            <input type="hidden" name="_method" value="DELETE" />
+            <input type="hidden" name="_token" value="${csrf}" />
+            <button type="submit" class="btn btn-danger btn-sm" data-bs-toggle="tooltip" title="Eliminar"><i class="bi bi-trash"></i></button>
+          </form>
+        </div>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderClientesPagination(meta) {
+  const pag = document.getElementById('clientesPagination');
+  if (!pag) return;
+  pag.innerHTML = '';
+  if (!meta || meta.last_page <= 1) return;
+  const ul = document.createElement('ul');
+  ul.className = 'pagination m-0';
+  const addItem = (label, page, disabled = false, active = false) => {
+    const li = document.createElement('li');
+    li.className = `page-item ${disabled ? 'disabled' : ''} ${active ? 'active' : ''}`;
+    const a = document.createElement('a');
+    a.className = 'page-link';
+    a.href = '#';
+    a.textContent = label;
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (!disabled && !active) fetchClientesAndRender(page);
+    });
+    li.appendChild(a);
+    ul.appendChild(li);
+  };
+  addItem('«', meta.current_page - 1, meta.current_page === 1);
+  for (let p = 1; p <= meta.last_page; p++) addItem(String(p), p, false, p === meta.current_page);
+  addItem('»', meta.current_page + 1, meta.current_page === meta.last_page);
+  pag.appendChild(ul);
+}
+
+function fetchClientesAndRender(page = 1, perPage = 10) {
+  renderSkeleton('clientes', 6);
+  const q = document.getElementById('clientesSearch')?.value?.trim() || '';
+  const scope = document.querySelector('input[name="clientesScope"]:checked')?.value || 'today';
+  const from = document.getElementById('clientesFrom')?.value || '';
+  const to = document.getElementById('clientesTo')?.value || '';
+  const params = new URLSearchParams({ page: String(page), per_page: String(perPage), scope });
+  if (q) params.set('q', q);
+  if (from) params.set('from', from);
+  if (to) params.set('to', to);
+  fetch(`/usuarios/json?${params.toString()}`, { headers: { Accept: 'application/json' } })
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(data => {
+      renderClientesTable(data);
+      renderClientesPagination({ current_page: data.current_page, last_page: data.last_page });
+    })
+    .catch(err => console.error('Error al cargar clientes:', err));
 }
 
 function markActive(section) {
@@ -472,23 +581,23 @@ function renderSection(section, data) {
         <div class="d-flex flex-column flex-md-row gap-2 justify-content-between align-items-md-center mb-3">
           <div class="input-group" style="max-width: 420px;">
             <span class="input-group-text"><i class="bi bi-search"></i></span>
-            <input id="mascotasSearch" type="text" class="form-control" placeholder="Buscar por nombre">
-            <button id="mascotasSearchBtn" class="btn btn-primary">Buscar</button>
+            <input id="clientesSearch" type="text" class="form-control" placeholder="Buscar por nombre o apellido">
+            <button id="clientesSearchBtn" class="btn btn-primary">Buscar</button>
           </div>
 
           <div class="d-flex flex-column flex-md-row gap-2">
             <div class="btn-group" role="group" aria-label="ScopeMascotas">
-              <input type="radio" class="btn-check" name="mascotasScope" id="mScopeToday" autocomplete="off" value="today" checked>
-              <label class="btn btn-outline-secondary" for="mScopeToday">Registradas hoy</label>
-              <input type="radio" class="btn-check" name="mascotasScope" id="mScopePast" autocomplete="off" value="past">
-              <label class="btn btn-outline-secondary" for="mScopePast">Anteriores</label>
+              <input type="radio" class="btn-check" name="clientesScope" id="cScopeToday" autocomplete="off" value="today" checked>
+              <label class="btn btn-outline-secondary" for="cScopeToday">Registrados hoy</label>
+              <input type="radio" class="btn-check" name="clientesScope" id="cScopePast" autocomplete="off" value="past">
+              <label class="btn btn-outline-secondary" for="cScopePast">Anteriores</label>
             </div>
 
             <div class="input-group" style="max-width: 360px;">
               <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
-              <input type="date" id="mascotasFrom" class="form-control" placeholder="Desde">
-              <input type="date" id="mascotasTo" class="form-control" placeholder="Hasta">
-              <button id="mascotasRangeBtn" class="btn btn-outline-primary">Filtrar</button>
+              <input type="date" id="clientesFrom" class="form-control" placeholder="Desde">
+              <input type="date" id="clientesTo" class="form-control" placeholder="Hasta">
+              <button id="clientesRangeBtn" class="btn btn-outline-primary">Filtrar</button>
             </div>
           </div>
         </div>
@@ -506,15 +615,25 @@ function renderSection(section, data) {
                 <th class="text-center">Acciones</th>
               </tr>
             </thead>
-            <tbody id="mascotasBody"></tbody>
+            <tbody id="clientesBody"></tbody>
           </table>
         </div>
 
-        <div id="mascotasPagination" class="d-flex justify-content-center my-3"></div>
+        <div id="clientesPagination" class="d-flex justify-content-center my-3"></div>
       </div>
     </div>
 
     `;
+    // eventos y carga inicial clientes
+    const cSearchBtn = document.getElementById('clientesSearchBtn');
+    const cRangeBtn = document.getElementById('clientesRangeBtn');
+    const cSearchInput = document.getElementById('clientesSearch');
+    const cRadios = document.querySelectorAll('input[name="clientesScope"]');
+    cSearchBtn?.addEventListener('click', () => fetchClientesAndRender(1));
+    cRangeBtn?.addEventListener('click', () => fetchClientesAndRender(1));
+    cSearchInput?.addEventListener('keydown', (e) => { if (e.key === 'Enter') fetchClientesAndRender(1); });
+    cRadios.forEach(r => r.addEventListener('change', () => fetchClientesAndRender(1)));
+    fetchClientesAndRender();
   } else if (section === 'mascotas') {
     mainContent.innerHTML = `
     <div class="card shadow-sm mt-4">
@@ -869,6 +988,12 @@ function initNavHandlers() {
         return;
       }
 
+      if (section === 'clientes') {
+        renderSection('clientes');
+        history.pushState({ section: 'clientes' }, '', '/dashboard/clientes');
+        return;
+      }
+
       if (section === 'citas') {
         renderSection('citas');
         fetchCitasAndRender();
@@ -904,6 +1029,9 @@ function handlePopState() {
     } else if (section === 'citas') {
       renderSection('citas');
       fetchCitasAndRender();
+    } else if (section === 'clientes') {
+      renderSection('clientes');
+      fetchClientesAndRender();
     } else {
       renderSection(section);
     }
