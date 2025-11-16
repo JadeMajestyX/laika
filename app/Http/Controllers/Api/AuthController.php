@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Notifications\WelcomeNotification;
 use Google_Client;
 use Illuminate\Support\Facades\Hash;
 
@@ -27,9 +28,6 @@ class AuthController extends Controller
             $user = User::where('email', $email)->first();
 
             if (!$user) {
-
-         
-
                 // Crear usuario solo si no existe
                 $user = User::create([
                     'email' => $email,
@@ -42,6 +40,13 @@ class AuthController extends Controller
                     'telefono' => null,
                     'password' => Hash::make(str()->random(16)),
                 ]);
+
+                // Enviar correo de bienvenida
+                try {
+                    $user->notify(new WelcomeNotification());
+                } catch (\Throwable $e) {
+                    // Evitar que un fallo de correo bloquee el login
+                }
             }
 
             // Generar token
