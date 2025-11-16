@@ -549,11 +549,10 @@ function renderTrabajadoresPagination(meta) {
 function fetchTrabajadoresAndRender(page = 1, perPage = 10) {
   renderSkeleton('trabajadores', 6);
   const q = document.getElementById('trabajadoresSearch')?.value?.trim() || '';
-  const scope = document.querySelector('input[name="trabajadoresScope"]:checked')?.value || 'today';
   const from = document.getElementById('trabajadoresFrom')?.value || '';
   const to = document.getElementById('trabajadoresTo')?.value || '';
   const rol = document.getElementById('trabajadoresRol')?.value || '';
-  const params = new URLSearchParams({ page: String(page), per_page: String(perPage), scope });
+  const params = new URLSearchParams({ page: String(page), per_page: String(perPage) });
   if (q) params.set('q', q);
   if (from) params.set('from', from);
   if (to) params.set('to', to);
@@ -919,13 +918,6 @@ function renderSection(section, data) {
               </select>
             </div>
 
-            <div class="btn-group" role="group" aria-label="ScopeTrabajadores">
-              <input type="radio" class="btn-check" name="trabajadoresScope" id="tScopeToday" autocomplete="off" value="today" checked>
-              <label class="btn btn-outline-secondary" for="tScopeToday">Ingresados hoy</label>
-              <input type="radio" class="btn-check" name="trabajadoresScope" id="tScopePast" autocomplete="off" value="past">
-              <label class="btn btn-outline-secondary" for="tScopePast">Anteriores</label>
-            </div>
-
             <div class="input-group" style="max-width: 360px;">
               <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
               <input type="date" id="trabajadoresFrom" class="form-control" placeholder="Desde">
@@ -960,12 +952,10 @@ function renderSection(section, data) {
     const tSearchBtn = document.getElementById('trabajadoresSearchBtn');
     const tRangeBtn = document.getElementById('trabajadoresRangeBtn');
     const tSearchInput = document.getElementById('trabajadoresSearch');
-    const tRadios = document.querySelectorAll('input[name="trabajadoresScope"]');
     const tRolSelect = document.getElementById('trabajadoresRol');
     tSearchBtn?.addEventListener('click', () => fetchTrabajadoresAndRender(1));
     tRangeBtn?.addEventListener('click', () => fetchTrabajadoresAndRender(1));
     tSearchInput?.addEventListener('keydown', (e) => { if (e.key === 'Enter') fetchTrabajadoresAndRender(1); });
-    tRadios.forEach(r => r.addEventListener('change', () => fetchTrabajadoresAndRender(1)));
     tRolSelect?.addEventListener('change', () => fetchTrabajadoresAndRender(1));
     fetchTrabajadoresAndRender();
   } else if (section === 'reportes') {

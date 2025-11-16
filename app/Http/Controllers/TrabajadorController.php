@@ -101,8 +101,9 @@ class TrabajadorController extends Controller
             });
         }
 
+        // Alcance por fecha (opcional). Si se envía 'today' o 'past' se filtra, de lo contrario se listan todos.
         $today = now()->toDateString();
-        $scope = $request->input('scope', 'today');
+        $scope = $request->input('scope', 'all');
         if ($scope === 'today') {
             $query->whereDate('created_at', $today);
         } elseif ($scope === 'past') {
