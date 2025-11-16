@@ -19,6 +19,8 @@ use App\Notifications\ResetPasswordCodeNotification;
 use App\Notifications\WelcomeNotification;
 use App\Support\ActivityLogger;
 use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Api\DeviceTokenController;
+use App\Http\Controllers\Api\NotificationsController;
 
 Route::post('/login', function(Request $request){
     $request->validate([
@@ -220,6 +222,13 @@ Route::middleware('auth:sanctum')->get('/mis-dispensadores', function(Request $r
         'dispensadores' => $dispensadores
     ]);
 });
+
+// Device tokens: registrar/actualizar token del dispositivo del usuario
+Route::middleware('auth:sanctum')->post('/device-tokens', [DeviceTokenController::class, 'store']);
+Route::middleware('auth:sanctum')->delete('/device-tokens/{token}', [DeviceTokenController::class, 'destroy']);
+
+// Internal push endpoint: enviar notificación (user_id o topic). Protegido por HEADER X-INTERNAL-KEY (env INTERNAL_PUSH_KEY) o puede quedar abierto si se configura.
+Route::post('/notifications/push', [NotificationsController::class, 'push']);
 
 Route::get('/estado-dispensador', function (Request $request) {
     $codigo = $request->query('codigo');
