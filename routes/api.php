@@ -793,3 +793,40 @@ Route::middleware('auth:sanctum')->put('/perfil', function(Request $request) {
         'user' => $user
     ]);
 });
+
+
+//eliminar la cuenta de usuario
+Route::middleware('auth:sanctum')->delete('/account', function(Request $request) {
+    $request->validate([
+        'password' => 'required|string'
+    ]);
+
+    $user = $request->user();
+
+    // Verificar contraseña actual
+    if(!Hash::check($request->password, $user->password)) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Contraseña incorrecta'
+        ], 403);
+    }
+
+    // Log de actividad antes de eliminar
+    ActivityLogger::log($request, 'Eliminar cuenta', 'User', $user->id, [
+        'email' => $user->email,
+    ], $user->id);
+
+    // Revocar todos los tokens (logout global)
+    try { $user->tokens()->delete(); } catch(\Throwable $e) {}
+
+    // Limpiar tokens de recuperación de contraseña asociados
+    try { DB::table('password_reset_tokens')->where('email', $user->email)->delete(); } catch(\Throwable $e) {}
+
+    // Eliminar (destruir) usuario definitivamente
+    $user->delete();
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Cuenta eliminada correctamente'
+    ], 200);
+});
