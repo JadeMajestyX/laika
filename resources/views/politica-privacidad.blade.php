@@ -172,25 +172,19 @@
           o anonimizarán de forma segura.
         </p>
 
-        <h3>7. Datos de menores</h3>
-        <p>
-          Si el titular de los datos es menor de edad, el uso de la aplicación y el registro deben realizarse con el consentimiento
-          y supervisión de un padre o tutor.
-        </p>
-
-        <h3>8. Cambios en la Política</h3>
+        <h3>7. Cambios en la Política</h3>
         <p>
           Esta Política de Privacidad puede actualizarse. Cuando se realicen cambios significativos,
           se notificará a los usuarios mediante la aplicación o correo electrónico con antelación razonable.
         </p>
 
-        <h3>9. Contacto</h3>
+        <h3>8. Contacto</h3>
         <p>
           Para dudas o reportes sobre privacidad, escriba a
           <a href="mailto:help.vetpet@jademajesty.com">help.vetpet@jademajesty.com</a>.
         </p>
 
-        <h3>10. Aceptación</h3>
+        <h3>9. Aceptación</h3>
         <p>
           Al usar la aplicación, el panel administrativo o registrar un dispositivo dispensador de alimento,
           usted acepta los términos de esta Política de Privacidad y consiente el tratamiento de sus datos conforme a lo aquí descrito.
