@@ -62,10 +62,7 @@
 
     @if(!empty($url))
       <p style="text-align:center;">
-<a href="intent://laikaapp#Intent;scheme=laika;package=com.jademajesty.laikaapp;end" 
-   class="btn">
-    Ir a VetCare
-</a>
+<a href="laika://open" class="btn">Ir a VetCare</a>
 
       </p>
     @endif
