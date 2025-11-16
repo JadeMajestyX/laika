@@ -141,100 +141,127 @@
   <!-- Contenido -->
   <section class="py-5">
     <div class="container">
-      <div class="card card-policy p-4 p-md-5">
-        <p><strong>Última actualización: 5 de Noviembre de 2025</strong></p>
-        <h3 class="section-title mb-3">Términos y Condiciones</h3>
+<div class="card card-policy p-4 p-md-5">
+  <p><strong>Última actualización: 5 de Noviembre de 2025</strong></p>
+  <h3 class="section-title mb-3">Términos y Condiciones</h3>
 
-        <p>
-          Laika es un ecosistema tecnológico destinado a mejorar la experiencia de los propietarios de mascotas y
-          optimizar la gestión operativa de clínicas veterinarias. A través de la plataforma, el usuario podrá gestionar
-          citas médicas, consultar historiales clínicos de sus mascotas y controlar remotamente un dispensador
-          inteligente de alimento y agua para animales.
+  <p>
+    Los presentes Términos y Condiciones regulan el uso de la aplicación, sitio web y servicios ofrecidos por <strong>Laika</strong>,
+    un ecosistema tecnológico diseñado para apoyar a propietarios de mascotas y clínicas veterinarias mediante gestión de citas,
+    historial clínico y control de dispensadores inteligentes de alimento y agua.
+  </p>
 
-          Al descargar, instalar o utilizar la aplicación Laika, el usuario acepta plenamente los presentes Términos y
-          Condiciones. Si no está de acuerdo con ellos, deberá abstenerse de utilizar la aplicación y sus servicios.
-        </p>
+  <p>
+    Al descargar, instalar, registrarse o utilizar la aplicación Laika, el usuario acepta plenamente estos Términos y Condiciones.
+    Si no está de acuerdo, deberá abstenerse de utilizar la plataforma.
+  </p>
 
-        <h3>1. Proposito de la aplicación</h3>
-        <p>
-          Laika tiene como finalidad:
-        <ul>
-          <li>Facilitar la gestión de citas veterinarias.</li>
-          <li>Brindar acceso al historial clínico de las mascotas.</li>
-          <li>Permitir la programación y control de un dispensador automático de alimento mediante tecnología IoT</li>
+  <h3>1. Propósito de la Aplicación</h3>
+  <p>Laika tiene como finalidad:</p>
+  <ul>
+    <li>Facilitar la gestión y programación de citas veterinarias.</li>
+    <li>Brindar acceso seguro al historial clínico digital de las mascotas.</li>
+    <li>Permitir la configuración, monitoreo y control de un dispensador automático IoT de alimento y agua.</li>
+    <li>Mejorar la comunicación entre usuarios, veterinarios y clínicas afiliadas.</li>
+  </ul>
 
-        </ul>
-        </p>
+  <h3>2. Uso Autorizado</h3>
+  <p>El usuario se compromete a utilizar la aplicación exclusivamente para fines personales y legales. Queda prohibido:</p>
+  <ul>
+    <li>Manipular, desactivar o modificar indebidamente los dispositivos IoT vinculados al servicio.</li>
+    <li>Intentar vulnerar la seguridad o acceder a información de otros usuarios.</li>
+    <li>Realizar ingeniería inversa, descompilar o copiar la aplicación sin autorización.</li>
+    <li>Utilizar la plataforma para actividades ilícitas, fraudulentas o que afecten a terceros.</li>
+    <li>Crear cuentas falsas o proporcionar información incorrecta.</li>
+  </ul>
 
-        <h3>2. Uso Autorizado</h3>
-        <p>
-          EL usuario se compromete a utilizar la aplicación de forma personal, responsable y conforme a la ley. Queda estrictamente prohibido:
-        </p>
-        <ul>
-          <li>Manipular, alterar o usar de forma indebida los dispositivos IoT vinculados al sistema.</li>
-          <li>Copiar, distribuir, descompilar o modificar la aplicación y sus componentes sin autorización.</li>
-          <li>Usar la plataforma para actividades ilícitas, fraudulentas, malintencionadas o que afecten a terceros.</li>
-          <li>Intentar acceder a información, cuentas o datos de otros usuarios sin autorización.</li>
-        </ul>
+  <h3>3. Obligaciones del Usuario</h3>
+  <ul>
+    <li>Mantener sus credenciales de acceso de forma segura.</li>
+    <li>Proporcionar información real, actualizada y verificable.</li>
+    <li>Notificar al soporte si detecta un acceso no autorizado a su cuenta.</li>
+    <li>No permitir que terceros utilicen su cuenta sin supervisión.</li>
+  </ul>
 
-        <h3>3. Obligaciones del Usuario</h3>
-        <p>El usuario acepta:</p>
-        <ul>
-          <li>Mantener en secreto y proteger sus credenciales de acceso.</li>
-          <li>Proveer información verídica, exacta y actualizada.</li>
-          <li>Asumir responsabilidad por el uso que terceros hagan de su cuenta en caso de compartir voluntariamente sus accesos.</li>
-        </ul>
+  <h3>4. Funcionamiento del Dispensador IoT</h3>
+  <p>El usuario reconoce que:</p>
+  <ul>
+    <li>El dispensador es un dispositivo auxiliar y no reemplaza la supervisión directa hacia la mascota.</li>
+    <li>El funcionamiento depende de la conexión a internet, energía eléctrica y configuración adecuada.</li>
+    <li>Laika no garantiza alimentación automática en caso de fallas externas o saturación de red.</li>
+  </ul>
 
-        <h3>4. Limitación de Responsabilidad</h3>
-        <p>
-          Laika no se hace responsable por:
-        </p>
-        <ul>
-          <li>Fallas técnicas, interrupciones del servicio, errores de conexión o pérdidas de información</li>
-          <li>Daños derivados del uso inadecuado de la aplicación o de los dispositivos IoT asociados.</li>
-          <li>Consecuencias por el uso excesivo del sistema sin intervención humana. <br>
-            El dispensador IoT es un auxiliar tecnológico y no sustituye la atención directa del propietario hacia su mascota.
-          </li>
-        </ul>
+  <h3>5. Limitación de Responsabilidad</h3>
+  <p>Laika no será responsable por:</p>
+  <ul>
+    <li>Fallas técnicas, interrupciones del servicio o pérdida de información ocasionada por factores externos.</li>
+    <li>Daños derivados del mal uso de la aplicación, negligencia del usuario o manipulación indebida del dispensador.</li>
+    <li>Problemas ocasionados por conexión deficiente, dispositivos incompatibles o falta de mantenimiento del usuario.</li>
+  </ul>
 
-        <h3>5. Propiedad Intelectual</h3>
-        <p>Todo contenido, software, código, nombre comercial, logotipos, diseños e interfaces de Laika son propiedad exclusivamente de la empresa. Su uso se otorga únicamente bajo licencia personal, limitada, revocable y no transferible. El usuario no adquiere derechos sobre los activos intelectuales mencionados.</p>
+  <h3>6. Propiedad Intelectual</h3>
+  <p>
+    Todo el contenido de Laika (software, API, diseños, logotipos, modelos IoT, bases de datos, textos e interfaces)
+    es propiedad exclusiva de la empresa. Su uso se otorga bajo una licencia personal, limitada, no exclusiva,
+    revocable y no transferible. No se otorgan derechos distintos a los expresamente permitidos.
+  </p>
 
-        <h3>6. Mo</h3>
-        <p>
-          Los datos personales se conservarán únicamente durante el tiempo necesario para cumplir con los fines
-          descritos,
-          mientras la cuenta esté activa o según lo establecido por la ley. Una vez cumplido el plazo, los datos se
-          eliminarán
-          o anonimizarán de forma segura.
-        </p>
+  <h3>7. Privacidad y Protección de Datos</h3>
+  <p>
+    El tratamiento de la información personal se rige por nuestra Política de Privacidad.  
+    Al usar la aplicación, el usuario acepta dicho tratamiento.
+  </p>
 
-        <h3>7. Datos de menores</h3>
-        <p>
-          Si el titular de los datos es menor de edad, el uso de la aplicación y el registro deben realizarse con el
-          consentimiento
-          y supervisión de un padre o tutor.
-        </p>
+  <h3>8. Eliminación de Cuenta y Datos</h3>
+  <p>
+    El usuario puede solicitar la eliminación definitiva de su cuenta en cualquier momento.  
+    Al hacerlo:
+  </p>
+  <ul>
+    <li>Se elimina toda la información personal y datos asociados.</li>
+    <li>No se conserva ningún dato en copias de seguridad o registros internos.</li>
+    <li>Los dispositivos IoT se desvinculan permanentemente.</li>
+    <li>Los datos solo se conservarán si existiera una obligación legal vigente.</li>
+  </ul>
+  <p>
+    La eliminación es irreversible y Laika no podrá recuperar información posteriormente.
+  </p>
 
-        <h3>8. Cambios en la Política</h3>
-        <p>
-          Esta Política de Privacidad puede actualizarse. Cuando se realicen cambios significativos,
-          se notificará a los usuarios mediante la aplicación o correo electrónico con antelación razonable.
-        </p>
+  <h3>9. Datos de Menores de Edad</h3>
+  <p>
+    Los menores solo pueden utilizar la aplicación bajo supervisión y autorización expresa de un padre o tutor,
+    quien será responsable del uso de la cuenta.
+  </p>
 
-        <h3>9. Contacto</h3>
-        <p>
-          Para dudas o reportes sobre privacidad, escriba a
-          <a href="mailto:help.vetpet@jademajesty.com">help.vetpet@jademajesty.com</a>.
-        </p>
+  <h3>10. Modificaciones a los Términos</h3>
+  <p>
+    Laika podrá actualizar estos Términos y Condiciones en cualquier momento para reflejar cambios legales,
+    técnicos o funcionales. Se avisará con antelación razonable mediante la aplicación o correo electrónico.
+  </p>
 
-        <h3>10. Aceptación</h3>
-        <p>
-          Al usar la aplicación, el panel administrativo o registrar un dispositivo dispensador de alimento,
-          usted acepta los términos de esta Política de Privacidad y consiente el tratamiento de sus datos conforme a lo
-          aquí descrito.
-        </p>
-      </div>
+  <h3>11. Suspensión o Cancelación de Servicios</h3>
+  <p>
+    Laika puede suspender temporal o permanentemente una cuenta cuando:
+  </p>
+  <ul>
+    <li>Se detecte actividad fraudulenta o violación a estos términos.</li>
+    <li>Exista riesgo de seguridad para otros usuarios o para la infraestructura.</li>
+    <li>Haya mal uso del dispensador IoT o manipulación indebida del sistema.</li>
+  </ul>
+
+  <h3>12. Contacto</h3>
+  <p>
+    Para dudas, aclaraciones o soporte técnico, puede contactarnos en:  
+    <a href="mailto:help.vetpet@jademajesty.com">help.vetpet@jademajesty.com</a>
+  </p>
+
+  <h3>13. Aceptación</h3>
+  <p>
+    Al usar la aplicación, el panel administrativo o registrar un dispositivo, usted declara haber leído y aceptado estos
+    Términos y Condiciones en su totalidad.
+  </p>
+</div>
+
     </div>
   </section>
 
