@@ -142,7 +142,7 @@
   <section class="py-5">
     <div class="container">
 <div class="card card-policy p-4 p-md-5">
-  <p><strong>Última actualización: 5 de Noviembre de 2025</strong></p>
+  <p><strong>Última actualización: 15 de Noviembre de 2025</strong></p>
   <h3 class="section-title mb-3">Términos y Condiciones</h3>
 
   <p>
