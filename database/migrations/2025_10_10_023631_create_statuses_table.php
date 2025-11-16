@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('statuses', function (Blueprint $table) {
             $table->id();
             $table->boolean('status');
+            $table->boolean('calibrar');
             $table->foreignId('dispensador_id')->constrained('codigo_dispensadors')->onDelete('cascade');
             $table->timestamps();
         });
