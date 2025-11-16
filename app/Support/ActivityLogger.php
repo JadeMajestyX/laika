@@ -33,6 +33,10 @@ class ActivityLogger
                 'ip_address'=> $request->ip(),
                 'navegador' => $request->userAgent(),
             ]);
+
+            // Marcar la petición para evitar que el middleware de request logging duplique el registro
+            // (el middleware debe verificar este flag antes de crear su propio registro)
+            $request->attributes->set('activity_logged', true);
         } catch (\Throwable $e) {
             // Nunca romper el flujo por un fallo de logging
         }
