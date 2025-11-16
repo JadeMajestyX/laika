@@ -736,4 +736,60 @@ Route::post('/password/reset', function (Request $request) {
         'message' => 'Contraseña restablecida correctamente'
     ]);
 });
+
+
+//editar perfil de usuario  
 // ===============================================================================
+Route::middleware('auth:sanctum')->put('/perfil', function(Request $request) {
+    $user = $request->user();
+
+    $request->validate([
+        'nombre' => 'sometimes|required|string|max:100',
+        'apellido_paterno' => 'sometimes|required|string|max:100',
+        'apellido_materno' => 'sometimes|nullable|string|max:100',
+        'fecha_nacimiento' => 'sometimes|required|date',
+        'genero' => 'sometimes|required|in:M,F,O',
+        'telefono' => 'sometimes|required|string|max:15|unique:users,telefono,' . $user->id,
+        'imagen_perfil' => 'sometimes|nullable|string|max:100',
+        'password' => 'sometimes|required|string|min:8|confirmed',
+    ]);
+
+    $updateData = $request->only([
+        'nombre',
+        'apellido_paterno',
+        'apellido_materno',
+        'fecha_nacimiento',
+        'genero',
+        'telefono',
+        'imagen_perfil',
+    ]);
+
+    if ($request->filled('password')) {
+        $updateData['password'] = Hash::make($request->password);
+    }
+
+    // Filtrar claves vacías (no enviadas) para evitar sobreescritura con null accidental
+    $updateData = array_filter($updateData, function($value) { return !is_null($value); });
+
+    $original = $user->getOriginal();
+    $user->update($updateData);
+
+    // Determinar campos cambiados
+    $changed = [];
+    foreach ($updateData as $k => $v) {
+        if ($k === 'password') { $changed[] = 'password'; continue; }
+        if (!array_key_exists($k, $original) || $original[$k] !== $v) {
+            $changed[] = $k;
+        }
+    }
+
+    // Log de actividad: actualización de perfil
+    ActivityLogger::log($request, 'Actualizar perfil', 'User', $user->id, [
+        'changed_fields' => $changed,
+    ], $user->id);
+
+    return response()->json([
+        'success' => true,
+        'user' => $user
+    ]);
+});
