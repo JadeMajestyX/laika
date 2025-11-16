@@ -19,73 +19,112 @@
 
   @section('header-title', 'Reportes')
 
+  @push('head')
+  <style>
+    .text-purple{ color:#6f42c1 !important; }
+    .metric-card{ border:1px solid #e9ecef; border-radius: var(--radius-xl); }
+    .metric-card .icon-bubble{ width:46px; height:46px; border-radius: .75rem; display:flex; align-items:center; justify-content:center; background: rgba(111,66,193,.12); color:#6f42c1; }
+    .skeleton{ position:relative; overflow:hidden; background:#e9ecef; color:transparent !important; border-radius:.25rem; }
+    .skeleton::after{ content:""; position:absolute; inset:0; transform:translateX(-100%); background:linear-gradient(90deg, transparent, rgba(255,255,255,.6), transparent); animation:shimmer 1.2s infinite; }
+    @keyframes shimmer{ 100%{ transform:translateX(100%);} }
+    .chart-wrap{ position:relative; height:280px; }
+    .chart-wrap canvas{ width:100% !important; height:100% !important; }
+    .chart-spinner{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:transparent; }
+    .table thead th{ font-weight:600; }
+  </style>
+  @endpush
+
   @section('content')
+
+    <!-- Encabezado -->
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+      <div>
+        <h2 class="mb-1">Reportes</h2>
+        <div class="text-body-secondary">Analiza el rendimiento por fechas, servicios y personal.</div>
+      </div>
+      <div class="small text-body-secondary" id="texto-rango"></div>
+    </div>
 
       <!-- Filtros -->
       <div class="card shadow-sm mt-4 p-3">
         <div class="row align-items-end">
           <div class="col-md-2">
             <label class="form-label">Rango de fechas:</label>
-            <select class="form-select">
-              <option>Este mes</option>
-              <option>Último mes</option>
-              <option>Últimos 3 meses</option>
+            <select id="filtro-rango" class="form-select">
+              <option value="mes-actual" selected>Este mes</option>
+              <option value="mes-anterior">Último mes</option>
+              <option value="3-meses">Últimos 3 meses</option>
+              <option value="custom">Personalizado</option>
             </select>
           </div>
           <div class="col-md-2">
             <label class="form-label">Desde:</label>
-            <input type="date" class="form-control" value="2025-09-01">
+            <input id="filtro-desde" type="date" class="form-control">
           </div>
           <div class="col-md-2">
             <label class="form-label">Hasta:</label>
-            <input type="date" class="form-control" value="2025-09-15">
+            <input id="filtro-hasta" type="date" class="form-control">
           </div>
           <div class="col-md-2">
             <label class="form-label">Rol:</label>
-            <select class="form-select">
-              <option>Veterinario</option>
-              <option>Groomer</option>
+            <select id="filtro-rol" class="form-select">
+              <option value="">Todos</option>
+              @isset($roles)
+                @foreach($roles as $rol)
+                  <option value="{{ $rol }}">{{ ucfirst($rol) }}</option>
+                @endforeach
+              @endisset
             </select>
           </div>
           <div class="col-md-2">
-            <label class="form-label">Trabajador:</label>
-            <input type="text" class="form-control" value="Dr. House">
+            <label class="form-label">Trabajador (ID):</label>
+            <input id="filtro-trabajador" type="number" class="form-control" placeholder="Ej. 12">
           </div>
-          <div class="col-md-2 text-end">
-            <button class="btn text-white" style="background:#6f42c1;"><i class="bi bi-funnel"></i> Aplicar filtro</button>
-            <button class="btn btn-outline-secondary"><i class="bi bi-download"></i> Exportar</button>
-          </div>
+          
+            <div class="col-md-2 d-flex justify-content-end gap-2">
+              <button id="btn-aplicar-filtro" class="btn text-white" style="background:#6f42c1;"><i class="bi bi-funnel"></i> Aplicar filtro</button>
+              <div class="btn-group">
+                <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                  <i class="bi bi-download"></i> Exportar
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li><a class="dropdown-item" href="#" id="btn-exportar-xlsx">Exportar XLSX</a></li>
+                  <li><a class="dropdown-item" href="#" id="btn-exportar-pdf">Exportar PDF</a></li>
+                </ul>
+              </div>
+            </div>
+
         </div>
       </div>
 
       <!-- Métricas -->
       <div class="row mt-4 g-3">
         <div class="col-md-3">
-          <div class="card text-center p-3 shadow-sm">
-            <i class="bi bi-calendar-check fs-2 text-purple"></i>
-            <h5 class="mt-2">8</h5>
-            <p class="text-muted mb-0">Citas realizadas</p>
+          <div class="metric-card p-3 shadow-sm text-center">
+            <div class="d-flex justify-content-center"><div class="icon-bubble"><i class="bi bi-calendar-check"></i></div></div>
+            <h4 id="metric-citas-realizadas" class="mt-2 mb-0">—</h4>
+            <div class="text-body-secondary">Citas realizadas</div>
           </div>
         </div>
         <div class="col-md-3">
-          <div class="card text-center p-3 shadow-sm">
-            <i class="bi bi-heart-pulse fs-2 text-purple"></i>
-            <h5 class="mt-2">18</h5>
-            <p class="text-muted mb-0">Mascotas atendidas</p>
+          <div class="metric-card p-3 shadow-sm text-center">
+            <div class="d-flex justify-content-center"><div class="icon-bubble"><i class="bi bi-heart-pulse"></i></div></div>
+            <h4 id="metric-mascotas-atendidas" class="mt-2 mb-0">—</h4>
+            <div class="text-body-secondary">Mascotas atendidas</div>
           </div>
         </div>
         <div class="col-md-3">
-          <div class="card text-center p-3 shadow-sm">
-            <i class="bi bi-person-check fs-2 text-purple"></i>
-            <h5 class="mt-2">124</h5>
-            <p class="text-muted mb-0">Clientes nuevos</p>
+          <div class="metric-card p-3 shadow-sm text-center">
+            <div class="d-flex justify-content-center"><div class="icon-bubble"><i class="bi bi-person-check"></i></div></div>
+            <h4 id="metric-clientes-nuevos" class="mt-2 mb-0">—</h4>
+            <div class="text-body-secondary">Clientes nuevos</div>
           </div>
         </div>
         <div class="col-md-3">
-          <div class="card text-center p-3 shadow-sm">
-            <i class="bi bi-cash-stack fs-2 text-purple"></i>
-            <h5 class="mt-2">$10,457</h5>
-            <p class="text-muted mb-0">Ingresos totales</p>
+          <div class="metric-card p-3 shadow-sm text-center">
+            <div class="d-flex justify-content-center"><div class="icon-bubble"><i class="bi bi-cash-stack"></i></div></div>
+            <h4 id="metric-ingresos-totales" class="mt-2 mb-0">—</h4>
+            <div class="text-body-secondary">Ingresos totales</div>
           </div>
         </div>
       </div>
@@ -94,14 +133,20 @@
       <div class="row mt-4 g-3">
         <div class="col-md-6">
           <div class="card p-3">
-            <h6 class="fw-bold">Citas por servicio</h6>
-            <canvas id="chartCitas"></canvas>
+            <h6 class="fw-bold mb-2">Citas por servicio</h6>
+            <div class="chart-wrap">
+              <div id="spinner-citas" class="chart-spinner d-none"><div class="spinner-border" role="status"></div></div>
+              <canvas id="chartCitas"></canvas>
+            </div>
           </div>
         </div>
         <div class="col-md-6">
           <div class="card p-3">
-            <h6 class="fw-bold">Mascotas por especie</h6>
-            <canvas id="chartMascotas"></canvas>
+            <h6 class="fw-bold mb-2">Mascotas por especie</h6>
+            <div class="chart-wrap">
+              <div id="spinner-mascotas" class="chart-spinner d-none"><div class="spinner-border" role="status"></div></div>
+              <canvas id="chartMascotas"></canvas>
+            </div>
           </div>
         </div>
       </div>
@@ -109,14 +154,20 @@
       <div class="row mt-4 g-3">
         <div class="col-md-6">
           <div class="card p-3">
-            <h6 class="fw-bold">Ingresos mensuales</h6>
-            <canvas id="chartIngresos"></canvas>
+            <h6 class="fw-bold mb-2">Ingresos mensuales</h6>
+            <div class="chart-wrap">
+              <div id="spinner-ingresos" class="chart-spinner d-none"><div class="spinner-border" role="status"></div></div>
+              <canvas id="chartIngresos"></canvas>
+            </div>
           </div>
         </div>
         <div class="col-md-6">
           <div class="card p-3">
-            <h6 class="fw-bold">Productos más vendidos</h6>
-            <canvas id="chartProductos"></canvas>
+            <h6 class="fw-bold mb-2">Servicios más solicitados</h6>
+            <div class="chart-wrap">
+              <div id="spinner-servicios" class="chart-spinner d-none"><div class="spinner-border" role="status"></div></div>
+              <canvas id="chartProductos"></canvas>
+            </div>
           </div>
         </div>
       </div>
@@ -137,10 +188,8 @@
                 <th>Tendencia</th>
               </tr>
             </thead>
-            <tbody>
-              <tr><td>Realizadas</td><td>132</td><td>78%</td><td class="text-success">↑ 5%</td></tr>
-              <tr><td>Canceladas</td><td>21</td><td>23%</td><td class="text-success">↑ 2%</td></tr>
-              <tr><td>No presentadas</td><td>3</td><td>5%</td><td class="text-success">↑ 1%</td></tr>
+            <tbody id="tabla-resumen-citas">
+              <tr class="placeholder-row"><td colspan="4" class="text-center text-body-secondary">Cargando…</td></tr>
             </tbody>
           </table>
         </div>
@@ -161,19 +210,15 @@
                 <th>Variación</th>
               </tr>
             </thead>
-            <tbody>
-              <tr><td>Consulta</td><td>132</td><td>$4,556</td><td class="text-success">↑ 5%</td></tr>
-              <tr><td>Cita</td><td>21</td><td>$2,656</td><td class="text-success">↑ 2%</td></tr>
-              <tr><td>Aseo</td><td>23</td><td>$1,358</td><td class="text-success">↑ 1%</td></tr>
+            <tbody id="tabla-servicios-top">
+              <tr class="placeholder-row"><td colspan="4" class="text-center text-body-secondary">Cargando…</td></tr>
             </tbody>
           </table>
         </div>
       </div>
 
 @endsection
-@section('scripts')
+@push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="{{ asset('js/reportes.js') }}"></script>
-@endsection
-</body>
-</html>
+@endpush

@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Notifications\WelcomeNotification;
 use Google_Client;
+use App\Support\ActivityLogger;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
@@ -27,9 +29,6 @@ class AuthController extends Controller
             $user = User::where('email', $email)->first();
 
             if (!$user) {
-
-         
-
                 // Crear usuario solo si no existe
                 $user = User::create([
                     'email' => $email,
@@ -42,8 +41,21 @@ class AuthController extends Controller
                     'telefono' => null,
                     'password' => Hash::make(str()->random(16)),
                 ]);
+
+                // Enviar correo de bienvenida
+                try {
+                    $user->notify(new WelcomeNotification());
+                } catch (\Throwable $e) {
+                    // Evitar que un fallo de correo bloquee el login
+                }
             }
 
+
+                // Log de actividad: registro de usuario con Google
+                ActivityLogger::log($request, 'Registro de usuario (Google)', 'User', $user->id, [
+                    'email' => $user->email,
+                    'nombre' => $user->nombre,
+                ], $user->id);
             // Generar token
             $token = $user->createToken('mobile')->plainTextToken;
 

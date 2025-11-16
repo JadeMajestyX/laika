@@ -10,13 +10,8 @@ class CitaController extends Controller
 {
     public function index(){
 
-    $citas = Cita::with(['clinica', 'servicio', 'mascota', 'creador'])
-             ->orderBy('fecha', 'desc')
-             ->paginate(10);
 
-    $usuario = Auth::user();
-
-        return view('citas', compact('citas', 'usuario'));
+        return view('agendarCita');
     }
 
     /**
@@ -28,6 +23,12 @@ class CitaController extends Controller
      * - q: texto de búsqueda (clínica, servicio, mascota, propietario)
      * - from, to: rango de fechas (YYYY-MM-DD). Si se envía cualquiera, tiene prioridad sobre scope.
      */
+
+
+
+
+
+
     public function getCitasJson(Request $request)
     {
         $perPage = (int) $request->integer('per_page', 10);
