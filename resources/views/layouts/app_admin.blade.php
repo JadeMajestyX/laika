@@ -49,6 +49,9 @@
     .sidebar .brand{ display:flex; gap:10px; align-items:center; margin-bottom:24px; }
     .sidebar .brand-icon{ width:36px; height:36px; border-radius:0.75rem; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.25); }
     .sidebar .nav-btn{ width:100%; display:flex; gap:12px; align-items:center; padding:12px 16px; border:0; border-radius:0.75rem; color:#e9d5ff; background:transparent; text-align:left; transition:.15s ease; }
+    /* Quitar decoración de enlaces en el sidebar */
+    .sidebar a{ text-decoration:none; }
+    .sidebar a:hover{ text-decoration:none; }
     .sidebar .nav-btn.active{ background:rgba(255,255,255,.2); color:#fff; }
     .sidebar .nav-btn:hover{ background:rgba(255,255,255,.1); color:#fff; }
     .sidebar .foot{ margin-top:auto; font-size:.8rem; color:#e9d5ff; opacity:.9; }
@@ -119,7 +122,7 @@
         <button class="nav-btn"><i class="bi bi-clipboard-check" data-section="citas"></i><span>Citas</span></button>
         <button class="nav-btn"><i class="bi bi-file-earmark-text" data-section="trabajadores"></i><span>Trabajadores</span></button>
         <button class="nav-btn"><i class="bi bi-graph-up" data-section="reportes"></i><span>Reportes</span></button>
-        <button class="nav-btn"><i class="bi bi-gear" data-section="configuracion"></i><span>Configuración</span></button>
+        <a href="/configuracion" class=""><button class="nav-btn"><i class="bi bi-gear" data-section="configuracion"></i><span>Configuración</span></button></a>
       </nav>
       <div class="foot pt-4">
         <div>Soporte 24/7</div>
