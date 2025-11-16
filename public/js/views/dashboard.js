@@ -437,12 +437,24 @@ function fetchClientesAndRender(page = 1, perPage = 10) {
   if (from) params.set('from', from);
   if (to) params.set('to', to);
   fetch(`/usuarios/json?${params.toString()}`, { headers: { Accept: 'application/json' } })
-    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(async r => {
+      if (!r.ok) {
+        const text = await r.text();
+        throw new Error('HTTP ' + r.status + ' ' + text.substring(0, 120));
+      }
+      return r.json();
+    })
     .then(data => {
       renderClientesTable(data);
       renderClientesPagination({ current_page: data.current_page, last_page: data.last_page });
     })
-    .catch(err => console.error('Error al cargar clientes:', err));
+    .catch(err => {
+      console.error('Error al cargar clientes:', err);
+      const tbody = document.getElementById('clientesBody');
+      if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger py-4">Error al cargar clientes. Intenta nuevamente.</td></tr>`;
+      }
+    });
 }
 
 function markActive(section) {

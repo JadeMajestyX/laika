@@ -42,12 +42,12 @@ Route::middleware(EnsureUserHasRole::class.':A')->group(function () {
         return redirect('/dashboard/home');
     });
     Route::get('/usuarios', [UserController::class, 'index'])->name('usuarios');
+    // Importante: declarar la ruta JSON ANTES de /usuarios/{id} para evitar que 'json' coincida como {id}
+    Route::get('/usuarios/json', [UserController::class, 'getUsuariosJson'])->name('usuarios.json');
     Route::get('/usuarios/{id}', [UserController::class, 'show'])->name('usuarios.show');
     Route::get('/usuarios/{id}/editar', [UserController::class, 'edit'])->name('usuarios.edit');
     Route::put('/usuarios/{id}', [UserController::class, 'update'])->name('usuarios.update');
     Route::delete('/usuarios/{id}', [UserController::class, 'destroy'])->name('usuarios.destroy');
-    // JSON para SPA clientes
-    Route::get('/usuarios/json', [UserController::class, 'getUsuariosJson'])->name('usuarios.json');
     Route::get('/citas', [App\Http\Controllers\CitaController::class, 'index'])->name('citas');
     // Endpoint JSON paginado para citas (hoy por defecto, soporte búsqueda en pasadas)
     Route::get('/citas/json', [App\Http\Controllers\CitaController::class, 'getCitasJson'])->name('citas.json');
