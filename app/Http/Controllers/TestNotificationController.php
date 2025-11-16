@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\DeviceToken;
 use Illuminate\Support\Facades\Log;
+use App\Services\FcmV1Client;
 
 class TestNotificationController extends Controller
 {
@@ -44,22 +45,53 @@ class TestNotificationController extends Controller
             'extra_id' => 'nullable|string|max:100',
         ]);
 
-        $fcmServerKey = env('FIREBASE_SERVER_KEY');
-        if(!$fcmServerKey){
-            return back()->with('error','FIREBASE_SERVER_KEY no configurado en .env');
+        $useV1 = config('fcm.use_v1');
+        $dataPayload = array_filter([
+            'screen' => $data['screen'] ?? null,
+            'id'     => $data['extra_id'] ?? null,
+        ], fn($v) => $v !== null);
+
+        if($useV1){
+            try {
+                $client = app(FcmV1Client::class);
+            } catch (\Throwable $e){
+                return back()->with('error','Error inicializando FCM v1: '.$e->getMessage());
+            }
+            if($data['mode']==='topic'){
+                if(empty($data['topic'])) return back()->with('error','Topic requerido');
+                $res = $client->sendToTopic($data['topic'], $data['title'], $data['body'], $dataPayload);
+                Log::info('Test push v1 topic', $res);
+                return back()->with($res['ok']?'success':'error', ($res['ok']?'Enviado ':'Fallo ').'(HTTP '.$res['status'].')');
+            } elseif($data['mode']==='user') {
+                if(empty($data['user_id'])) return back()->with('error','user_id requerido');
+                $tokens = DeviceToken::where('user_id',$data['user_id'])->pluck('token')->unique()->values()->all();
+                if(empty($tokens)) return back()->with('error','Usuario sin tokens registrados');
+                $ok=0;$fail=0; $results=[];
+                foreach($tokens as $tk){
+                    try { $r=$client->sendToToken($tk, $data['title'], $data['body'], $dataPayload); $results[]=$r; $r['ok']?$ok++:$fail++; }
+                    catch(\Throwable $ex){ Log::warning('FCM v1 token error: '.$ex->getMessage()); $results[]=['ok'=>false,'error'=>$ex->getMessage()]; $fail++; }
+                }
+                return back()->with($fail===0?'success':'error', 'Tokens OK:'.$ok.' Fallos:'.$fail);
+            } else { // token directo
+                if(empty($data['token'])) return back()->with('error','token requerido');
+                $res = $client->sendToToken($data['token'], $data['title'], $data['body'], $dataPayload);
+                Log::info('Test push v1 token', $res);
+                return back()->with($res['ok']?'success':'error', ($res['ok']?'Enviado ':'Fallo ').'(HTTP '.$res['status'].')');
+            }
         }
 
+        // Fallback legacy
+        $fcmServerKey = env('FIREBASE_SERVER_KEY');
+        if(!$fcmServerKey){
+            return back()->with('error','FIREBASE_SERVER_KEY no configurado en .env (modo legacy)');
+        }
         $payload = [
             'notification' => [
                 'title' => $data['title'],
                 'body' => $data['body'],
             ],
-            'data' => array_filter([
-                'screen' => $data['screen'] ?? null,
-                'id' => $data['extra_id'] ?? null,
-            ]) ?: new \stdClass(),
+            'data' => $dataPayload ?: new \stdClass(),
         ];
-
         if($data['mode'] === 'topic'){
             if(empty($data['topic'])) return back()->with('error','Topic requerido');
             $payload['to'] = '/topics/'.$data['topic'];
@@ -68,11 +100,10 @@ class TestNotificationController extends Controller
             $tokens = DeviceToken::where('user_id',$data['user_id'])->pluck('token')->unique()->values()->all();
             if(empty($tokens)) return back()->with('error','Usuario sin tokens registrados');
             $payload['registration_ids'] = $tokens;
-        } else { // token directo
+        } else {
             if(empty($data['token'])) return back()->with('error','token requerido');
             $payload['to'] = $data['token'];
         }
-
         try {
             $ch = curl_init('https://fcm.googleapis.com/fcm/send');
             curl_setopt($ch, CURLOPT_POST, true);
@@ -85,15 +116,13 @@ class TestNotificationController extends Controller
             $resp = curl_exec($ch);
             $http = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             if(curl_errno($ch)){
-                $err = curl_error($ch);
-                curl_close($ch);
-                return back()->with('error','Error cURL: '.$err);
+                $err = curl_error($ch); curl_close($ch); return back()->with('error','Error cURL: '.$err);
             }
             curl_close($ch);
-            Log::info('Test push sent', ['http_code'=>$http,'response'=>$resp]);
+            Log::info('Test push legacy', ['http_code'=>$http,'response'=>$resp]);
             return back()->with('success','Notificación enviada (HTTP '.$http.')');
         } catch(\Throwable $e){
-            Log::error('Error enviando push test: '.$e->getMessage());
+            Log::error('Error enviando push test legacy: '.$e->getMessage());
             return back()->with('error','Excepción: '.$e->getMessage());
         }
     }
