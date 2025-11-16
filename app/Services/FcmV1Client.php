@@ -17,10 +17,30 @@ class FcmV1Client
     public function __construct(?string $projectId = null, ?string $credentialsPath = null)
     {
         $credentialsPath = $credentialsPath ?: Config::get('fcm.credentials_path');
-        if (!is_file($credentialsPath)) {
-            throw new RuntimeException("No se encontró el archivo de credenciales en: {$credentialsPath}");
+        // Permitir credenciales inline via env FIREBASE_CREDENTIALS_JSON (Base64 del JSON)
+        $inline = env('FIREBASE_CREDENTIALS_JSON');
+        if ($inline) {
+            $decoded = base64_decode($inline, true);
+            if ($decoded === false) {
+                throw new RuntimeException('FIREBASE_CREDENTIALS_JSON inválido (Base64 no decodificable)');
+            }
+            $json = $decoded;
+        } else {
+            // Normalizar ruta relativa -> absoluta
+            if ($credentialsPath && !preg_match('/^([A-Za-z]:\\\\|\/)/', $credentialsPath)) { // no absolute windows ni unix
+                $possible = [
+                    base_path($credentialsPath),
+                    storage_path(trim($credentialsPath, '\\/')),
+                ];
+                foreach ($possible as $p) {
+                    if (is_file($p)) { $credentialsPath = $p; break; }
+                }
+            }
+            if (!is_file($credentialsPath)) {
+                throw new RuntimeException("No se encontró el archivo de credenciales en: {$credentialsPath}");
+            }
+            $json = file_get_contents($credentialsPath);
         }
-        $json = file_get_contents($credentialsPath);
         $this->credentials = json_decode($json, true) ?: [];
         if (empty($this->credentials)) {
             throw new RuntimeException('No se pudieron leer las credenciales JSON.');
