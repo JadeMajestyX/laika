@@ -120,6 +120,10 @@ Route::middleware(EnsureUserHasRole::class.':A')->group(function () {
     Route::patch('/clinicas/servicio/{servicio}', [ConfiguracionController::class, 'updateServicio'])->name('clinicas.servicio.update');
     Route::delete('/clinicas/servicio/{servicio}', [ConfiguracionController::class, 'eliminarServicio'])->name('clinicas.servicio.destroy');
 
+    // Página de prueba para enviar notificaciones manuales
+    Route::get('/test/noti', [\App\Http\Controllers\TestNotificationController::class, 'index'])->name('test.noti');
+    Route::post('/test/noti', [\App\Http\Controllers\TestNotificationController::class, 'send'])->name('test.noti.send');
+
     //Route::get('/buscar', [SearchController::class, 'buscar'])->name('buscar');
 
 
