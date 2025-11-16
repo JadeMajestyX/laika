@@ -62,7 +62,7 @@
 
     @if(!empty($url))
       <p style="text-align:center;">
-        <a href="{{ $url }}" class="btn">Ir a VetCare</a>
+        <a href="https://play.google.com/store/apps/details?id=com.jademajesty.laikaapp&hl=en-US&ah=cR3SjTQqCF2r67ioLxobDpW6xQ8" class="btn">Ir a VetCare</a>
       </p>
     @endif
 
