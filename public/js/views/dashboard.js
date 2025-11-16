@@ -1154,7 +1154,9 @@ function renderSection(section, data) {
       document.body.appendChild(s);
     })();
   } else if (section === 'configuracion') {
-    // TODO: render configuracion
+
+    //redirigir a la página de configuración completa
+    window.location.href = '/configuracion';
   }
 }
 
