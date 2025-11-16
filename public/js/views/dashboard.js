@@ -313,6 +313,28 @@ function renderSkeleton(section, rows = 5) {
     return;
   }
 
+  if (section === 'trabajadores') {
+    const tbody = document.getElementById('trabajadoresBody');
+    const pag = document.getElementById('trabajadoresPagination');
+    if (tbody) {
+      tbody.innerHTML = '';
+      for (let i = 0; i < rows; i++) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><div class="placeholder-glow"><span class="placeholder col-6"></span></div></td>
+          <td><div class="placeholder-glow"><span class="placeholder col-5"></span></div></td>
+          <td><div class="placeholder-glow"><span class="placeholder col-3"></span></div></td>
+          <td><div class="placeholder-glow"><span class="placeholder col-4"></span></div></td>
+          <td><div class="placeholder-glow"><span class="placeholder col-6"></span></div></td>
+          <td><div class="placeholder-glow"><span class="placeholder col-4"></span></div></td>
+          <td class="text-center"><div class="placeholder-glow"><span class="placeholder col-2"></span></div></td>`;
+        tbody.appendChild(tr);
+      }
+    }
+    if (pag) pag.innerHTML = '';
+    return;
+  }
+
   if (section === 'home') {
     const chart = document.getElementById('appointmentsChart');
     const actividad = document.getElementById('actividadReciente');
@@ -453,6 +475,106 @@ function fetchClientesAndRender(page = 1, perPage = 10) {
       const tbody = document.getElementById('clientesBody');
       if (tbody) {
         tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger py-4">Error al cargar clientes. Intenta nuevamente.</td></tr>`;
+      }
+    });
+}
+
+// ---- Trabajadores: helpers y fetch ----
+function renderTrabajadoresTable(items) {
+  const tbody = document.getElementById('trabajadoresBody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  const list = Array.isArray(items) ? items : (Array.isArray(items.data) ? items.data : []);
+  if (list.length === 0) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td colspan="7" class="text-center text-body-secondary py-4">No hay trabajadores</td>`;
+    tbody.appendChild(tr);
+    return;
+  }
+  const csrf = getCsrfToken();
+  list.forEach(t => {
+    const apellidos = [t.apellido_paterno, t.apellido_materno].filter(Boolean).join(' ');
+    const rolMap = { A: 'Admin', V: 'Veterinario', G: 'Groomer' };
+    const rolTxt = rolMap[t.rol] || t.rol;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${t.nombre ?? '-'}</td>
+      <td>${apellidos || '-'}</td>
+      <td>${rolTxt}</td>
+      <td>${t.email ?? '-'}</td>
+      <td>${t.telefono ?? '-'}</td>
+      <td>${t.clinica ?? '-'}</td>
+      <td class="text-center">
+        <div class="d-inline-flex gap-1">
+          <a href="/trabajadores/${t.id}" class="btn btn-warning btn-sm" data-bs-toggle="tooltip" title="Ver"><i class="bi bi-eye"></i></a>
+          <a href="/trabajadores/${t.id}/editar" class="btn btn-info btn-sm text-white" data-bs-toggle="tooltip" title="Editar"><i class="bi bi-pencil-square"></i></a>
+          <form method="POST" action="/trabajadores/${t.id}" onsubmit="return confirm('¿Seguro que deseas eliminar este trabajador?')">
+            <input type="hidden" name="_method" value="DELETE" />
+            <input type="hidden" name="_token" value="${csrf}" />
+            <button type="submit" class="btn btn-danger btn-sm" data-bs-toggle="tooltip" title="Eliminar"><i class="bi bi-trash"></i></button>
+          </form>
+        </div>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderTrabajadoresPagination(meta) {
+  const pag = document.getElementById('trabajadoresPagination');
+  if (!pag) return;
+  pag.innerHTML = '';
+  if (!meta || meta.last_page <= 1) return;
+  const ul = document.createElement('ul');
+  ul.className = 'pagination m-0';
+  const addItem = (label, page, disabled = false, active = false) => {
+    const li = document.createElement('li');
+    li.className = `page-item ${disabled ? 'disabled' : ''} ${active ? 'active' : ''}`;
+    const a = document.createElement('a');
+    a.className = 'page-link';
+    a.href = '#';
+    a.textContent = label;
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (!disabled && !active) fetchTrabajadoresAndRender(page);
+    });
+    li.appendChild(a);
+    ul.appendChild(li);
+  };
+  addItem('«', meta.current_page - 1, meta.current_page === 1);
+  for (let p = 1; p <= meta.last_page; p++) addItem(String(p), p, false, p === meta.current_page);
+  addItem('»', meta.current_page + 1, meta.current_page === meta.last_page);
+  pag.appendChild(ul);
+}
+
+function fetchTrabajadoresAndRender(page = 1, perPage = 10) {
+  renderSkeleton('trabajadores', 6);
+  const q = document.getElementById('trabajadoresSearch')?.value?.trim() || '';
+  const scope = document.querySelector('input[name="trabajadoresScope"]:checked')?.value || 'today';
+  const from = document.getElementById('trabajadoresFrom')?.value || '';
+  const to = document.getElementById('trabajadoresTo')?.value || '';
+  const rol = document.getElementById('trabajadoresRol')?.value || '';
+  const params = new URLSearchParams({ page: String(page), per_page: String(perPage), scope });
+  if (q) params.set('q', q);
+  if (from) params.set('from', from);
+  if (to) params.set('to', to);
+  if (rol) params.set('rol', rol);
+  fetch(`/trabajadores/json?${params.toString()}`, { headers: { Accept: 'application/json' } })
+    .then(async r => {
+      if (!r.ok) {
+        const text = await r.text();
+        throw new Error('HTTP ' + r.status + ' ' + text.substring(0, 120));
+      }
+      return r.json();
+    })
+    .then(data => {
+      renderTrabajadoresTable(data);
+      renderTrabajadoresPagination({ current_page: data.current_page, last_page: data.last_page });
+    })
+    .catch(err => {
+      console.error('Error al cargar trabajadores:', err);
+      const tbody = document.getElementById('trabajadoresBody');
+      if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger py-4">Error al cargar trabajadores. Intenta nuevamente.</td></tr>`;
       }
     });
 }
@@ -769,7 +891,83 @@ function renderSection(section, data) {
     // carga inicial
     fetchCitasAndRender();
   } else if (section === 'trabajadores') {
-    // TODO: render trabajadores
+    mainContent.innerHTML = `
+    <div class="card shadow-sm mt-4">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Listado de Trabajadores</h5>
+        <a href="/trabajadores/crear" class="btn btn-success">
+          <i class="bi bi-plus-lg me-1"></i> Agregar Trabajador
+        </a>
+      </div>
+
+      <div class="card-body">
+        <div class="d-flex flex-column flex-md-row gap-2 justify-content-between align-items-md-center mb-3">
+          <div class="input-group" style="max-width: 420px;">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input id="trabajadoresSearch" type="text" class="form-control" placeholder="Buscar por nombre o apellido">
+            <button id="trabajadoresSearchBtn" class="btn btn-primary">Buscar</button>
+          </div>
+
+          <div class="d-flex flex-column flex-md-row gap-2">
+            <div class="input-group" style="max-width: 260px;">
+              <label class="input-group-text" for="trabajadoresRol"><i class="bi bi-person-badge"></i></label>
+              <select id="trabajadoresRol" class="form-select">
+                <option value="">Todos los roles</option>
+                <option value="A">Administradores</option>
+                <option value="V">Veterinarios</option>
+                <option value="G">Groomers</option>
+              </select>
+            </div>
+
+            <div class="btn-group" role="group" aria-label="ScopeTrabajadores">
+              <input type="radio" class="btn-check" name="trabajadoresScope" id="tScopeToday" autocomplete="off" value="today" checked>
+              <label class="btn btn-outline-secondary" for="tScopeToday">Ingresados hoy</label>
+              <input type="radio" class="btn-check" name="trabajadoresScope" id="tScopePast" autocomplete="off" value="past">
+              <label class="btn btn-outline-secondary" for="tScopePast">Anteriores</label>
+            </div>
+
+            <div class="input-group" style="max-width: 360px;">
+              <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
+              <input type="date" id="trabajadoresFrom" class="form-control" placeholder="Desde">
+              <input type="date" id="trabajadoresTo" class="form-control" placeholder="Hasta">
+              <button id="trabajadoresRangeBtn" class="btn btn-outline-primary">Filtrar</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Nombre</th>
+                <th>Apellidos</th>
+                <th>Rol</th>
+                <th>Email</th>
+                <th>Teléfono</th>
+                <th>Clínica</th>
+                <th class="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="trabajadoresBody"></tbody>
+          </table>
+        </div>
+
+        <div id="trabajadoresPagination" class="d-flex justify-content-center my-3"></div>
+      </div>
+    </div>
+    `;
+    // eventos y carga inicial trabajadores
+    const tSearchBtn = document.getElementById('trabajadoresSearchBtn');
+    const tRangeBtn = document.getElementById('trabajadoresRangeBtn');
+    const tSearchInput = document.getElementById('trabajadoresSearch');
+    const tRadios = document.querySelectorAll('input[name="trabajadoresScope"]');
+    const tRolSelect = document.getElementById('trabajadoresRol');
+    tSearchBtn?.addEventListener('click', () => fetchTrabajadoresAndRender(1));
+    tRangeBtn?.addEventListener('click', () => fetchTrabajadoresAndRender(1));
+    tSearchInput?.addEventListener('keydown', (e) => { if (e.key === 'Enter') fetchTrabajadoresAndRender(1); });
+    tRadios.forEach(r => r.addEventListener('change', () => fetchTrabajadoresAndRender(1)));
+    tRolSelect?.addEventListener('change', () => fetchTrabajadoresAndRender(1));
+    fetchTrabajadoresAndRender();
   } else if (section === 'reportes') {
     // Render de la sección Reportes dentro del SPA
     mainContent.innerHTML = `
@@ -1006,6 +1204,12 @@ function initNavHandlers() {
         return;
       }
 
+      if (section === 'trabajadores') {
+        renderSection('trabajadores');
+        history.pushState({ section: 'trabajadores' }, '', '/dashboard/trabajadores');
+        return;
+      }
+
       if (section === 'citas') {
         renderSection('citas');
         fetchCitasAndRender();
@@ -1044,6 +1248,9 @@ function handlePopState() {
     } else if (section === 'clientes') {
       renderSection('clientes');
       fetchClientesAndRender();
+    } else if (section === 'trabajadores') {
+      renderSection('trabajadores');
+      fetchTrabajadoresAndRender();
     } else {
       renderSection(section);
     }

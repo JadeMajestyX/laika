@@ -61,6 +61,8 @@ Route::middleware(EnsureUserHasRole::class.':A')->group(function () {
     Route::delete('/mascotas/{id}', [MascotaController::class, 'destroy'])->name('mascotas.destroy');
 
     Route::get('/trabajadores', [TrabajadorController::class, 'index'])->name('trabajadores');
+    // JSON antes de rutas dinámicas
+    Route::get('/trabajadores/json', [TrabajadorController::class, 'getTrabajadoresJson'])->name('trabajadores.json');
     Route::get('/trabajadores/{id}', [TrabajadorController::class, 'show'])->name('trabajadores.show');
     Route::get('/trabajadores/{id}/editar', [TrabajadorController::class, 'edit'])->name('trabajadores.edit');
     Route::put('/trabajadores/{id}', [TrabajadorController::class, 'update'])->name('trabajadores.update');
