@@ -102,6 +102,24 @@ Route::middleware(EnsureUserHasRole::class.':A')->group(function () {
     // Remover trabajador (desasignar de clínica)
     Route::delete('/configuracion/clinica/{clinica}/trabajadores/{user}/remover', [ConfiguracionController::class, 'removerTrabajadorClinica'])->name('configuracion.clinica.trabajadores.remover');
 
+    // Alias con prefijo /clinicas para URLs amigables
+    Route::get('/clinicas', [ConfiguracionController::class, 'index'])->name('clinicas');
+    Route::get('/clinicas/clinica/{clinica}', [ConfiguracionController::class, 'editarClinica'])->name('clinicas.clinica');
+    Route::post('/clinicas/clinica', [ConfiguracionController::class, 'storeClinica'])->name('clinicas.clinica.store');
+    // Servicios de clínica (listar y agregar)
+    Route::get('/clinicas/clinica/{clinica}/servicios', [ConfiguracionController::class, 'serviciosClinica'])->name('clinicas.clinica.servicios.index');
+    Route::post('/clinicas/clinica/{clinica}/servicios', [ConfiguracionController::class, 'storeServiciosClinica'])->name('clinicas.clinica.servicios.store');
+    // Actualizaciones
+    Route::put('/clinicas/clinica/{clinica}', [ConfiguracionController::class, 'updateClinicaInfo'])->name('clinicas.clinica.update');
+    Route::put('/clinicas/horarios', [ConfiguracionController::class, 'updateHorarios'])->name('clinicas.horarios.update');
+    // Trabajadores
+    Route::post('/clinicas/clinica/{clinica}/trabajadores', [ConfiguracionController::class, 'storeTrabajadorClinica'])->name('clinicas.clinica.trabajadores.store');
+    Route::post('/clinicas/clinica/{clinica}/trabajadores/asignar', [ConfiguracionController::class, 'asignarTrabajadorClinica'])->name('clinicas.clinica.trabajadores.asignar');
+    Route::delete('/clinicas/clinica/{clinica}/trabajadores/{user}/remover', [ConfiguracionController::class, 'removerTrabajadorClinica'])->name('clinicas.clinica.trabajadores.remover');
+    // Servicio individual (editar/eliminar)
+    Route::patch('/clinicas/servicio/{servicio}', [ConfiguracionController::class, 'updateServicio'])->name('clinicas.servicio.update');
+    Route::delete('/clinicas/servicio/{servicio}', [ConfiguracionController::class, 'eliminarServicio'])->name('clinicas.servicio.destroy');
+
     //Route::get('/buscar', [SearchController::class, 'buscar'])->name('buscar');
 
 

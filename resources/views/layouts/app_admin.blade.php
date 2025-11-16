@@ -122,7 +122,7 @@
         <button class="nav-btn"><i class="bi bi-clipboard-check" data-section="citas"></i><span>Citas</span></button>
         <button class="nav-btn"><i class="bi bi-file-earmark-text" data-section="trabajadores"></i><span>Trabajadores</span></button>
         <button class="nav-btn"><i class="bi bi-graph-up" data-section="reportes"></i><span>Reportes</span></button>
-        <a href="/configuracion" class=""><button class="nav-btn"><i class="bi bi-gear" data-section="configuracion"></i><span>Configuración</span></button></a>
+        <a href="/clinicas" class=""><button class="nav-btn"><i class="bi bi-gear" data-section="configuracion"></i><span>Clínicas</span></button></a>
       </nav>
       <div class="foot pt-4">
         <div>Soporte 24/7</div>
