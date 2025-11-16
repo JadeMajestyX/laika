@@ -289,12 +289,31 @@
             const base = '{{ url('/configuracion/clinica') }}';
             const svcTbody = document.getElementById('svcTbody');
             const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            let currentClinicaId = null;
+            let existingByName = new Map(); // nombre -> servicio
+
+            function getPresetNames(){
+                return Array.from(form.querySelectorAll('input[name="servicios[]"]')).map(i=> i.value.trim());
+            }
+
+            function syncPresetChecks(){
+                const inputs = form.querySelectorAll('input[name="servicios[]"]');
+                inputs.forEach(inp => {
+                    const val = (inp.value || '').trim();
+                    inp.checked = existingByName.has(val);
+                });
+            }
 
             function renderServicios(rows){
                 if(!svcTbody) return;
                 svcTbody.innerHTML = '';
+                existingByName = new Map();
+                if(Array.isArray(rows)){
+                    for(const s of rows){ existingByName.set((s.nombre||'').trim(), s); }
+                }
                 if(!rows || rows.length === 0){
                     svcTbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3">Sin servicios</td></tr>';
+                    syncPresetChecks();
                     return;
                 }
                 for(const s of rows){
@@ -320,6 +339,8 @@
                         </td>`;
                     svcTbody.appendChild(tr);
                 }
+                // marcar checkboxes de presets que ya existen
+                syncPresetChecks();
             }
 
             function bindRowActions(clinicaId){
@@ -385,6 +406,7 @@
                 form.querySelectorAll('input[type="checkbox"]').forEach(ch=> ch.checked = false);
                 // set action
                 form.setAttribute('action', `${base}/${id}/servicios`);
+                currentClinicaId = id;
                 // cargar servicios actuales
                 try{
                     const resp = await fetch(`${base}/${id}/servicios`, { headers: { 'X-Requested-With':'XMLHttpRequest' } });
@@ -393,6 +415,48 @@
                     bindRowActions(id);
                 }catch(e){
                     renderServicios([]);
+                }
+            });
+
+            // Enviar: agrega los seleccionados que no existen y elimina los que existen pero se desmarcaron
+            form?.addEventListener('submit', async (ev)=>{
+                if(!currentClinicaId) return; // seguridad
+                ev.preventDefault();
+                const presetNames = getPresetNames();
+                const selected = new Set(Array.from(form.querySelectorAll('input[name="servicios[]"]:checked')).map(i=> i.value.trim()));
+                const existingNames = Array.from(existingByName.keys());
+
+                const toAdd = Array.from(selected).filter(n => !existingByName.has(n));
+                const toRemove = existingNames.filter(n => !selected.has(n) && presetNames.includes(n));
+
+                try{
+                    // Agregar en lote si hay
+                    if(toAdd.length){
+                        const fd = new FormData();
+                        toAdd.forEach(n => fd.append('servicios[]', n));
+                        const respAdd = await fetch(`${base}/${currentClinicaId}/servicios`, {
+                            method: 'POST',
+                            headers: { 'X-CSRF-TOKEN': csrf },
+                            body: fd,
+                        });
+                        // no usamos respuesta (puede redirigir), continuamos
+                    }
+
+                    // Eliminar en paralelo
+                    if(toRemove.length){
+                        const deletes = toRemove.map(n => {
+                            const s = existingByName.get(n);
+                            return fetch(`{{ url('/configuracion/servicio') }}/${s.id}`, { method:'DELETE', headers:{ 'X-CSRF-TOKEN': csrf, 'X-Requested-With':'XMLHttpRequest' } });
+                        });
+                        await Promise.allSettled(deletes);
+                    }
+
+                    // refrescar lista y checks
+                    const resp = await fetch(`${base}/${currentClinicaId}/servicios`, { headers: { 'X-Requested-With':'XMLHttpRequest' } });
+                    const data = await resp.json();
+                    renderServicios(data.servicios || []);
+                }catch(e){
+                    alert('No se pudieron aplicar los cambios de servicios.');
                 }
             });
         });

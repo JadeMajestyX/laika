@@ -90,6 +90,8 @@ Route::middleware(EnsureUserHasRole::class.':A')->group(function () {
     Route::get('/configuracion/clinica/{clinica}/servicios', [ConfiguracionController::class, 'serviciosClinica'])->name('configuracion.clinica.servicios.index');
     // Actualizar un servicio (precio, tiempo, nombre)
     Route::patch('/configuracion/servicio/{servicio}', [ConfiguracionController::class, 'updateServicio'])->name('configuracion.servicio.update');
+    // Eliminar un servicio de una clínica
+    Route::delete('/configuracion/servicio/{servicio}', [ConfiguracionController::class, 'eliminarServicio'])->name('configuracion.servicio.destroy');
     // Actualizar información básica de clínica
     Route::put('/configuracion/clinica/{clinica}', [ConfiguracionController::class, 'updateClinicaInfo'])->name('configuracion.clinica.update');
     // Actualizar horarios (requiere clinica_id en el formulario)

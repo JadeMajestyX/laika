@@ -395,4 +395,25 @@ class ConfiguracionController extends Controller
             'servicio' => $servicio->only(['id','nombre','descripcion','precio','tiempo_estimado']),
         ]);
     }
+
+    // Eliminar un servicio de una clínica
+    public function eliminarServicio(Request $request, Servicio $servicio)
+    {
+        $id = $servicio->id;
+        $clinicaId = $servicio->clinica_id;
+        try {
+            $servicio->delete();
+
+            ActivityLogger::log($request, 'Eliminar servicio clínica', 'Servicio', $id, [
+                'clinica_id' => $clinicaId,
+            ], Auth::id());
+
+            return response()->json(['ok' => true, 'id' => $id]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'No se pudo eliminar el servicio.'
+            ], 422);
+        }
+    }
 }
