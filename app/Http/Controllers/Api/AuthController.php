@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Notifications\WelcomeNotification;
 use Google_Client;
+use App\Support\ActivityLogger;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
@@ -49,6 +50,12 @@ class AuthController extends Controller
                 }
             }
 
+
+                // Log de actividad: registro de usuario con Google
+                ActivityLogger::log($request, 'Registro de usuario (Google)', 'User', $user->id, [
+                    'email' => $user->email,
+                    'nombre' => $user->nombre,
+                ], $user->id);
             // Generar token
             $token = $user->createToken('mobile')->plainTextToken;
 

@@ -17,6 +17,8 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use App\Notifications\ResetPasswordCodeNotification;
 use App\Notifications\WelcomeNotification;
+use App\Support\ActivityLogger;
+use Illuminate\Support\Facades\Log;
 
 Route::post('/login', function(Request $request){
     $request->validate([
@@ -67,12 +69,18 @@ Route::post('/register', function(Request $request){
         'password' => Hash::make($request->password)
     ]);
 
+    // Log de actividad: registro de usuario
+    ActivityLogger::log($request, 'Registro de usuario', 'User', $user->id, [
+        'email' => $user->email,
+        'nombre' => $user->nombre,
+    ], $user->id);
+
     // Enviar correo de bienvenida
     try {
         $user->notify(new WelcomeNotification());
     } catch (\Throwable $e) {
         // Evitar que un fallo de correo rompa el registro
-        \Log::warning('Fallo al enviar correo de bienvenida: ' . $e->getMessage());
+        Log::warning('Fallo al enviar correo de bienvenida: ' . $e->getMessage());
     }
 
     $token = $user->createToken('auth_token')->plainTextToken;
@@ -143,6 +151,12 @@ Route::post('/register-mascota', function(Request $request) {
         'imagen' => $imageName,
         'user_id' => $request->user_id
     ]);
+
+    // Log de actividad: registro de mascota
+    ActivityLogger::log($request, 'Registro de mascota', 'Mascota', $mascota->id, [
+        'nombre' => $mascota->nombre,
+        'user_id' => $mascota->user_id,
+    ], $request->user_id);
 
     // 🔹 Responder con JSON
     return response()->json([
@@ -552,6 +566,14 @@ Route::middleware('auth:sanctum')->post('/agendar-cita', function(Request $reque
         'fecha' => $request->fecha,
         'notas' => $request->notas,
     ]);
+
+    // Log de actividad: agendar cita
+    ActivityLogger::log($request, 'Agendar cita', 'Cita', $cita->id, [
+        'clinica_id' => $cita->clinica_id,
+        'servicio_id' => $cita->servicio_id,
+        'mascota_id' => $cita->mascota_id,
+        'fecha' => $cita->fecha,
+    ], $request->user()->id);
 
     return response()->json([
         'success' => true,
