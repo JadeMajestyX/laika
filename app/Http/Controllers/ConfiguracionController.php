@@ -8,6 +8,7 @@ use App\Models\Clinica;        // modelo Clinica
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use App\Support\ActivityLogger;
+use App\Models\Servicio;
 
 class ConfiguracionController extends Controller
 {
@@ -296,5 +297,102 @@ class ConfiguracionController extends Controller
 
         return redirect()->route('configuracion.clinica', ['clinica' => $clinica->id, 'tab' => 'trabajadores'])
             ->with('success', 'Trabajador removido correctamente.');
+    }
+
+    // Agregar servicios predefinidos a una clínica (crea registros en tabla servicios con clinica_id)
+    public function storeServiciosClinica(Request $request, Clinica $clinica)
+    {
+        $request->validate([
+            'servicios' => 'required|array|min:1',
+            'servicios.*' => 'string|max:150',
+        ]);
+
+        $presets = [
+            'Consulta médica' => ['precio' => '0.00', 'tiempo' => 30, 'descripcion' => null],
+            'Corte de pelo' => ['precio' => '0.00', 'tiempo' => 45, 'descripcion' => null],
+            'Baño' => ['precio' => '0.00', 'tiempo' => 45, 'descripcion' => null],
+            'Vacunación' => ['precio' => '0.00', 'tiempo' => 20, 'descripcion' => null],
+            'Desparasitación' => ['precio' => '0.00', 'tiempo' => 20, 'descripcion' => null],
+            'Limpieza dental' => ['precio' => '0.00', 'tiempo' => 60, 'descripcion' => null],
+        ];
+
+        $creados = [];
+        foreach ($request->servicios as $nombre) {
+            $nombre = trim($nombre);
+            if ($nombre === '') { continue; }
+
+            // Determinar defaults
+            $def = $presets[$nombre] ?? ['precio' => '0.00', 'tiempo' => 30, 'descripcion' => null];
+
+            // Evitar duplicados por nombre dentro de la misma clínica
+            $exists = Servicio::where('clinica_id', $clinica->id)
+                ->where('nombre', $nombre)
+                ->exists();
+            if ($exists) { continue; }
+
+            $srv = Servicio::create([
+                'clinica_id' => $clinica->id,
+                'nombre' => $nombre,
+                'descripcion' => $def['descripcion'],
+                'precio' => $def['precio'],
+                'tiempo_estimado' => $def['tiempo'],
+            ]);
+            $creados[] = $srv->id;
+        }
+
+        if (!empty($creados)) {
+            ActivityLogger::log($request, 'Agregar servicios a clínica', 'Clinica', $clinica->id, [
+                'servicios_creados' => $creados,
+            ], Auth::id());
+            return redirect()->route('configuracion')->with('success', 'Servicios agregados correctamente.');
+        }
+
+        return redirect()->route('configuracion')->with('error', 'No se agregaron servicios (posibles duplicados).');
+    }
+
+    // Listar servicios de una clínica (JSON)
+    public function serviciosClinica(Request $request, Clinica $clinica)
+    {
+        $servicios = Servicio::where('clinica_id', $clinica->id)
+            ->orderBy('nombre')
+            ->get(['id','nombre','descripcion','precio','tiempo_estimado']);
+
+        return response()->json([
+            'clinica_id' => $clinica->id,
+            'servicios' => $servicios,
+        ]);
+    }
+
+    // Actualizar datos de un servicio (precio, tiempo, nombre opcional)
+    public function updateServicio(Request $request, Servicio $servicio)
+    {
+        $data = $request->validate([
+            'nombre' => 'sometimes|required|string|max:150',
+            'precio' => 'sometimes|required|numeric|min:0|max:9999999.99',
+            'tiempo_estimado' => 'sometimes|required|integer|min:1|max:1440',
+            'descripcion' => 'sometimes|nullable|string|max:255',
+        ]);
+
+        $original = $servicio->getOriginal();
+        $servicio->fill($data);
+        $servicio->save();
+
+        // Determinar cambios
+        $changed = [];
+        foreach ($data as $k => $v) {
+            if (!array_key_exists($k, $original) || $original[$k] != $v) {
+                $changed[] = $k;
+            }
+        }
+
+        ActivityLogger::log($request, 'Actualizar servicio clínica', 'Servicio', $servicio->id, [
+            'clinica_id' => $servicio->clinica_id,
+            'changed_fields' => $changed,
+        ], Auth::id());
+
+        return response()->json([
+            'ok' => true,
+            'servicio' => $servicio->only(['id','nombre','descripcion','precio','tiempo_estimado']),
+        ]);
     }
 }

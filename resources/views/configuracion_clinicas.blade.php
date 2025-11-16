@@ -133,6 +133,10 @@
                                                 <a href="{{ route('configuracion.clinica', $clinica->id) }}" class="btn btn-sm btn-primary">
                                                     <i class="bi bi-pencil-square me-1"></i> Configurar
                                                 </a>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary ms-1 btn-servicios" data-bs-toggle="modal" data-bs-target="#modalServiciosClinica"
+                                                    data-clinica-id="{{ $clinica->id }}" data-clinica-nombre="{{ $clinica->nombre }}">
+                                                <i class="bi bi-list-check me-1"></i> Servicios
+                                            </button>
                                             </td>
                                         </tr>
                                     @empty
@@ -207,11 +211,191 @@
         </div>
     </div>
 
+    <!-- Modal Asignar Servicios a Clínica -->
+    <div class="modal fade" id="modalServiciosClinica" tabindex="-1" aria-labelledby="modalServiciosClinicaLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalServiciosClinicaLabel">Agregar servicios a <span id="svcClinicaNombre"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <form id="formServiciosClinica" method="POST" action="#">
+                    @csrf
+                    <div class="modal-body">
+                        <p class="text-muted">Selecciona los servicios que quieres agregar a la clínica.</p>
+                        <div class="d-grid gap-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="Consulta médica" id="svc1" name="servicios[]">
+                                <label class="form-check-label" for="svc1">Consulta médica</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="Corte de pelo" id="svc2" name="servicios[]">
+                                <label class="form-check-label" for="svc2">Corte de pelo</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="Baño" id="svc3" name="servicios[]">
+                                <label class="form-check-label" for="svc3">Baño</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="Vacunación" id="svc4" name="servicios[]">
+                                <label class="form-check-label" for="svc4">Vacunación</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="Desparasitación" id="svc5" name="servicios[]">
+                                <label class="form-check-label" for="svc5">Desparasitación</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="Limpieza dental" id="svc6" name="servicios[]">
+                                <label class="form-check-label" for="svc6">Limpieza dental</label>
+                            </div>
+                        </div>
+                        <hr class="my-3">
+                        <h6 class="mb-2">Servicios actuales</h6>
+                        <div id="svcListWrap" class="table-responsive border rounded">
+                            <table class="table table-sm align-middle mb-0" id="svcTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width:35%">Nombre</th>
+                                        <th style="width:20%">Precio</th>
+                                        <th style="width:20%">Tiempo (min)</th>
+                                        <th class="text-end" style="width:25%"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="svcTbody">
+                                    <tr><td colspan="4" class="text-center text-muted py-3">Sin servicios</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i> Agregar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         function setupSidebar(){ const btn = document.getElementById('btnToggleSidebar'); const sidebar = document.getElementById('sidebar'); if(!btn || !sidebar) return; const savedCollapsed = localStorage.getItem('sidebarCollapsed') === 'true'; if(window.innerWidth >= 992 && savedCollapsed){ sidebar.classList.add('collapsed'); } btn.addEventListener('click', ()=>{ if(window.innerWidth < 992){ sidebar.classList.toggle('show'); } else { sidebar.classList.toggle('collapsed'); localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed')); } }); document.addEventListener('click', (e)=>{ if(window.innerWidth >= 992) return; if(!sidebar.classList.contains('show')) return; const clickInside = sidebar.contains(e.target) || btn.contains(e.target); if(!clickInside) sidebar.classList.remove('show'); }); window.addEventListener('resize', ()=>{ if(window.innerWidth < 992){ sidebar.classList.remove('collapsed'); } else { sidebar.classList.remove('show'); const saved = localStorage.getItem('sidebarCollapsed') === 'true'; sidebar.classList.toggle('collapsed', saved); } }); }
         function setupTheme(){ const switchEl = document.getElementById('switchTheme'); const saved = localStorage.getItem('theme') || 'light'; document.documentElement.setAttribute('data-bs-theme', saved); if(switchEl) switchEl.checked = saved === 'dark'; switchEl?.addEventListener('change', ()=>{ const next = switchEl.checked ? 'dark' : 'light'; document.documentElement.setAttribute('data-bs-theme', next); localStorage.setItem('theme', next); }); }
-        document.addEventListener('DOMContentLoaded', ()=>{ setupSidebar(); setupTheme(); });
+        document.addEventListener('DOMContentLoaded', ()=>{ 
+            setupSidebar(); setupTheme(); 
+            // preparar modal de servicios
+            const modalEl = document.getElementById('modalServiciosClinica');
+            const form = document.getElementById('formServiciosClinica');
+            const titleSpan = document.getElementById('svcClinicaNombre');
+            const base = '{{ url('/configuracion/clinica') }}';
+            const svcTbody = document.getElementById('svcTbody');
+            const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+            function renderServicios(rows){
+                if(!svcTbody) return;
+                svcTbody.innerHTML = '';
+                if(!rows || rows.length === 0){
+                    svcTbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3">Sin servicios</td></tr>';
+                    return;
+                }
+                for(const s of rows){
+                    const tr = document.createElement('tr');
+                    tr.dataset.id = s.id;
+                    tr.innerHTML = `
+                        <td>
+                            <span class="v-name">${s.nombre ?? ''}</span>
+                            <input class="form-control form-control-sm d-none e-name" value="${s.nombre ?? ''}">
+                        </td>
+                        <td>
+                            <span class="v-precio">${Number(s.precio).toFixed(2)}</span>
+                            <input type="number" step="0.01" min="0" class="form-control form-control-sm d-none e-precio" value="${s.precio}">
+                        </td>
+                        <td>
+                            <span class="v-tiempo">${s.tiempo_estimado}</span>
+                            <input type="number" min="1" class="form-control form-control-sm d-none e-tiempo" value="${s.tiempo_estimado}">
+                        </td>
+                        <td class="text-end">
+                            <button type="button" class="btn btn-sm btn-outline-primary btn-edit">Editar</button>
+                            <button type="button" class="btn btn-sm btn-primary d-none btn-save">Guardar</button>
+                            <button type="button" class="btn btn-sm btn-secondary d-none btn-cancel">Cancelar</button>
+                        </td>`;
+                    svcTbody.appendChild(tr);
+                }
+            }
+
+            function bindRowActions(clinicaId){
+                if(!svcTbody) return;
+                svcTbody.addEventListener('click', async (ev)=>{
+                    const btn = ev.target.closest('button');
+                    if(!btn) return;
+                    const tr = btn.closest('tr');
+                    const id = tr?.dataset.id;
+                    if(btn.classList.contains('btn-edit')){
+                        tr.querySelectorAll('.v-name,.v-precio,.v-tiempo').forEach(el=> el.classList.add('d-none'));
+                        tr.querySelectorAll('.e-name,.e-precio,.e-tiempo').forEach(el=> el.classList.remove('d-none'));
+                        tr.querySelector('.btn-edit').classList.add('d-none');
+                        tr.querySelector('.btn-save').classList.remove('d-none');
+                        tr.querySelector('.btn-cancel').classList.remove('d-none');
+                    } else if(btn.classList.contains('btn-cancel')){
+                        tr.querySelectorAll('.e-name,.e-precio,.e-tiempo').forEach(el=> el.classList.add('d-none'));
+                        tr.querySelectorAll('.v-name,.v-precio,.v-tiempo').forEach(el=> el.classList.remove('d-none'));
+                        tr.querySelector('.btn-edit').classList.remove('d-none');
+                        tr.querySelector('.btn-save').classList.add('d-none');
+                        tr.querySelector('.btn-cancel').classList.add('d-none');
+                    } else if(btn.classList.contains('btn-save')){
+                        const nombre = tr.querySelector('.e-name').value.trim();
+                        const precio = tr.querySelector('.e-precio').value;
+                        const tiempo = tr.querySelector('.e-tiempo').value;
+                        try{
+                            const resp = await fetch(`{{ url('/configuracion/servicio') }}/${id}`, {
+                                method: 'PATCH',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                    'X-CSRF-TOKEN': csrf,
+                                },
+                                body: JSON.stringify({ nombre, precio, tiempo_estimado: parseInt(tiempo,10) }),
+                            });
+                            if(!resp.ok){ throw new Error('Error al guardar'); }
+                            const data = await resp.json();
+                            const s = data.servicio;
+                            tr.querySelector('.v-name').textContent = s.nombre;
+                            tr.querySelector('.v-precio').textContent = Number(s.precio).toFixed(2);
+                            tr.querySelector('.v-tiempo').textContent = s.tiempo_estimado;
+                            tr.querySelector('.e-name').value = s.nombre;
+                            tr.querySelector('.e-precio').value = s.precio;
+                            tr.querySelector('.e-tiempo').value = s.tiempo_estimado;
+                            // toggle back
+                            tr.querySelectorAll('.e-name,.e-precio,.e-tiempo').forEach(el=> el.classList.add('d-none'));
+                            tr.querySelectorAll('.v-name,.v-precio,.v-tiempo').forEach(el=> el.classList.remove('d-none'));
+                            tr.querySelector('.btn-edit').classList.remove('d-none');
+                            tr.querySelector('.btn-save').classList.add('d-none');
+                            tr.querySelector('.btn-cancel').classList.add('d-none');
+                        }catch(e){
+                            alert('No se pudo guardar el servicio.');
+                        }
+                    }
+                }, { passive: true });
+            }
+            modalEl?.addEventListener('show.bs.modal', async (ev)=>{
+                const btn = ev.relatedTarget;
+                const id = btn?.getAttribute('data-clinica-id');
+                const nombre = btn?.getAttribute('data-clinica-nombre') || '';
+                titleSpan.textContent = nombre;
+                // reset checks
+                form.querySelectorAll('input[type="checkbox"]').forEach(ch=> ch.checked = false);
+                // set action
+                form.setAttribute('action', `${base}/${id}/servicios`);
+                // cargar servicios actuales
+                try{
+                    const resp = await fetch(`${base}/${id}/servicios`, { headers: { 'X-Requested-With':'XMLHttpRequest' } });
+                    const data = await resp.json();
+                    renderServicios(data.servicios || []);
+                    bindRowActions(id);
+                }catch(e){
+                    renderServicios([]);
+                }
+            });
+        });
     </script>
     @stack('scripts')
     @yield('scripts')

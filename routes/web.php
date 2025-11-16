@@ -84,6 +84,12 @@ Route::middleware(EnsureUserHasRole::class.':A')->group(function () {
     Route::get('/configuracion/clinica/{clinica}', [ConfiguracionController::class, 'editarClinica'])->name('configuracion.clinica');
     // Crear nueva clínica
     Route::post('/configuracion/clinica', [ConfiguracionController::class, 'storeClinica'])->name('configuracion.clinica.store');
+    // Agregar servicios predefinidos a una clínica
+    Route::post('/configuracion/clinica/{clinica}/servicios', [ConfiguracionController::class, 'storeServiciosClinica'])->name('configuracion.clinica.servicios.store');
+    // Listar servicios de una clínica (JSON)
+    Route::get('/configuracion/clinica/{clinica}/servicios', [ConfiguracionController::class, 'serviciosClinica'])->name('configuracion.clinica.servicios.index');
+    // Actualizar un servicio (precio, tiempo, nombre)
+    Route::patch('/configuracion/servicio/{servicio}', [ConfiguracionController::class, 'updateServicio'])->name('configuracion.servicio.update');
     // Actualizar información básica de clínica
     Route::put('/configuracion/clinica/{clinica}', [ConfiguracionController::class, 'updateClinicaInfo'])->name('configuracion.clinica.update');
     // Actualizar horarios (requiere clinica_id en el formulario)
