@@ -227,10 +227,11 @@
     La eliminación es irreversible y Laika no podrá recuperar información posteriormente.
   </p>
 
-  <h3>9. Datos de Menores de Edad</h3>
+  <h3>9. Restricción de uso para menores de edad</h3>
   <p>
-    Los menores solo pueden utilizar la aplicación bajo supervisión y autorización expresa de un padre o tutor,
-    quien será responsable del uso de la cuenta.
+Esta aplicación está destinada únicamente a personas mayores de 18 años.
+Los menores de edad no pueden crear una cuenta ni utilizar la app bajo ninguna circunstancia.
+Al registrarte, confirmas que eres mayor de edad y que la información proporcionada es verídica.
   </p>
 
   <h3>10. Modificaciones a los Términos</h3>
