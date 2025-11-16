@@ -39,42 +39,66 @@
         <div class="col-md-4 mb-3">
           <div class="card shadow-sm p-3">
             <h5 class="mb-4">Configuración</h5>
+            @php($currentTab = request('tab','clinica'))
             <div class="list-group" id="configTabs">
-              <a href="#" data-target="panel-clinica" class="list-group-item list-group-item-action mb-2"><i class="bi bi-hospital me-2"></i> Información de la clínica</a>
-              <a href="#" data-target="panel-horario" class="list-group-item list-group-item-action mb-2"><i class="bi bi-clock me-2"></i> Horario de atención</a>
-              <a href="#" data-target="panel-notificaciones" class="list-group-item list-group-item-action active"><i class="bi bi-bell me-2"></i> Notificaciones</a>
-              <a href="#" data-target="panel-sistema" class="list-group-item list-group-item-action mb-2"><i class="bi bi-sliders me-2"></i> Preferencias</a>
-
+              <a href="#" data-target="panel-clinica" class="list-group-item list-group-item-action mb-2 {{ $currentTab=='clinica' ? 'active' : '' }}"><i class="bi bi-hospital me-2"></i> Información de la clínica</a>
+              <a href="#" data-target="panel-horario" class="list-group-item list-group-item-action mb-2 {{ $currentTab=='horario' ? 'active' : '' }}"><i class="bi bi-clock me-2"></i> Horario de atención</a>
+              <a href="#" data-target="panel-trabajadores" class="list-group-item list-group-item-action mb-2 {{ $currentTab=='trabajadores' ? 'active' : '' }}"><i class="bi bi-people-fill me-2"></i> Trabajadores</a>
             </div>
           </div>
         </div>
 
         <div class="col-md-8 mb-3">
           <!-- Paneles -->
-          <div id="panel-clinica" class="config-panel card shadow-sm p-4 d-none">
-            <h4 class="mb-4">Información de la clínica</h4>
-            <form id="formClinica">
+            <div id="panel-clinica" class="config-panel card shadow-sm p-4 {{ $currentTab=='clinica' ? '' : 'd-none' }}">
+            <h4 class="mb-4">Información de la clínica: {{ $clinica->nombre }}</h4>
+            @if(session('success') && $currentTab=='clinica')
+              <div class="alert alert-success">{{ session('success') }}</div>
+            @endif
+            @if(session('error') && $currentTab=='clinica')
+              <div class="alert alert-danger">{{ session('error') }}</div>
+            @endif
+            <form id="formClinica" method="POST" action="{{ route('configuracion.clinica.update',$clinica->id) }}">
+              @csrf
+              @method('PUT')
               <div class="mb-3">
                 <label class="form-label" for="clinicaNombre">Nombre de la clínica</label>
-                <input class="form-control" id="clinicaNombre" type="text" placeholder="Veterinaria Laika" disabled />
+                <input class="form-control" id="clinicaNombre" name="nombre" type="text" value="{{ old('nombre',$clinica->nombre) }}" disabled required />
+                @error('nombre')<small class="text-danger">{{ $message }}</small>@enderror
               </div>
               <div class="mb-3">
                 <label class="form-label" for="clinicaDireccion">Dirección</label>
-                <input class="form-control" id="clinicaDireccion" type="text" placeholder="Calle 123 #45-67" disabled />
-              </div>
-              <div class="row">
+                <input class="form-control" id="clinicaDireccion" name="direccion" type="text" value="{{ old('direccion',$clinica->direccion) }}" disabled required />
+                @error('direccion')<small class="text-danger">{{ $message }}</small>@enderror
+                <div class="row">
                 <div class="col-md-6 mb-3">
                   <label class="form-label" for="clinicaTelefono">Teléfono</label>
-                  <input class="form-control" id="clinicaTelefono" type="text" placeholder="+57 300 000 0000" disabled />
+                  <input class="form-control" id="clinicaTelefono" name="telefono" type="text" value="{{ old('telefono',$clinica->telefono) }}" disabled required />
+                  @error('telefono')<small class="text-danger">{{ $message }}</small>@enderror
                 </div>
                 <div class="col-md-6 mb-3">
                   <label class="form-label" for="clinicaEmail">Email</label>
-                  <input class="form-control" id="clinicaEmail" type="email" placeholder="contacto@laika.com" disabled />
+                  <input class="form-control" id="clinicaEmail" name="email" type="email" value="{{ old('email',$clinica->email) }}" disabled required />
+                  @error('email')<small class="text-danger">{{ $message }}</small>@enderror
+                </div>
                 </div>
               </div>
               <div class="mb-3">
-                <label class="form-label" for="clinicaDescripcion">Descripción</label>
-                <textarea class="form-control" id="clinicaDescripcion" rows="3" placeholder="Breve descripción de la clínica" disabled></textarea>
+                <label class="form-label" for="clinicaSite">Sitio / URL</label>
+                <input class="form-control" id="clinicaSite" name="site" type="text" value="{{ old('site',$clinica->site) }}" disabled />
+                @error('site')<small class="text-danger">{{ $message }}</small>@enderror
+              </div>
+              <div class="mb-3 d-flex gap-4 align-items-center">
+                <div class="form-check">
+                  <input type="hidden" name="is_open" value="0" />
+                  <input class="form-check-input" type="checkbox" id="clinicaOpen" name="is_open" value="1" {{ $clinica->is_open ? 'checked' : '' }} disabled />
+                  <label class="form-check-label" for="clinicaOpen">Abierta</label>
+                </div>
+                <div class="form-check">
+                  <input type="hidden" name="is_visible" value="0" />
+                  <input class="form-check-input" type="checkbox" id="clinicaVisible" name="is_visible" value="1" {{ $clinica->is_visible ? 'checked' : '' }} disabled />
+                  <label class="form-check-label" for="clinicaVisible">Visible</label>
+                </div>
               </div>
               <div class="d-flex gap-2">
                 <button type="button" id="btnEditarClinica" class="btn btn-outline-secondary"><i class="bi bi-pencil me-1"></i>Editar</button>
@@ -84,12 +108,19 @@
             </form>
           </div>
 
-          <div id="panel-horario" class="config-panel card shadow-sm p-4 d-none">
+          <div id="panel-horario" class="config-panel card shadow-sm p-4 {{ $currentTab=='horario' ? '' : 'd-none' }}">
               <h4 class="mb-4">Horario de atención</h4>
+              @if(session('success') && $currentTab=='horario')
+                <div class="alert alert-success">{{ session('success') }}</div>
+              @endif
+              @if(session('error') && $currentTab=='horario')
+                <div class="alert alert-danger">{{ session('error') }}</div>
+              @endif
 
               <form id="formHorario" method="POST" action="{{ route('configuracion.horarios.update') }}">
                 @csrf
                 @method('PUT')
+                <input type="hidden" name="clinica_id" value="{{ $clinica->id }}" />
 
                 <div class="table-responsive">
                   <table class="table align-middle">
@@ -127,51 +158,181 @@
 
 
 
-          <div id="panel-notificaciones" class="config-panel card shadow-sm p-4">
-            <h4 class="mb-4">Configuración de notificaciones</h4>
-            <form id="formNotificaciones">
-              <div class="mb-3 d-flex justify-content-between align-items-center">
-                <div>
-                  <strong>Recordatorio de citas por email</strong>
-                  <div class="text-muted" style="font-size:0.9em">Enviar recordatorio de citas programadas a los clientes</div>
-                </div>
-                <div class="form-check form-switch">
-                  <input class="form-check-input" type="checkbox" id="emailReminder" checked>
-                </div>
-              </div>
-              <div class="mb-3 d-flex justify-content-between align-items-center">
-                <div>
-                  <strong>Recordatorio de citas por SMS</strong>
-                  <div class="text-muted" style="font-size:0.9em">Enviar recordatorio de citas por mensaje de texto</div>
-                </div>
-                <div class="form-check form-switch">
-                  <input class="form-check-input" type="checkbox" id="smsReminder" checked>
-                </div>
-              </div>
-              <div class="mb-3 d-flex justify-content-between align-items-center">
-                <div>
-                  <strong>Alerta de inventario bajo</strong>
-                  <div class="text-muted" style="font-size:0.9em">Notificar cuando los productos estén por agotarse</div>
-                </div>
-                <div class="form-check form-switch">
-                  <input class="form-check-input" type="checkbox" id="inventoryAlert" checked>
-                </div>
-              </div>
-              <hr>
-              <div class="mb-3">
-                <label for="leadTime" class="form-label">Antelación para recordatorios (horas):</label>
-                <input type="number" class="form-control" id="leadTime" placeholder="24">
-              </div>
-              <button type="submit" class="btn btn-primary"><i class="bi bi-save me-2"></i>Guardar configuración</button>
-            </form>
-          </div>
 
           
           <div id="alertPlaceholder" class="mt-3"></div>
+          <div id="panel-trabajadores" class="config-panel card shadow-sm p-4 {{ $currentTab=='trabajadores' ? '' : 'd-none' }}">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h4 class="mb-0">Trabajadores de la clínica</h4>
+              <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalAsignarTrabajador">
+                <i class="bi bi-person-plus-fill me-1"></i> Asignar existente
+              </button>
+            </div>
+            @if(session('success') && $currentTab=='trabajadores')
+              <div class="alert alert-success">{{ session('success') }}</div>
+            @endif
+            @if(session('error') && $currentTab=='trabajadores')
+              <div class="alert alert-danger">{{ session('error') }}</div>
+            @endif
+            @if($trabajadores->isEmpty())
+              <p class="text-muted">No hay trabajadores asociados a esta clínica.</p>
+            @else
+            <div class="table-responsive mb-4">
+              <table class="table table-sm align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Rol</th>
+                    <th>Email</th>
+                    <th>Activo</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @foreach($trabajadores as $t)
+                    <tr>
+                      <td>{{ $t->nombre }} {{ $t->apellido_paterno }}</td>
+                      <td>
+                        @php($rolesMap = ['A'=>'Admin','R'=>'Recepción','V'=>'Veterinario'])
+                        <span class="badge bg-secondary">{{ $rolesMap[$t->rol] ?? $t->rol }}</span>
+                      </td>
+                      <td>{{ $t->email }}</td>
+                      <td>{!! $t->is_active ? '<span class="badge bg-success">Sí</span>' : '<span class="badge bg-danger">No</span>' !!}</td>
+                      <td class="text-end">
+                        <form method="POST" action="{{ route('configuracion.clinica.trabajadores.remover', ['clinica'=>$clinica->id,'user'=>$t->id]) }}" onsubmit="return confirm('¿Remover este trabajador de la clínica?');" class="d-inline">
+                          @csrf
+                          @method('DELETE')
+                          <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-x-lg"></i></button>
+                        </form>
+                      </td>
+                    </tr>
+                  @endforeach
+                </tbody>
+              </table>
+            </div>
+            @endif
+          </div>
+
+          <!-- Modal Asignar Trabajador Existente -->
+          <div class="modal fade" id="modalAsignarTrabajador" tabindex="-1" aria-labelledby="modalAsignarTrabajadorLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable">
+              <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="modalAsignarTrabajadorLabel">Asignar trabajador existente</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                  </div>
+                  <div class="modal-body">
+                    <form method="GET" action="{{ route('configuracion.clinica', $clinica->id) }}" class="row g-2 align-items-end mb-3">
+                      <div class="col-md-8">
+                        <label for="searchEmail" class="form-label mb-1">Buscar por correo</label>
+                        <input type="text" id="searchEmail" name="search_email" class="form-control" placeholder="usuario@correo.com" value="{{ request('search_email') }}">
+                        <input type="hidden" name="tab" value="trabajadores">
+                        <input type="hidden" name="open_modal" value="asignar">
+                      </div>
+                      <div class="col-md-4 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary flex-grow-1"><i class="bi bi-search me-1"></i>Buscar</button>
+                        <a href="{{ route('configuracion.clinica', ['clinica'=>$clinica->id, 'tab'=>'trabajadores', 'open_modal'=>'asignar']) }}" class="btn btn-outline-secondary" title="Limpiar"><i class="bi bi-x-lg"></i></a>
+                      </div>
+                    </form>
+                    @if($availableTrabajadores->isEmpty())
+                      <p class="text-muted">No hay trabajadores (Administrador/Veterinario) disponibles para asignar.</p>
+                    @else
+                      <div class="table-responsive">
+                        <table class="table table-hover table-sm align-middle">
+                          <thead class="table-light">
+                            <tr>
+                              <th>Nombre</th>
+                              <th>Rol</th>
+                              <th>Email</th>
+                              <th></th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            @foreach($availableTrabajadores as $u)
+                              <tr>
+                                <td>{{ $u->nombre }} {{ $u->apellido_paterno }}</td>
+                                <td>
+                                  @php($rolesMap = ['A'=>'Admin','V'=>'Veterinario'])
+                                  <span class="badge bg-secondary">{{ $rolesMap[$u->rol] ?? $u->rol }}</span>
+                                </td>
+                                <td>{{ $u->email }}</td>
+                                <td class="text-end">
+                                  <form method="POST" action="{{ route('configuracion.clinica.trabajadores.asignar', $clinica->id) }}" class="d-inline">
+                                    @csrf
+                                    <input type="hidden" name="user_id" value="{{ $u->id }}" />
+                                    <button type="submit" class="btn btn-sm btn-outline-primary"><i class="bi bi-plus-lg"></i> Asignar</button>
+                                  </form>
+                                </td>
+                              </tr>
+                            @endforeach
+                          </tbody>
+                        </table>
+                      </div>
+                    @endif
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                  </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       @endsection
 
 @section('scripts')
-<script src="{{ asset('js/configuracion_admin.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // ===== Toggle tabs =====
+  const tabLinks = document.querySelectorAll('#configTabs a');
+  const panels = document.querySelectorAll('.config-panel');
+  tabLinks.forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      const target = link.dataset.target;
+      // Ocultar todas
+      panels.forEach(p => p.classList.add('d-none'));
+      // Mostrar la seleccionada si existe
+      const panel = document.getElementById(target);
+      if (panel) panel.classList.remove('d-none');
+      // Active en link
+      tabLinks.forEach(l => l.classList.remove('active'));
+      link.classList.add('active');
+      // Actualizar la URL para persistir pestaña
+      const url = new URL(window.location.href);
+      url.searchParams.set('tab', target.replace('panel-',''));
+      window.history.replaceState({}, '', url.toString());
+    });
+  });
+
+  // ===== Clinic edit toggle =====
+  const editBtn = document.getElementById('btnEditarClinica');
+  const saveBtn = document.getElementById('btnGuardarClinica');
+  const cancelBtn = document.getElementById('btnCancelarClinica');
+  const form = document.getElementById('formClinica');
+  const inputs = form ? form.querySelectorAll('input:not([type=hidden]), textarea') : [];
+
+  function setEditable(editing){
+    inputs.forEach(i => { i.disabled = !editing; });
+    if (editBtn) editBtn.classList.toggle('d-none', editing);
+    if (saveBtn) saveBtn.classList.toggle('d-none', !editing);
+    if (cancelBtn) cancelBtn.classList.toggle('d-none', !editing);
+  }
+
+  editBtn?.addEventListener('click', () => setEditable(true));
+  cancelBtn?.addEventListener('click', () => {
+    window.location.reload();
+  });
+
+  // Auto abrir modal de asignar si query open_modal=asignar
+  const params = new URLSearchParams(window.location.search);
+  if(params.get('open_modal') === 'asignar'){
+      const modalEl = document.getElementById('modalAsignarTrabajador');
+      if(modalEl){
+          const modal = new bootstrap.Modal(modalEl);
+          modal.show();
+      }
+  }
+});
+</script>
 @endsection

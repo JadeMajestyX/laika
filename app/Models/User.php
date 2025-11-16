@@ -31,6 +31,7 @@ class User extends Authenticatable
         'telefono',
         'imagen_perfil',
         'is_active',
+        'clinica_id',
         'password',
     ];
 
@@ -74,5 +75,10 @@ class User extends Authenticatable
 public function sendPasswordResetNotification($token)
 {
     $this->notify(new CustomResetPasswordNotification($token));
+}
+
+public function clinica()
+{
+    return $this->belongsTo(\App\Models\Clinica::class, 'clinica_id');
 }
 }

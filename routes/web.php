@@ -74,8 +74,21 @@ Route::middleware(EnsureUserHasRole::class.':A')->group(function () {
     Route::get('/reportes/citas/export/xlsx', [ReporteController::class, 'exportCitasXlsx'])->name('reportes.citas.export.xlsx');
     Route::get('/reportes/citas/export/pdf', [ReporteController::class, 'exportCitasPdf'])->name('reportes.citas.export.pdf');
     Route::get('/inventario', [App\Http\Controllers\InventarioController::class, 'index'])->name('inventario');
+    // Listado de clínicas (selección)
     Route::get('/configuracion', [ConfiguracionController::class, 'index'])->name('configuracion');
+    // Vista de configuración para una clínica específica
+    Route::get('/configuracion/clinica/{clinica}', [ConfiguracionController::class, 'editarClinica'])->name('configuracion.clinica');
+    // Crear nueva clínica
+    Route::post('/configuracion/clinica', [ConfiguracionController::class, 'storeClinica'])->name('configuracion.clinica.store');
+    // Actualizar información básica de clínica
+    Route::put('/configuracion/clinica/{clinica}', [ConfiguracionController::class, 'updateClinicaInfo'])->name('configuracion.clinica.update');
+    // Actualizar horarios (requiere clinica_id en el formulario)
     Route::put('/configuracion/horarios', [ConfiguracionController::class, 'updateHorarios'])->name('configuracion.horarios.update');
+    // Crear trabajador para clínica
+    Route::post('/configuracion/clinica/{clinica}/trabajadores', [ConfiguracionController::class, 'storeTrabajadorClinica'])->name('configuracion.clinica.trabajadores.store');
+    Route::post('/configuracion/clinica/{clinica}/trabajadores/asignar', [ConfiguracionController::class, 'asignarTrabajadorClinica'])->name('configuracion.clinica.trabajadores.asignar');
+    // Remover trabajador (desasignar de clínica)
+    Route::delete('/configuracion/clinica/{clinica}/trabajadores/{user}/remover', [ConfiguracionController::class, 'removerTrabajadorClinica'])->name('configuracion.clinica.trabajadores.remover');
 
     //Route::get('/buscar', [SearchController::class, 'buscar'])->name('buscar');
 
