@@ -61,8 +61,9 @@ class FcmV1Client
                 'title' => $title,
                 'body' => $body,
             ],
-            'data' => array_map('strval', $data),
         ];
+        $d = $this->normalizeData($data);
+        if ($d !== null) { $message['data'] = $d; }
         if (!empty($options['android'])) {
             $message['android'] = $options['android'];
         }
@@ -80,8 +81,9 @@ class FcmV1Client
                 'title' => $title,
                 'body' => $body,
             ],
-            'data' => array_map('strval', $data),
         ];
+        $d = $this->normalizeData($data);
+        if ($d !== null) { $message['data'] = $d; }
         if (!empty($options['android'])) {
             $message['android'] = $options['android'];
         }
@@ -171,5 +173,28 @@ class FcmV1Client
     protected function base64url(string $data): string
     {
         return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
+    }
+
+    /**
+     * Normaliza el data payload: convierte valores a string y omite si está vacío.
+     */
+    protected function normalizeData(array $data): ?array
+    {
+        // Filtrar nulos
+        $filtered = [];
+        foreach ($data as $k => $v) {
+            if ($v === null) { continue; }
+            // claves deben ser string
+            $key = is_int($k) ? (string)$k : $k;
+            // valores como string (FCM requiere string-to-string)
+            if (is_array($v) || is_object($v)) {
+                $v = json_encode($v, JSON_UNESCAPED_UNICODE);
+            }
+            $filtered[$key] = (string)$v;
+        }
+        if (empty($filtered)) {
+            return null; // omitir 'data' para evitar enviar []
+        }
+        return $filtered;
     }
 }
