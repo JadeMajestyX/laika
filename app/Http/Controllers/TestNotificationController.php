@@ -61,22 +61,66 @@ class TestNotificationController extends Controller
                 if(empty($data['topic'])) return back()->with('error','Topic requerido');
                 $res = $client->sendToTopic($data['topic'], $data['title'], $data['body'], $dataPayload);
                 Log::info('Test push v1 topic', $res);
-                return back()->with($res['ok']?'success':'error', ($res['ok']?'Enviado ':'Fallo ').'(HTTP '.$res['status'].')');
+                if($res['ok']){
+                    return back()->with('success', 'Enviado (HTTP '.$res['status'].')');
+                } else {
+                    $err = is_array($res['body']) && isset($res['body']['error']) ? $res['body']['error'] : $res['body'];
+                    $detail = [];
+                    if(is_array($err)){
+                        $detail[] = [
+                            'target' => 'topic:'.$data['topic'],
+                            'status' => $err['status'] ?? null,
+                            'message'=> $err['message'] ?? json_encode($err),
+                        ];
+                    } else {
+                        $detail[] = [ 'target'=>'topic:'.$data['topic'], 'message'=>(string)$err ];
+                    }
+                    return back()->with('error', 'Fallo (HTTP '.$res['status'].')')
+                                 ->with('errors_detail', $detail);
+                }
             } elseif($data['mode']==='user') {
                 if(empty($data['user_id'])) return back()->with('error','user_id requerido');
                 $tokens = DeviceToken::where('user_id',$data['user_id'])->pluck('token')->unique()->values()->all();
                 if(empty($tokens)) return back()->with('error','Usuario sin tokens registrados');
-                $ok=0;$fail=0; $results=[];
+                $ok=0;$fail=0; $results=[]; $failReasons=[];
                 foreach($tokens as $tk){
                     try { $r=$client->sendToToken($tk, $data['title'], $data['body'], $dataPayload); $results[]=$r; $r['ok']?$ok++:$fail++; }
                     catch(\Throwable $ex){ Log::warning('FCM v1 token error: '.$ex->getMessage()); $results[]=['ok'=>false,'error'=>$ex->getMessage()]; $fail++; }
+                    // recolectar motivo si falló
+                    $last = end($results);
+                    if(!$last['ok']){
+                        $body = $last['body'] ?? null;
+                        if(is_array($body) && isset($body['error'])){
+                            $failReasons[] = [
+                                'target' => 'token:'.substr($tk,0,18).'...'
+                                            , 'status' => $body['error']['status'] ?? null,
+                                'message' => $body['error']['message'] ?? json_encode($body['error']),
+                            ];
+                        } else {
+                            $failReasons[] = [ 'target'=>'token:'.substr($tk,0,18).'...', 'message'=> (is_string($body)?$body:json_encode($body)) ];
+                        }
+                    }
                 }
-                return back()->with($fail===0?'success':'error', 'Tokens OK:'.$ok.' Fallos:'.$fail);
+                $resp = back()->with($fail===0?'success':'error', 'Tokens OK:'.$ok.' Fallos:'.$fail);
+                if($fail>0){ $resp->with('errors_detail', $failReasons); }
+                return $resp;
             } else { // token directo
                 if(empty($data['token'])) return back()->with('error','token requerido');
                 $res = $client->sendToToken($data['token'], $data['title'], $data['body'], $dataPayload);
                 Log::info('Test push v1 token', $res);
-                return back()->with($res['ok']?'success':'error', ($res['ok']?'Enviado ':'Fallo ').'(HTTP '.$res['status'].')');
+                if($res['ok']){
+                    return back()->with('success', 'Enviado (HTTP '.$res['status'].')');
+                } else {
+                    $err = is_array($res['body']) && isset($res['body']['error']) ? $res['body']['error'] : $res['body'];
+                    $detail = [];
+                    if(is_array($err)){
+                        $detail[] = [ 'target'=>'token:'.substr($data['token'],0,18).'...', 'status'=>$err['status'] ?? null, 'message'=>$err['message'] ?? json_encode($err) ];
+                    } else {
+                        $detail[] = [ 'target'=>'token:'.substr($data['token'],0,18).'...', 'message'=>(string)$err ];
+                    }
+                    return back()->with('error', 'Fallo (HTTP '.$res['status'].')')
+                                 ->with('errors_detail', $detail);
+                }
             }
         }
 
@@ -120,7 +164,32 @@ class TestNotificationController extends Controller
             }
             curl_close($ch);
             Log::info('Test push legacy', ['http_code'=>$http,'response'=>$resp]);
-            return back()->with('success','Notificación enviada (HTTP '.$http.')');
+            $decoded = json_decode($resp, true);
+            if(isset($payload['registration_ids'])){
+                // multi-token response con results por índice
+                $errors = [];
+                if(is_array($decoded) && isset($decoded['results'])){
+                    foreach($decoded['results'] as $i => $r){
+                        if(isset($r['error'])){ $errors[] = ['target'=>'token['.$i.']','message'=>$r['error']]; }
+                    }
+                }
+                $ok = $decoded['success'] ?? null; $fail = $decoded['failure'] ?? null;
+                $respBack = back()->with($fail && $fail>0 ? 'error' : 'success', 'Tokens OK:'.($ok ?? 0).' Fallos:'.($fail ?? 0).' (HTTP '.$http.')');
+                if(!empty($errors)){ $respBack->with('errors_detail', $errors); }
+                return $respBack;
+            }
+            // token único o topic
+            if($http >= 200 && $http < 300){
+                return back()->with('success','Notificación enviada (HTTP '.$http.')');
+            } else {
+                $errDetail = [];
+                if(is_array($decoded)){
+                    $errDetail[] = ['target'=>'legacy','message'=> isset($decoded['error']) ? $decoded['error'] : json_encode($decoded)];
+                } else {
+                    $errDetail[] = ['target'=>'legacy','message'=>(string)$resp];
+                }
+                return back()->with('error','Fallo (HTTP '.$http.')')->with('errors_detail', $errDetail);
+            }
         } catch(\Throwable $e){
             Log::error('Error enviando push test legacy: '.$e->getMessage());
             return back()->with('error','Excepción: '.$e->getMessage());

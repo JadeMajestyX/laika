@@ -14,8 +14,29 @@
 <body>
 <div class="container py-4">
     <h3 class="mb-4">Enviar Notificación (Test)</h3>
-    @if(session('success'))<div class="alert alert-success">{{ session('success') }}</div>@endif
-    @if(session('error'))<div class="alert alert-danger">{{ session('error') }}</div>@endif
+    @if(session('success'))
+        <div class="alert alert-success">{{ session('success') }}</div>
+    @endif
+    @if(session('error'))
+        <div class="alert alert-danger">
+            <div>{{ session('error') }}</div>
+            @if(session('errors_detail'))
+                <hr class="my-2">
+                <div class="small">
+                    <strong>Detalles:</strong>
+                    <ul class="mb-0">
+                        @foreach((array)session('errors_detail') as $e)
+                            <li>
+                                @if(!empty($e['target']))<code>{{ $e['target'] }}</code> — @endif
+                                @if(!empty($e['status']))<span class="text-muted">{{ $e['status'] }}:</span> @endif
+                                {{ $e['message'] ?? json_encode($e) }}
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+        </div>
+    @endif
 
     <div class="card mb-4 shadow-sm">
         <div class="card-body">
