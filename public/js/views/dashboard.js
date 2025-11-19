@@ -191,21 +191,17 @@ function renderMascotasTable(mascotas) {
           <td>${formatAge(m.fecha_nacimiento)}</td>
           <td>${m.peso != null ? m.peso + ' kg' : '-'}</td>
           <td>${owner}</td>
-          <td class="text-center">
+           <td class="text-center">
             <div class="d-inline-flex gap-1">
-              <a href="/mascotas/${m.id}" class="btn btn-warning btn-sm" data-bs-toggle="tooltip" title="Ver">
+              <button type="button" class="btn btn-warning btn-sm" data-action="view" data-section="mascotas" data-id="${m.id}" title="Ver">
                 <i class="bi bi-eye"></i>
-              </a>
-              <a href="/mascotas/${m.id}/editar" class="btn btn-info btn-sm text-white" data-bs-toggle="tooltip" title="Editar">
+              </button>
+              <button type="button" class="btn btn-info btn-sm text-white" data-action="edit" data-section="mascotas" data-id="${m.id}" title="Editar">
                 <i class="bi bi-pencil-square"></i>
-              </a>
-              <form method="POST" action="/mascotas/${m.id}" onsubmit="return confirm('¿Seguro que deseas eliminar esta mascota?')">
-                <input type="hidden" name="_method" value="DELETE" />
-                <input type="hidden" name="_token" value="${csrf}" />
-                <button type="submit" class="btn btn-danger btn-sm" data-bs-toggle="tooltip" title="Eliminar">
-                  <i class="bi bi-trash"></i>
-                </button>
-              </form>
+              </button>
+              <button type="button" class="btn btn-danger btn-sm" data-action="delete" data-section="mascotas" data-id="${m.id}" title="Eliminar">
+                <i class="bi bi-trash"></i>
+              </button>
             </div>
           </td>
         `;
@@ -407,16 +403,19 @@ function renderClientesTable(items) {
       <td>${u.email ?? '-'}</td>
       <td>${u.telefono ?? '-'}</td>
       <td class="text-center">
-        <div class="d-inline-flex gap-1">
-          <a href="/usuarios/${u.id}" class="btn btn-warning btn-sm" data-bs-toggle="tooltip" title="Ver"><i class="bi bi-eye"></i></a>
-          <a href="/usuarios/${u.id}/editar" class="btn btn-info btn-sm text-white" data-bs-toggle="tooltip" title="Editar"><i class="bi bi-pencil-square"></i></a>
-          <form method="POST" action="/usuarios/${u.id}" onsubmit="return confirm('¿Seguro que deseas eliminar este usuario?')">
-            <input type="hidden" name="_method" value="DELETE" />
-            <input type="hidden" name="_token" value="${csrf}" />
-            <button type="submit" class="btn btn-danger btn-sm" data-bs-toggle="tooltip" title="Eliminar"><i class="bi bi-trash"></i></button>
-          </form>
-        </div>
-      </td>`;
+          <div class="d-inline-flex gap-1">
+            <button type="button" class="btn btn-warning btn-sm" data-action="view" data-section="clientes" data-id="${u.id}" title="Ver">
+              <i class="bi bi-eye"></i>
+            </button>
+            <button type="button" class="btn btn-info btn-sm text-white" data-action="edit" data-section="clientes" data-id="${u.id}" title="Editar">
+              <i class="bi bi-pencil-square"></i>
+            </button>
+            <button type="button" class="btn btn-danger btn-sm" data-action="delete" data-section="clientes" data-id="${u.id}" title="Eliminar">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </td>
+      `;
     tbody.appendChild(tr);
   });
 }
@@ -505,16 +504,19 @@ function renderTrabajadoresTable(items) {
       <td>${t.telefono ?? '-'}</td>
       <td>${t.clinica ?? '-'}</td>
       <td class="text-center">
-        <div class="d-inline-flex gap-1">
-          <a href="/trabajadores/${t.id}" class="btn btn-warning btn-sm" data-bs-toggle="tooltip" title="Ver"><i class="bi bi-eye"></i></a>
-          <a href="/trabajadores/${t.id}/editar" class="btn btn-info btn-sm text-white" data-bs-toggle="tooltip" title="Editar"><i class="bi bi-pencil-square"></i></a>
-          <form method="POST" action="/trabajadores/${t.id}" onsubmit="return confirm('¿Seguro que deseas eliminar este trabajador?')">
-            <input type="hidden" name="_method" value="DELETE" />
-            <input type="hidden" name="_token" value="${csrf}" />
-            <button type="submit" class="btn btn-danger btn-sm" data-bs-toggle="tooltip" title="Eliminar"><i class="bi bi-trash"></i></button>
-          </form>
-        </div>
-      </td>`;
+            <div class="d-inline-flex gap-1">
+              <button type="button" class="btn btn-warning btn-sm" data-action="view" data-section="trabajadores" data-id="${t.id}" title="Ver">
+                <i class="bi bi-eye"></i>
+              </button>
+              <button type="button" class="btn btn-info btn-sm text-white" data-action="edit" data-section="trabajadores" data-id="${t.id}" title="Editar">
+                <i class="bi bi-pencil-square"></i>
+              </button>
+              <button type="button" class="btn btn-danger btn-sm" data-action="delete" data-section="trabajadores" data-id="${t.id}" title="Eliminar">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </td>
+        `;
     tbody.appendChild(tr);
   });
 }
@@ -1372,3 +1374,16 @@ function fetchCitasAndRender(page = 1, perPage = 10) {
     })
     .catch((err) => console.error('Error al cargar citas:', err));
 }
+document.addEventListener('entity:deleted', (e) => {
+  const s = e.detail.section;
+  if (s === 'mascotas') fetchMascotasAndRender();
+  if (s === 'clientes') fetchClientesAndRender();
+  if (s === 'trabajadores') fetchTrabajadoresAndRender();
+});
+
+document.addEventListener('entity:updated', (e) => {
+  const s = e.detail.section;
+  if (s === 'mascotas') fetchMascotasAndRender();
+  if (s === 'clientes') fetchClientesAndRender();
+  if (s === 'trabajadores') fetchTrabajadoresAndRender();
+});
