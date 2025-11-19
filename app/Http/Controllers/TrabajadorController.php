@@ -14,10 +14,10 @@ class TrabajadorController extends Controller
         return view('trabajadores', compact('usuario', 'trabajadores'));
     }
 
-    public function show($id){
-        $trabajador = User::findOrFail($id);
-        return view('trabajadores.show', compact('trabajador'));
-    }
+        public function show($id){
+            $trabajador = User::findOrFail($id);
+            return response()->json($trabajador);
+        }
 
     public function create(){
         return view('trabajadores.create');
@@ -40,16 +40,12 @@ class TrabajadorController extends Controller
             'email' => $request->email,
             'fecha_nacimiento' => $request->fecha_nacimiento,
             'rol' => 'A', // Se crea como Administrador
-            'password' => Hash::make($request->password),
+            'password' => Hash::make(value: $request->password),
         ]);
 
         return redirect()->route('trabajadores')->with('success', 'Administrador registrado correctamente.');
     }
 
-    public function edit($id){
-        $trabajador = User::findOrFail($id);
-        return view('trabajadores.edit', compact('trabajador'));
-    }
 
     public function update(Request $request, $id){
         $trabajador = User::findOrFail($id);
@@ -62,17 +58,19 @@ class TrabajadorController extends Controller
             'fecha_nacimiento' => 'required|date',
         ]);
 
-        $trabajador->update($request->all());
+            $data = $request->json()->all();
 
-        return redirect()->route('trabajadores')->with('success', 'Trabajador actualizado correctamente.');
-    }
+            $trabajador->update($data);
+
+            return response()->json(['success' => true]);
+        }
 
     public function destroy($id){
         $trabajador = User::findOrFail($id);
         $trabajador->delete();
-        return redirect()->route('trabajadores')->with('success', 'Trabajador eliminado correctamente.');
-    }
 
+            return response()->json(['success' => true]);
+        }
     /**
      * Devuelve JSON paginado de trabajadores (roles distintos de 'U').
      * Parámetros soportados:

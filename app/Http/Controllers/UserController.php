@@ -107,7 +107,10 @@ public function index(Request $request)
             $usuario = auth()->user();
             $cliente = User::with('mascotas')->findOrFail($id);
 
-            return view('usuarios.show', compact('usuario', 'cliente'));
+            return response()->json([
+            'auth' => $usuario,  // se envía si lo necesitas
+            'cliente' => $cliente
+            ]);
         }
 
         public function edit($id)
@@ -115,7 +118,11 @@ public function index(Request $request)
             $usuario = auth()->user();
             $cliente = User::findOrFail($id);
 
-            return view('usuarios.edit', compact('usuario', 'cliente'));
+            return response()->json([
+                'auth' => $usuario, // también se envía
+                'cliente' => $cliente
+            ]);
+
         }
 
         public function update(Request $request, $id)

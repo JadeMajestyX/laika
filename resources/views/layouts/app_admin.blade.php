@@ -35,7 +35,7 @@
       --bs-primary-text-emphasis: #1f4f6a;
     }
     body{ background-color:#f8f9fa; }
-    .app{ display:flex; min-height:100vh; overflow:hidden; }
+    .app{ display:flex; min-height:100vh; overflow-x: hidden; }
     /* Sidebar */
   .sidebar{ width:var(--sidebar-width); background:linear-gradient(180deg,var(--brand),var(--brand-dark)); color:#fff; padding:24px; display:flex; flex-direction:column; position:fixed; top:0; left:0; height:100vh; z-index:1040; }
     .sidebar.collapsed{ width:72px; padding:24px 12px; }
@@ -101,7 +101,14 @@
       .content{ margin-left:0 !important; }
       .app-header{ left:0 !important; }
     }
+
+      #editModal .modal-body {
+    max-height: 75vh;
+    overflow-y: auto;
+      }
   </style>
+
+
   @stack('head')
 </head>
 <body>
@@ -198,7 +205,7 @@
 
     <!-- EDIT modal -->
     <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
-      <div class="modal-dialog modal-lg modal-dialog-scrollable">
+     <div class="modal-dialog modal-dialog-scrollable modal-lg">
         <div class="modal-content">
           <form id="editModalForm">
             <div class="modal-header">

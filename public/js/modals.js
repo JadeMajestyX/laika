@@ -98,11 +98,18 @@
       } else if (action === 'edit') {
         if (!editModal) return;
         editModalTitle.textContent = `Editar ${section}`;
-        editModalBody.innerHTML = '<div class="text-center py-3"><div class="spinner-border" role="status"><span class="visually-hidden">Cargando...</span></div></div>';
-        editModal.show();
+        editModalBody.innerHTML = '<div class="text-center py-3"><div class="spinner-border"></div></div>';
+
         const payload = await fetchJson(getApiUrl(section, id), { method: 'GET', headers: { Accept: 'application/json' } });
         const formFields = buildEditFormFields(payload);
-        editModalBody.innerHTML = `<input type="hidden" name="id" value="${escapeHtml(id)}"/><input type="hidden" name="_section" value="${escapeHtml(section)}" />` + formFields;
+
+        editModalBody.innerHTML = `
+          <input type="hidden" name="id" value="${escapeHtml(id)}"/>
+          <input type="hidden" name="_section" value="${escapeHtml(section)}"/>
+          ${formFields}
+        `;
+         editModal.show();
+
         const first = editModalBody.querySelector('input,select,textarea'); if (first) first.focus();
       } else if (action === 'delete') {
         if (!confirmModal) return;

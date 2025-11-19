@@ -44,8 +44,8 @@ Route::middleware(EnsureUserHasRole::class.':A')->group(function () {
     Route::get('/usuarios', [UserController::class, 'index'])->name('usuarios');
     // Importante: declarar la ruta JSON ANTES de /usuarios/{id} para evitar que 'json' coincida como {id}
     Route::get('/usuarios/json', [UserController::class, 'getUsuariosJson'])->name('usuarios.json');
-    Route::get('/usuarios/{id}', [UserController::class, 'show'])->name('usuarios.show');
-    Route::get('/usuarios/{id}/editar', [UserController::class, 'edit'])->name('usuarios.edit');
+    Route::get('/usuarios/{id}', [UserController::class, 'show']);
+    Route::get('/usuarios/{id}/editar', [UserController::class, 'edit']);
     Route::put('/usuarios/{id}', [UserController::class, 'update'])->name('usuarios.update');
     Route::delete('/usuarios/{id}', [UserController::class, 'destroy'])->name('usuarios.destroy');
     Route::get('/citas', [App\Http\Controllers\CitaController::class, 'index'])->name('citas');
@@ -55,18 +55,18 @@ Route::middleware(EnsureUserHasRole::class.':A')->group(function () {
     Route::get('/mascotas', [MascotaController::class, 'index'])->name('mascotas');
     // Primero la ruta JSON para que no la capture /mascotas/{id}
     Route::get('/mascotas/json', [MascotaController::class, 'getAllMascotas'])->name('mascotas.json');
-    Route::get('/mascotas/{id}', [MascotaController::class, 'show'])->name('mascotas.show');
-    Route::get('/mascotas/{id}/editar', [MascotaController::class, 'edit'])->name('mascotas.edit');
+    Route::get('/mascotas/{id}', [MascotaController::class, 'show']);
+    Route::get('/mascotas/{id}/editar', [MascotaController::class, 'edit']);
     Route::put('/mascotas/{id}', [MascotaController::class, 'update'])->name('mascotas.update');
     Route::delete('/mascotas/{id}', [MascotaController::class, 'destroy'])->name('mascotas.destroy');
 
     Route::get('/trabajadores', [TrabajadorController::class, 'index'])->name('trabajadores');
     // JSON antes de rutas dinámicas
     Route::get('/trabajadores/json', [TrabajadorController::class, 'getTrabajadoresJson'])->name('trabajadores.json');
-    Route::get('/trabajadores/{id}', [TrabajadorController::class, 'show'])->name('trabajadores.show');
-    Route::get('/trabajadores/{id}/editar', [TrabajadorController::class, 'edit'])->name('trabajadores.edit');
     Route::put('/trabajadores/{id}', [TrabajadorController::class, 'update'])->name('trabajadores.update');
     Route::delete('/trabajadores/{id}', [TrabajadorController::class, 'destroy'])->name('trabajadores.destroy');
+    Route::get('/trabajadores/{id}/editar', [TrabajadorController::class, 'edit']);
+    Route::get('/trabajadores/{id}', [TrabajadorController::class, 'show']);
 
     // registrar nuevo administrador
     Route::get('/trabajadores/crear', [TrabajadorController::class, 'create'])->name('trabajadores.create');
