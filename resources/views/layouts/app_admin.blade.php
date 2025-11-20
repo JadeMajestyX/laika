@@ -35,7 +35,7 @@
       --bs-primary-text-emphasis: #1f4f6a;
     }
     body{ background-color:#f8f9fa; }
-    .app{ display:flex; min-height:100vh; overflow:hidden; }
+    .app{ display:flex; min-height:100vh; overflow-x: hidden; }
     /* Sidebar */
   .sidebar{ width:var(--sidebar-width); background:linear-gradient(180deg,var(--brand),var(--brand-dark)); color:#fff; padding:24px; display:flex; flex-direction:column; position:fixed; top:0; left:0; height:100vh; z-index:1040; }
     .sidebar.collapsed{ width:72px; padding:24px 12px; }
@@ -101,7 +101,14 @@
       .content{ margin-left:0 !important; }
       .app-header{ left:0 !important; }
     }
+
+      #editModal .modal-body {
+    max-height: 75vh;
+    overflow-y: auto;
+      }
   </style>
+
+
   @stack('head')
 </head>
 <body>
@@ -116,7 +123,7 @@
         </div>
       </div>
       <nav class="d-grid gap-2">
-        <button class="nav-btn"><i class="bi bi-house" data-section="home"></i><span>Home</span></button>
+        <button class="nav-btn"><i class="bi bi-house" data-section="home"></i><span>Inicio</span></button>
         <button class="nav-btn"><i class="bi bi-people" data-section="clientes"></i><span>Clientes</span></button>
         <button class="nav-btn"><i class="bi bi-heart" data-section="mascotas"></i><span>Mascotas</span></button>
         <button class="nav-btn"><i class="bi bi-clipboard-check" data-section="citas"></i><span>Citas</span></button>
@@ -153,7 +160,12 @@
             <div class="d-flex align-items-center gap-2">
               <div class="avatar"><span>SO</span></div>
               <div>
-                <div class="small fw-semibold">{{$usuario->nombre}}</div>
+              @auth
+                <div class="small fw-semibold">{{ auth()->user()->nombre ?? auth()->user()->name ?? 'Usuario' }}</div>
+              @else
+                <div class="small fw-semibold">Invitado</div>
+              @endauth
+
                 <div class="small text-body-secondary">Administrador</div>
               </div>
             </div>
@@ -172,11 +184,73 @@
     </div>
   </div>
 
-  {{-- Modals globales de vistas hijas --}}
-  @yield('modals')
+      <!-- Modals globales de vistas hijas -->
+    <!-- VIEW modal -->
+    <div class="modal fade" id="viewModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 id="viewModalTitle" class="modal-title">Ver</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body" id="viewModalBody">
+            <div class="text-center py-3"><div class="spinner-border" role="status"><span class="visually-hidden">Cargando...</span></div></div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EDIT modal -->
+    <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+     <div class="modal-dialog modal-dialog-scrollable modal-lg">
+        <div class="modal-content">
+          <form id="editModalForm">
+            <div class="modal-header">
+              <h5 id="editModalTitle" class="modal-title">Editar</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body" id="editModalBody">
+              <div class="text-center py-3"><div class="spinner-border" role="status"><span class="visually-hidden">Cargando...</span></div></div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+              <button type="submit" class="btn btn-primary">Guardar cambios</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+      <!-- CONFIRM DELETE modal -->
+      <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Confirmar eliminación</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body" id="confirmDeleteBody">
+              ¿Deseas eliminar este registro?
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+              <button id="confirmDeleteBtn" class="btn btn-danger">Sí, eliminar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
 
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+     <!-- Dashboard JS -->
+    <script src="/js/views/dashboard.js"></script>
+
+    <!-- Modals controller -->
+    <script src="/js/modals.js"></script>
 
   <script>
     function getTextColor(){
@@ -231,6 +305,7 @@
       setupTheme();
     });
   </script>
+ 
   @stack('scripts') 
   @yield('scripts')
 </body>
