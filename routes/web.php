@@ -3,6 +3,7 @@
 // use App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Admin\ActividadController;
+use App\Http\Controllers\CitaController;
 use App\Http\Controllers\ConfiguracionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
@@ -12,7 +13,9 @@ use App\Http\Controllers\MascotaController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\TrabajadorController;
 use App\Http\Controllers\ReporteController;
+use App\Http\Controllers\VetDashboardController;
 use App\Http\Controllers\SearchController;
+
 
 
 
@@ -20,7 +23,18 @@ Route::get('/', function () {
     return view('welcome');
 })->name('welcome');
 
+Route::middleware(EnsureUserHasRole::class.':V')->group(function () {
+    Route::get('/vet-dashboard', [VetDashboardController::class, 'index'])->name('vet.dashboard');
+    
+    Route::get('/vet-dashboard/data', [VetDashboardController::class, 'getDashboardData'])->name('vet.dashboard.data');
+    
+    // Capturar subrutas (cualquiera)
+    Route::get('/vet-dashboard/{any}', [VetDashboardController::class, 'index'])->where('any', '.*');
+});
+
 Route::middleware(EnsureUserHasRole::class.':A')->group(function () {
+
+
     // Página principal del panel -> /dashboard/home
     Route::get('/dashboard/home', [DashboardController::class, 'index'])->name('dashboard');
     // Redirección desde /dashboard a /dashboard/home
@@ -61,6 +75,7 @@ Route::middleware(EnsureUserHasRole::class.':A')->group(function () {
     Route::get('/reportes/citas/export/pdf', [ReporteController::class, 'exportCitasPdf'])->name('reportes.citas.export.pdf');
     Route::get('/inventario', [App\Http\Controllers\InventarioController::class, 'index'])->name('inventario');
     Route::get('/configuracion', [ConfiguracionController::class, 'index'])->name('configuracion');
+    Route::put('/configuracion/horarios', [ConfiguracionController::class, 'updateHorarios'])->name('configuracion.horarios.update');
 
     //Route::get('/buscar', [SearchController::class, 'buscar'])->name('buscar');
 
@@ -100,7 +115,8 @@ Route::get('/login', function () {
 
 
 
-
+//ruta para la vista de agendar citas
+Route::get('/agendar-cita', CitaController::class . '@index')->name('agendar.cita');
 
 
 
