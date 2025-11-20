@@ -29,7 +29,6 @@
     @keyframes shimmer{ 100%{ transform:translateX(100%);} }
     .chart-wrap{ position:relative; height:280px; }
     .chart-wrap canvas{ width:100% !important; height:100% !important; }
-    .chart-spinner{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:transparent; }
     .table thead th{ font-weight:600; }
   </style>
   @endpush
@@ -99,74 +98,88 @@
 
       <!-- Métricas -->
       <div class="row mt-4 g-3">
-        <div class="col-md-3">
+        <div class="col-md-4">
           <div class="metric-card p-3 shadow-sm text-center">
             <div class="d-flex justify-content-center"><div class="icon-bubble"><i class="bi bi-calendar-check"></i></div></div>
             <h4 id="metric-citas-realizadas" class="mt-2 mb-0">—</h4>
-            <div class="text-body-secondary">Citas realizadas</div>
+                <div class="text-body-secondary">Citas atendidas</div>
           </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-4">
           <div class="metric-card p-3 shadow-sm text-center">
             <div class="d-flex justify-content-center"><div class="icon-bubble"><i class="bi bi-heart-pulse"></i></div></div>
             <h4 id="metric-mascotas-atendidas" class="mt-2 mb-0">—</h4>
             <div class="text-body-secondary">Mascotas atendidas</div>
           </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-4">
           <div class="metric-card p-3 shadow-sm text-center">
             <div class="d-flex justify-content-center"><div class="icon-bubble"><i class="bi bi-person-check"></i></div></div>
             <h4 id="metric-clientes-nuevos" class="mt-2 mb-0">—</h4>
-            <div class="text-body-secondary">Clientes nuevos</div>
+                <div class="text-body-secondary">Usuarios nuevos</div>
           </div>
         </div>
-        <div class="col-md-3">
-          <div class="metric-card p-3 shadow-sm text-center">
-            <div class="d-flex justify-content-center"><div class="icon-bubble"><i class="bi bi-cash-stack"></i></div></div>
-            <h4 id="metric-ingresos-totales" class="mt-2 mb-0">—</h4>
-            <div class="text-body-secondary">Ingresos totales</div>
+      </div>
+
+      <!-- Secciones resumidas -->
+      <div class="row mt-4 g-3">
+        <div class="col-md-6">
+          <div class="card p-4 h-100">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <h6 class="fw-bold mb-1">Citas atendidas</h6>
+                <div class="display-6 mb-1" id="panel-citas-atendidas">—</div>
+                <p class="text-body-secondary small mb-0">Total de citas completadas en el rango seleccionado.</p>
+              </div>
+              <div class="icon-bubble bg-opacity-25 bg-success-subtle text-success">
+                <i class="bi bi-clipboard2-check"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card p-4 h-100">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <h6 class="fw-bold mb-1">Usuarios nuevos</h6>
+                <div class="display-6 mb-1" id="panel-usuarios-nuevos">—</div>
+                <p class="text-body-secondary small mb-0">Clientes registrados en el periodo consultado.</p>
+              </div>
+              <div class="icon-bubble bg-opacity-25 bg-primary-subtle text-primary">
+                <i class="bi bi-person-plus"></i>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- Gráficas -->
       <div class="row mt-4 g-3">
-        <div class="col-md-6">
-          <div class="card p-3">
-            <h6 class="fw-bold mb-2">Citas por servicio</h6>
+        <div class="col-lg-6">
+          <div class="card p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div>
+                <h6 class="fw-bold mb-1">Distribución por estado</h6>
+                <p class="text-body-secondary small mb-0">Proporción de citas según su estado actual.</p>
+              </div>
+              <span class="badge bg-light text-body-secondary">Citas</span>
+            </div>
             <div class="chart-wrap">
-              <div id="spinner-citas" class="chart-spinner d-none"><div class="spinner-border" role="status"></div></div>
-              <canvas id="chartCitas"></canvas>
+              <canvas id="chart-resumen-citas"></canvas>
             </div>
           </div>
         </div>
-        <div class="col-md-6">
-          <div class="card p-3">
-            <h6 class="fw-bold mb-2">Mascotas por especie</h6>
-            <div class="chart-wrap">
-              <div id="spinner-mascotas" class="chart-spinner d-none"><div class="spinner-border" role="status"></div></div>
-              <canvas id="chartMascotas"></canvas>
+        <div class="col-lg-6">
+          <div class="card p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div>
+                <h6 class="fw-bold mb-1">Indicadores clave</h6>
+                <p class="text-body-secondary small mb-0">Comparativa de las métricas principales.</p>
+              </div>
+              <span class="badge bg-light text-body-secondary">Top 3</span>
             </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="row mt-4 g-3">
-        <div class="col-md-6">
-          <div class="card p-3">
-            <h6 class="fw-bold mb-2">Ingresos mensuales</h6>
             <div class="chart-wrap">
-              <div id="spinner-ingresos" class="chart-spinner d-none"><div class="spinner-border" role="status"></div></div>
-              <canvas id="chartIngresos"></canvas>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="card p-3">
-            <h6 class="fw-bold mb-2">Servicios más solicitados</h6>
-            <div class="chart-wrap">
-              <div id="spinner-servicios" class="chart-spinner d-none"><div class="spinner-border" role="status"></div></div>
-              <canvas id="chartProductos"></canvas>
+              <canvas id="chart-metricas"></canvas>
             </div>
           </div>
         </div>
@@ -195,30 +208,10 @@
         </div>
       </div>
 
-      <div class="card shadow-sm mt-4 mb-5">
-        <div class="card-header d-flex justify-content-between align-items-center">
-          <span>Servicios más solicitados</span>
-          <a href="#">Ver todos</a>
-        </div>
-        <div class="card-body p-0">
-          <table class="table table-hover mb-0">
-            <thead class="table-light">
-              <tr>
-                <th>Servicio</th>
-                <th>Cantidad</th>
-                <th>Ingresos</th>
-                <th>Variación</th>
-              </tr>
-            </thead>
-            <tbody id="tabla-servicios-top">
-              <tr class="placeholder-row"><td colspan="4" class="text-center text-body-secondary">Cargando…</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <div class="mb-5"></div>
 
 @endsection
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <script src="{{ asset('js/reportes.js') }}"></script>
 @endpush

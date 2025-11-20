@@ -8,31 +8,21 @@
     rol: $('#filtro-rol'), // actualmente no se filtra por rol en backend
     trabajador: $('#filtro-trabajador'),
     btnAplicar: $('#btn-aplicar-filtro'),
-  btnExportarXlsx: $('#btn-exportar-xlsx'),
-  btnExportarPdf: $('#btn-exportar-pdf'),
+    btnExportarXlsx: $('#btn-exportar-xlsx'),
+    btnExportarPdf: $('#btn-exportar-pdf'),
     mCitas: $('#metric-citas-realizadas'),
     mMascotas: $('#metric-mascotas-atendidas'),
     mClientes: $('#metric-clientes-nuevos'),
-    mIngresos: $('#metric-ingresos-totales'),
+    panelCitasAtendidas: document.getElementById('panel-citas-atendidas'),
+    panelUsuariosNuevos: document.getElementById('panel-usuarios-nuevos'),
     tablaResumenCitas: $('#tabla-resumen-citas'),
-    tablaServiciosTop: $('#tabla-servicios-top'),
-    spinnerCitas: $('#spinner-citas'),
-    spinnerMascotas: $('#spinner-mascotas'),
-    spinnerIngresos: $('#spinner-ingresos'),
-    spinnerServicios: $('#spinner-servicios'),
     textoRango: document.getElementById('texto-rango'),
   };
 
-  // Charts
-  let chartCitas = null;
-  let chartMascotas = null;
-  let chartIngresos = null;
-  let chartServicios = null; // usamos el canvas de 'chartProductos'
-
-  function formatCurrency(num) {
-    const n = Number(num || 0);
-    return n.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' });
-  }
+  const chartState = {
+    resumen: null,
+    metricas: null,
+  };
 
   function setDefaultDatesForRange() {
     const today = new Date();
@@ -121,10 +111,12 @@
     } catch (_) {}
 
     // Métricas
-    ui.mCitas.textContent = data?.metrics?.citas_realizadas ?? '0';
+    ui.mCitas.textContent = data?.metrics?.citas_atendidas ?? '0';
     ui.mMascotas.textContent = data?.metrics?.mascotas_atendidas ?? '0';
-    ui.mClientes.textContent = data?.metrics?.clientes_nuevos ?? '0';
-    ui.mIngresos.textContent = formatCurrency(data?.metrics?.ingresos_totales ?? 0);
+    ui.mClientes.textContent = data?.metrics?.usuarios_nuevos ?? '0';
+
+    // Paneles adicionales
+    renderPanels(data);
 
     // Gráficas
     renderCharts(data);
@@ -144,75 +136,115 @@
     } catch {}
   }
 
+  function renderPanels(data) {
+    if (ui.panelCitasAtendidas) {
+      ui.panelCitasAtendidas.textContent = data?.metrics?.citas_atendidas ?? '0';
+    }
+    if (ui.panelUsuariosNuevos) {
+      ui.panelUsuariosNuevos.textContent = data?.metrics?.usuarios_nuevos ?? '0';
+    }
+  }
+
+  const chartPalette = ['#6f42c1', '#0d6efd', '#20c997', '#fd7e14', '#0dcaf0', '#ffc107', '#198754', '#dc3545'];
+
+  function destroyChart(name) {
+    if (chartState[name]) {
+      chartState[name].destroy();
+      chartState[name] = null;
+    }
+  }
+
   function renderCharts(data) {
-    // Citas por servicio (pie)
-    const citas = (data?.charts?.citas_por_servicio || []);
-    const citasLabels = citas.map(r => r.label || 'N/D');
-    const citasValues = citas.map(r => r.value || 0);
-    const citasColors = ['#6f42c1','#dc3545','#0d6efd','#20c997','#ffc107','#198754','#fd7e14'];
+    if (typeof Chart === 'undefined') return;
+    renderResumenChart(data?.resumen_citas || []);
+    renderMetricasChart(data?.metrics || {});
+  }
 
-    chartCitas?.destroy();
-    if (window.Chart) chartCitas = new Chart(document.getElementById('chartCitas'), {
-      type: 'pie',
+  function renderResumenChart(resumen) {
+    const canvas = document.getElementById('chart-resumen-citas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    destroyChart('resumen');
+
+    const hasData = Array.isArray(resumen) && resumen.length > 0;
+    const labels = hasData ? resumen.map((r) => r.label ?? '—') : ['Sin datos'];
+    const values = hasData ? resumen.map((r) => Number(r.value ?? 0)) : [1];
+    const colors = labels.map((_, idx) => chartPalette[idx % chartPalette.length]);
+
+    chartState.resumen = new Chart(ctx, {
+      type: 'doughnut',
       data: {
-        labels: citasLabels,
-        datasets: [{ data: citasValues, backgroundColor: citasLabels.map((_,i)=>citasColors[i%citasColors.length]) }]
-      }
-    });
-
-    // Mascotas por especie (pie)
-    const esp = (data?.charts?.mascotas_por_especie || []);
-    const espLabels = esp.map(r => r.label || 'N/D');
-    const espValues = esp.map(r => r.value || 0);
-
-    chartMascotas?.destroy();
-  if (window.Chart) chartMascotas = new Chart(document.getElementById('chartMascotas'), {
-      type: 'pie',
-      data: {
-        labels: espLabels,
-        datasets: [{ data: espValues, backgroundColor: espLabels.map((_,i)=>citasColors[i%citasColors.length]) }]
-      }
-    });
-
-    // Ingresos mensuales (bar)
-    const ing = (data?.charts?.ingresos_mensuales || []);
-    const ingLabels = ing.map(r => r.month);
-    const ingValues = ing.map(r => Number(r.total || 0));
-
-    chartIngresos?.destroy();
-  if (window.Chart) chartIngresos = new Chart(document.getElementById('chartIngresos'), {
-      type: 'bar',
-      data: {
-        labels: ingLabels,
-        datasets: [{ label: 'Ingresos en $', data: ingValues, backgroundColor: '#6f42c1' }]
-      }
-    });
-
-    // Servicios top como gráfico horizontal (usamos chartProductos)
-    const top = (data?.charts?.servicios_top || []);
-    const topLabels = top.map(r => r.label);
-    const topValues = top.map(r => r.cantidad);
-
-    chartServicios?.destroy();
-  if (window.Chart) chartServicios = new Chart(document.getElementById('chartProductos'), {
-      type: 'bar',
-      data: {
-        labels: topLabels,
-        datasets: [{ label: 'Servicios (cantidad)', data: topValues, backgroundColor: '#28a745' }]
+        labels,
+        datasets: [
+          {
+            data: values,
+            backgroundColor: colors,
+            hoverOffset: 6,
+            borderWidth: 0,
+          },
+        ],
       },
-      options: { indexAxis: 'y' }
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom' },
+        },
+      },
+    });
+  }
+
+  function renderMetricasChart(metrics) {
+    const canvas = document.getElementById('chart-metricas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    destroyChart('metricas');
+
+    const labels = ['Citas atendidas', 'Mascotas atendidas', 'Usuarios nuevos'];
+    const values = [
+      Number(metrics?.citas_atendidas ?? 0),
+      Number(metrics?.mascotas_atendidas ?? 0),
+      Number(metrics?.usuarios_nuevos ?? 0),
+    ];
+    const colors = ['#6f42c1', '#20c997', '#0d6efd'];
+
+    chartState.metricas = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Total',
+            data: values,
+            backgroundColor: colors,
+            borderRadius: 8,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: { color: '#6c757d' },
+          },
+          y: {
+            beginAtZero: true,
+            grid: { color: '#f1f3f5' },
+            ticks: { precision: 0, color: '#6c757d' },
+          },
+        },
+        plugins: { legend: { display: false } },
+      },
     });
   }
 
   function setLoading(isLoading) {
-    const toggle = (el, show) => { if (!el) return; el.classList.toggle('d-none', !show); };
-    // Spinners de charts
-    toggle(ui.spinnerCitas, isLoading);
-    toggle(ui.spinnerMascotas, isLoading);
-    toggle(ui.spinnerIngresos, isLoading);
-    toggle(ui.spinnerServicios, isLoading);
     // Métricas skeleton
-    ;[ui.mCitas, ui.mMascotas, ui.mClientes, ui.mIngresos].forEach(el => {
+    ;[ui.mCitas, ui.mMascotas, ui.mClientes].forEach(el => {
       if (!el) return;
       if (isLoading) { el.classList.add('skeleton'); el.textContent = '···'; }
       else { el.classList.remove('skeleton'); }
@@ -222,15 +254,13 @@
       if (ui.tablaResumenCitas && !ui.tablaResumenCitas.querySelector('.placeholder-row')) {
         ui.tablaResumenCitas.innerHTML = '<tr class="placeholder-row"><td colspan="4" class="text-center text-body-secondary">Cargando…</td></tr>';
       }
-      if (ui.tablaServiciosTop && !ui.tablaServiciosTop.querySelector('.placeholder-row')) {
-        ui.tablaServiciosTop.innerHTML = '<tr class="placeholder-row"><td colspan="4" class="text-center text-body-secondary">Cargando…</td></tr>';
-      }
     }
   }
 
   function renderTables(data) {
     // Resumen de citas por status
     const tbody = ui.tablaResumenCitas;
+    if (!tbody) return;
     tbody.innerHTML = '';
     const resumen = data?.resumen_citas || [];
     if (!resumen.length) {
@@ -245,25 +275,6 @@
           <td class="text-muted">—</td>
         `;
         tbody.appendChild(tr);
-      }
-    }
-
-    // Servicios más solicitados (tabla)
-    const tbody2 = ui.tablaServiciosTop;
-    tbody2.innerHTML = '';
-    const top = data?.charts?.servicios_top || [];
-    if (!top.length) {
-      tbody2.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Sin datos</td></tr>';
-    } else {
-      for (const s of top) {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${s.label ?? '—'}</td>
-          <td>${s.cantidad ?? 0}</td>
-          <td>${formatCurrency(s.ingresos ?? 0)}</td>
-          <td class="text-muted">—</td>
-        `;
-        tbody2.appendChild(tr);
       }
     }
   }

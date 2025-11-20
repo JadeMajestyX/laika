@@ -3,12 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cita;
-use App\Models\Mascota;
 use App\Models\Servicio;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Box\Spout\Writer\Common\Creator\WriterEntityFactory;
@@ -21,7 +21,7 @@ class ReporteController extends Controller
      */
     public function index()
     {
-        $usuario = auth()->user();
+        $usuario = Auth::user();
         $roles = User::query()->select('rol')->distinct()->orderBy('rol')->pluck('rol');
         return view('reportes', compact('usuario', 'roles'));
     }
@@ -48,75 +48,11 @@ class ReporteController extends Controller
             ->with(['servicio']);
 
         // Métricas básicas
-        $citasRealizadas = (clone $citasQuery)->where('status', 'realizada')->count();
+        $citasAtendidas = (clone $citasQuery)->where('status', 'realizada')->count();
         $mascotasAtendidas = (clone $citasQuery)->where('status', 'realizada')->distinct('mascota_id')->count('mascota_id');
 
         // Clientes nuevos por ventana de tiempo
-        $clientesNuevos = User::whereBetween('created_at', [$from->copy()->startOfDay(), $to->copy()->endOfDay()])->count();
-
-        // Ingresos: suma de precio del servicio para citas realizadas (si existe)
-        $ingresosTotales = (clone $citasQuery)
-            ->where('status', 'realizada')
-            ->join('servicios', 'citas.servicio_id', '=', 'servicios.id')
-            ->sum('servicios.precio');
-
-        // Citas por servicio
-        $citasPorServicio = (clone $citasQuery)
-            ->select('servicios.nombre as label', DB::raw('COUNT(citas.id) as value'))
-            ->leftJoin('servicios', 'citas.servicio_id', '=', 'servicios.id')
-            ->groupBy('servicios.nombre')
-            ->orderByDesc('value')
-            ->get();
-
-        // Servicios con ingresos (solo realizadas)
-        $serviciosTop = (clone $citasQuery)
-            ->where('status', 'realizada')
-            ->join('servicios', 'citas.servicio_id', '=', 'servicios.id')
-            ->select(
-                'servicios.nombre as label',
-                DB::raw('COUNT(citas.id) as cantidad'),
-                DB::raw('SUM(servicios.precio) as ingresos')
-            )
-            ->groupBy('servicios.nombre')
-            ->orderByDesc('cantidad')
-            ->limit(10)
-            ->get();
-
-        // Mascotas por especie en el rango: se toma de las mascotas involucradas en citas del rango
-        $mascotasPorEspecie = Mascota::query()
-            ->select('mascotas.especie as label', DB::raw('COUNT(DISTINCT mascotas.id) as value'))
-            ->whereIn('mascotas.id', Cita::query()
-                ->when($trabajadorId, fn($q) => $q->where('creada_por', $trabajadorId))
-                ->when($rol, function ($q) use ($rol) {
-                    return $q->join('users as u_rol2', 'citas.creada_por', '=', 'u_rol2.id')
-                             ->where('u_rol2.rol', $rol);
-                })
-                ->whereBetween('fecha', [$from->copy()->startOfDay(), $to->copy()->endOfDay()])
-                ->pluck('mascota_id')
-                ->filter()
-            )
-            ->groupBy('mascotas.especie')
-            ->orderByDesc('value')
-            ->get();
-
-        // Ingresos mensuales (últimos 6 meses desde $to) como referencia
-        $startMonthly = $to->copy()->subMonthsNoOverflow(5)->startOfMonth();
-        $ingresosMensuales = Cita::query()
-            ->when($trabajadorId, fn($q) => $q->where('creada_por', $trabajadorId))
-            ->when($rol, function ($q) use ($rol) {
-                return $q->join('users as u_rol3', 'citas.creada_por', '=', 'u_rol3.id')
-                         ->where('u_rol3.rol', $rol);
-            })
-            ->whereBetween('fecha', [$startMonthly, $to->copy()->endOfMonth()])
-            ->where('status', 'realizada')
-            ->join('servicios', 'citas.servicio_id', '=', 'servicios.id')
-            ->select(
-                DB::raw("DATE_FORMAT(citas.fecha, '%Y-%m') as month"),
-                DB::raw('SUM(servicios.precio) as total')
-            )
-            ->groupBy('month')
-            ->orderBy('month')
-            ->get();
+        $usuariosNuevos = User::whereBetween('created_at', [$from->copy()->startOfDay(), $to->copy()->endOfDay()])->count();
 
         // Resumen de citas por status
         $resumenCitas = (clone $citasQuery)
@@ -142,16 +78,9 @@ class ReporteController extends Controller
             ],
             'roles' => $rolesDisponibles,
             'metrics' => [
-                'citas_realizadas' => $citasRealizadas,
+                'citas_atendidas' => $citasAtendidas,
                 'mascotas_atendidas' => $mascotasAtendidas,
-                'clientes_nuevos' => $clientesNuevos,
-                'ingresos_totales' => (float) $ingresosTotales,
-            ],
-            'charts' => [
-                'citas_por_servicio' => $citasPorServicio,
-                'mascotas_por_especie' => $mascotasPorEspecie,
-                'ingresos_mensuales' => $ingresosMensuales,
-                'servicios_top' => $serviciosTop,
+                'usuarios_nuevos' => $usuariosNuevos,
             ],
             'resumen_citas' => $resumenCitas,
         ]);
