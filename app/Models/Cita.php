@@ -20,9 +20,11 @@ class Cita extends Model
         'servicio_id',
         'mascota_id',
         'creada_por',
+        'veterinario_id',
         'fecha',
         'notas',
         'status',
+        'tipo',
     ];
 
     protected $casts = [
@@ -59,6 +61,14 @@ class Cita extends Model
     public function creador()
     {
         return $this->belongsTo(User::class, 'creada_por');
+    }
+
+    /**
+     * Relación: veterinario asignado a la cita
+     */
+    public function veterinario()
+    {
+        return $this->belongsTo(User::class, 'veterinario_id');
     }
 
 }
