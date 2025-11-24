@@ -251,6 +251,7 @@
 
     <!-- Modals controller -->
     <script src="/js/modals.js"></script>
+    <script src="/js/razas.js"></script>
 
   <script>
     function getTextColor(){

@@ -42,6 +42,7 @@ class MascotaController extends Controller
             'especie' => 'required|string|max:255',
             'raza' => 'nullable|string|max:255',
             'fecha_nacimiento' => 'nullable|date',
+            'sexo' => 'nullable|string',
             'peso' => 'nullable|numeric',
         ]);
 
@@ -50,15 +51,15 @@ class MascotaController extends Controller
             'especie' => $request->especie,
             'raza' => $request->raza,
             'fecha_nacimiento' => $request->fecha_nacimiento,
+            'sexo' => $request->sexo,
             'peso' => $request->peso,
 
               ]);
        
-        $mascota->update($request->all());
-        return response()->json([
+          return response()->json([
         'message' => 'Mascota actualizada correctamente.'
-         ]);
-    }
+    ]);
+}
 
     public function destroy($id)
     {
