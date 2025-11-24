@@ -98,6 +98,78 @@
       .content{ margin-left:0 !important; }
       .app-header{ left:0 !important; }
     }
+
+        /* Estilos para el contenedor de citas */
+    .citas-container {
+      scrollbar-width: thin;
+      scrollbar-color: #dee2e6 transparent;
+    }
+
+    .citas-container::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .citas-container::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .citas-container::-webkit-scrollbar-thumb {
+      background-color: #dee2e6;
+      border-radius: 3px;
+    }
+
+    .citas-container::-webkit-scrollbar-thumb:hover {
+      background-color: #adb5bd;
+    }
+
+    .cita-item {
+      transition: all 0.2s ease;
+    }
+
+    .cita-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+       
+    .chart-container {
+      min-height: 300px;
+      max-height: 300px;
+    }
+
+    .citas-container {
+      min-height: 200px;
+      max-height: 300px;
+    }
+
+    .cita-item {
+      flex-shrink: 0; /* Evita que los items se compriman */
+    }
+
+    .dropdown-toggle::after {
+        margin-left: 0.5em;
+    }
+
+    .dropdown-menu {
+        min-width: 180px;
+    }
+
+    .dropdown-item.active {
+        background-color: var(--bs-primary);
+        color: white;
+    }
+
+    .dropdown-item .badge {
+        font-size: 0.7em;
+        width: 8px;
+        height: 8px;
+        padding: 0;
+        border-radius: 50%;
+    }
+
+    .btn-sm.dropdown-toggle {
+        font-size: 0.775rem;
+        padding: 0.25rem 0.5rem;
+    }
   </style>
   @stack('head')
 </head>
@@ -223,7 +295,6 @@
       setupTheme();
     });
   </script>
-  <script src="{{ url('/js/views/dashboard-vet.js') }}"></script>
   @stack('scripts')
 </body>
 </html>

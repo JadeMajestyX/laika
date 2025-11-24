@@ -15,6 +15,9 @@ use App\Http\Controllers\TrabajadorController;
 use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\VetDashboardController;
 use App\Http\Controllers\GroomerDashboardController;
+use App\Http\Controllers\VetActividadesController;
+use App\Http\Controllers\VetHistorialController;
+use App\Http\Controllers\VetReportesController;
 use App\Http\Controllers\SearchController;
 
 
@@ -27,7 +30,28 @@ Route::get('/', function () {
 Route::middleware(EnsureUserHasRole::class.':V')->group(function () {
     Route::get('/vet-dashboard', [VetDashboardController::class, 'index'])->name('vet.dashboard');
     
-    Route::get('/vet-dashboard/data', [VetDashboardController::class, 'getDashboardData'])->name('vet.dashboard.data');
+    // Endpoint para obtener datos del dashboard veterinario
+    Route::get('/vet-dashboard/data/home', [VetDashboardController::class, 'getDashboardData'])->name('vet.dashboard.data');
+    
+    // Rutas para actividades del veterinario
+    Route::get('/vet-dashboard/citas-disponibles', [VetActividadesController::class, 'getCitasDisponibles'])->name('vet.citas.disponibles');
+    Route::post('/vet-dashboard/asignar-cita', [VetActividadesController::class, 'asignarCita'])->name('vet.citas.asignar');
+    Route::get('/vet-dashboard/actividades-hoy', [VetActividadesController::class, 'getActividadesHoy'])->name('vet.actividades.hoy');
+    Route::put('/vet-dashboard/actualizar-actividad', [VetActividadesController::class, 'actualizarEstadoActividad'])->name('vet.actividades.actualizar');
+    Route::post('/vet-dashboard/actualizar-estado-actividad', [VetActividadesController::class, 'actualizarEstadoActividad'])->name('vet.actualizar-estado-actividad');
+    Route::get('/vet-dashboard/get-cita-detalle/{citaId}', [VetActividadesController::class, 'getCitaDetalle']);
+    Route::post('/vet-dashboard/finalizar-cita', [VetActividadesController::class, 'finalizarCita']);
+    Route::post('/vet-dashboard/cancelar-cita', [VetActividadesController::class, 'cancelarCita']);
+    
+    //Crear consulta manual
+    Route::post('/vet-dashboard/crear-consulta-manual', [VetActividadesController::class, 'crearConsultaManual'])->name('vet.crear-consulta-manual');
+    
+    // Historial de actividades pasadas para el veterinario (API)
+    Route::get('/vet-dashboard/historial/data', [VetHistorialController::class, 'getHistorial'])->name('vet.historial.data');
+
+    // Rutas para reportes (NO FUNCIONA XD)
+    Route::get('/vet-dashboard/data/reportes', [VetReportesController::class, 'getReportesData'])->name('vet.reportes.data');
+    Route::get('/vet-reportes/export/pdf', [VetReportesController::class, 'exportarPDF'])->name('vet.reportes.export.pdf');
     
     // Capturar subrutas (cualquiera)
     Route::get('/vet-dashboard/{any}', [VetDashboardController::class, 'index'])->where('any', '.*');
