@@ -107,10 +107,8 @@ public function index(Request $request)
             $usuario = auth()->user();
             $cliente = User::with('mascotas')->findOrFail($id);
 
-            return response()->json([
-            'auth' => $usuario,  // se envía si lo necesitas
-            'cliente' => $cliente
-            ]);
+            return response()->json($cliente);
+
         }
 
         public function edit($id)
@@ -118,10 +116,8 @@ public function index(Request $request)
             $usuario = auth()->user();
             $cliente = User::findOrFail($id);
 
-            return response()->json([
-                'auth' => $usuario, // también se envía
-                'cliente' => $cliente
-            ]);
+            return response()->json($cliente);
+
 
         }
 
@@ -143,18 +139,28 @@ public function index(Request $request)
                 'apellido_materno' => $request->apellido_materno,
                 'email' => $request->email,
                 'rol' => $request->rol,
+                'telefono' => $request->telefono,
+                'genero' => $request->genero,
+                'fecha_nacimiento' => $request->fecha_nacimiento,
+                'clinica_id' => $request->clinica_id,
+                'is_active' => $request->is_active ?? 0
             ]);
 
-            return redirect()->route('usuarios')->with('success', 'Usuario actualizado correctamente.');
-        }
+               return response()->json([
+                    'success' => true,
+                    'message' => 'Usuario actualizado correctamente.'
+                ]);
+            }
 
         public function destroy($id)
         {
             $cliente = User::findOrFail($id);
             $cliente->delete();
 
-            return redirect()->route('usuarios')->with('success', 'Usuario eliminado correctamente.');
+            return response()->json([
+                'success' => true,
+                'message' => 'Usuario eliminado correctamente.'
+            ]);
         }
 
-
-}
+    }
