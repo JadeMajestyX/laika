@@ -5,10 +5,8 @@
     rango: $('#filtro-rango'),
     desde: $('#filtro-desde'),
     hasta: $('#filtro-hasta'),
-    rol: $('#filtro-rol'), // actualmente no se filtra por rol en backend
-    trabajador: $('#filtro-trabajador'),
+    rol: $('#filtro-rol'), // filtro opcional por rol
     btnAplicar: $('#btn-aplicar-filtro'),
-    btnExportarXlsx: $('#btn-exportar-xlsx'),
     btnExportarPdf: $('#btn-exportar-pdf'),
     mCitas: $('#metric-citas-realizadas'),
     mMascotas: $('#metric-mascotas-atendidas'),
@@ -68,8 +66,6 @@
     const params = new URLSearchParams();
     if (ui.desde.value) params.set('from', ui.desde.value);
     if (ui.hasta.value) params.set('to', ui.hasta.value);
-    const trabajadorId = ui.trabajador.value?.trim();
-    if (trabajadorId) params.set('trabajador_id', trabajadorId);
     const rol = ui.rol?.value?.trim();
     if (rol) params.set('rol', rol);
     return params.toString();
@@ -127,10 +123,9 @@
     // Texto de rango
     try {
       if (ui.textoRango && data?.filters) {
-        const { from, to, rol, trabajador_id } = data.filters;
+        const { from, to, rol } = data.filters;
         let extras = [];
         if (rol) extras.push(`Rol: ${rol}`);
-        if (trabajador_id) extras.push(`Trabajador: ${trabajador_id}`);
         ui.textoRango.textContent = `${from ?? ''} — ${to ?? ''}${extras.length ? ' · ' + extras.join(' · ') : ''}`;
       }
     } catch {}
@@ -286,12 +281,6 @@
     ui.btnAplicar?.addEventListener('click', (e) => {
       e.preventDefault();
       loadData().catch(err => console.error(err));
-    });
-    ui.btnExportarXlsx?.addEventListener('click', (e) => {
-      e.preventDefault();
-      const qs = buildQuery();
-      const url = `/reportes/citas/export/xlsx${qs ? `?${qs}` : ''}`;
-      window.location.href = url;
     });
     ui.btnExportarPdf?.addEventListener('click', (e) => {
       e.preventDefault();
