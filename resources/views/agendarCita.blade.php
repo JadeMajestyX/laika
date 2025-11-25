@@ -192,27 +192,7 @@
         <a href="{{ route('welcome') }}" class="btn btn-link small text-decoration-none"><i class="bi bi-arrow-left"></i> Volver</a>
       </div>
 
-      @if(session('recordatorio_result'))
-        @php($r = session('recordatorio_result'))
-        <div class="alert alert-success mt-3">
-          Recordatorio enviado: usuarios {{ $r['usuarios'] }}, éxitos {{ $r['exitosos'] }}, fallos {{ $r['fallidos'] }}.
-        </div>
-      @endif
-
-      @if(\Illuminate\Support\Facades\Auth::check() && \Illuminate\Support\Facades\Auth::user()->rol === 'A')
-        <div class="mt-3 p-3 border rounded bg-light">
-          <form method="POST" action="{{ url('/citas/recordatorio-hoy') }}" class="d-flex flex-column flex-sm-row gap-2 align-items-sm-center">
-            @csrf
-            <div class="flex-grow-1">
-              <strong>Recordatorio diario:</strong> Enviar notificación a todos los usuarios con citas hoy.
-            </div>
-            <button class="btn btn-primary" type="submit" id="btnRecordatorioHoy">
-              <i class="bi bi-bell"></i> Enviar recordatorio hoy
-            </button>
-          </form>
-          <small class="text-muted d-block mt-2">Se notificará una vez por ejecución. Tokens inválidos se depuran automáticamente.</small>
-        </div>
-      @endif
+      {{-- Recordatorio de citas movido al dashboard (sección citas) --}}
 
       <!-- Stepper -->
       <div class="mt-4">

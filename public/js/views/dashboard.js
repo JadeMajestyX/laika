@@ -840,6 +840,18 @@ function renderSection(section, data) {
     mainContent.innerHTML = `
       <div class="card shadow-sm mt-4">
         <div class="card-body">
+          <div id="citasRecordatorioMsg"></div>
+          <div class="d-flex flex-column flex-md-row gap-2 justify-content-between align-items-md-center mb-3">
+            <div class="flex-grow-1">
+              <h5 class="mb-1">Citas</h5>
+              <small class="text-body-secondary">Listado y gestión de citas programadas.</small>
+            </div>
+            <div class="d-flex gap-2">
+              <button id="btnRecordatorioHoyDashboard" class="btn btn-outline-primary" type="button">
+                <i class="bi bi-bell"></i> Recordatorio citas de hoy
+              </button>
+            </div>
+          </div>
           <div class="d-flex flex-column flex-md-row gap-2 justify-content-between align-items-md-center mb-3">
             <div class="input-group" style="max-width: 420px;">
               <span class="input-group-text"><i class="bi bi-search"></i></span>
@@ -885,10 +897,34 @@ function renderSection(section, data) {
     const rangeBtn = document.getElementById('citasRangeBtn');
     const searchInput = document.getElementById('citasSearch');
     const radios = document.querySelectorAll('input[name="citasScope"]');
+    const btnRecordatorio = document.getElementById('btnRecordatorioHoyDashboard');
     searchBtn?.addEventListener('click', () => fetchCitasAndRender(1));
     rangeBtn?.addEventListener('click', () => fetchCitasAndRender(1));
     searchInput?.addEventListener('keydown', (e) => { if (e.key === 'Enter') fetchCitasAndRender(1); });
     radios.forEach(r => r.addEventListener('change', () => fetchCitasAndRender(1)));
+    btnRecordatorio?.addEventListener('click', () => {
+      const msgBox = document.getElementById('citasRecordatorioMsg');
+      if (msgBox) msgBox.innerHTML = '<div class="alert alert-info mb-3">Enviando recordatorios...</div>';
+      fetch('/citas/recordatorio-hoy', {
+        method: 'POST',
+        headers: {
+          'X-CSRF-TOKEN': getCsrfToken(),
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({})
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (msgBox) {
+            msgBox.innerHTML = `<div class="alert alert-success mb-3">Recordatorio enviado a ${data.usuarios_notificados} usuarios. Éxitos: ${data.envios_exitosos}, Fallos: ${data.envios_fallidos}</div>`;
+          }
+        })
+        .catch(err => {
+          console.error('Error enviando recordatorio de citas:', err);
+          if (msgBox) msgBox.innerHTML = '<div class="alert alert-danger mb-3">Error enviando recordatorios. Intenta más tarde.</div>';
+        });
+    });
     // carga inicial
     fetchCitasAndRender();
   } else if (section === 'trabajadores') {
