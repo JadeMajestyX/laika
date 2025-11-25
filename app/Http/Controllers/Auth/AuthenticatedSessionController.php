@@ -29,7 +29,7 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerate();
 
         //si el rol del usuario es v redireccionar a la vista de veterinario
-        if (Auth::user()->role === 'V') {
+        if (Auth::user()->role === ':V') {
             return redirect()->intended(route('vet.dashboard', absolute: false));
         }
 
