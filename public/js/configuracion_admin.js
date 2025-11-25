@@ -1,7 +1,6 @@
 
-// Archivo completo: tabs, horario dinámico, localStorage, edición clínica, preferencias y restablecer.
+document.addEventListener('DOMContentLoaded', function () {
 
-// Encapsulamos para no contaminar el global
 (function () {
  
   // Tabs
@@ -293,3 +292,4 @@
 
 })();
 
+});

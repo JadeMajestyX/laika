@@ -11,12 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('statuses', function (Blueprint $table) {
-            $table->id();
-            $table->boolean('status');
-            $table->boolean('calibrar');
-            $table->foreignId('dispensador_id')->constrained('codigo_dispensadors')->onDelete('cascade');
-            $table->timestamps();
+        Schema::table('citas', function (Blueprint $table) {
+            $table->foreignId('veterinario_id')->nullable()->constrained('users')->onDelete('set null');
         });
     }
 
@@ -25,7 +21,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('statuses');
+        Schema::table('citas', function (Blueprint $table) {
+            $table->dropForeign(['veterinario_id']);
+            $table->dropColumn('veterinario_id');
+        });
     }
-
 };

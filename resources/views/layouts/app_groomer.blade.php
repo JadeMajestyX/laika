@@ -4,13 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="csrf-token" content="{{ csrf_token() }}">
-  <title>@yield('title', 'VetCare - Panel Veterinario')</title>
-  <!-- Bootstrap CSS -->
+  <title>@yield('title', 'VetCare - Panel Groomer')</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Bootstrap Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-  
-  <!-- Fuente opcional -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -20,77 +16,46 @@
       --sidebar-width: 260px;
       --radius-xl: 0.75rem;
       --header-h: 70px;
-
-      /* Paleta personalizada */
-      --brand: #3A7CA5;
-      --brand-dark: #2f6485; /* tono más oscuro para gradiente/hover */
-      /* Override Bootstrap primary */
+      --brand: #B35C9C; /* tono distinto para groomer */
+      --brand-dark: #8b4a7b;
       --bs-primary: var(--brand);
-      --bs-primary-rgb: 58, 124, 165;
+      --bs-primary-rgb: 179, 92, 156;
       --bs-link-color: var(--brand);
       --bs-link-hover-color: var(--brand-dark);
-      /* Utilidades subtle de Bootstrap 5.3 */
-      --bs-primary-bg-subtle: #d7eaf4; /* fondo claro */
-      --bs-primary-border-subtle: #a7c9dc;
-      --bs-primary-text-emphasis: #1f4f6a;
+      --bs-primary-bg-subtle: #f0d8ea;
+      --bs-primary-border-subtle: #d4a9c8;
+      --bs-primary-text-emphasis: #6a2e57;
     }
     body{ background-color:#f8f9fa; }
     .app{ display:flex; min-height:100vh; overflow:hidden; }
-    /* Sidebar */
-  .sidebar{ width:var(--sidebar-width); background:linear-gradient(180deg,var(--brand),var(--brand-dark)); color:#fff; padding:24px; display:flex; flex-direction:column; position:fixed; top:0; left:0; height:100vh; z-index:1040; }
+    .sidebar{ width:var(--sidebar-width); background:linear-gradient(180deg,var(--brand),var(--brand-dark)); color:#fff; padding:24px; display:flex; flex-direction:column; position:fixed; top:0; left:0; height:100vh; z-index:1040; }
     .sidebar.collapsed{ width:72px; padding:24px 12px; }
-    .sidebar.collapsed .brand{ justify-content:center; }
-    .sidebar .brand{ transition:all .2s ease; }
-    .sidebar .nav-btn{ transition:all .15s ease; }
-    .sidebar.collapsed .brand-text{ display:none; }
-    .sidebar.collapsed .nav-btn{ justify-content:center; gap:0; }
-    .sidebar.collapsed .nav-btn span{ display:none; }
-    .sidebar.collapsed .foot{ display:none; }
-    .sidebar .brand{ display:flex; gap:10px; align-items:center; margin-bottom:24px; }
+    .sidebar .brand{ display:flex; gap:10px; align-items:center; margin-bottom:24px; transition:all .2s ease; }
     .sidebar .brand-icon{ width:36px; height:36px; border-radius:0.75rem; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.25); }
-    .sidebar .nav-btn{ width:100%; display:flex; gap:12px; align-items:center; padding:12px 16px; border:0; border-radius:0.75rem; color:#e9d5ff; background:transparent; text-align:left; transition:.15s ease; }
+    .sidebar .brand-text{ transition:all .2s ease; }
+    .sidebar.collapsed .brand-text{ display:none; }
+    .sidebar .nav-btn{ width:100%; display:flex; gap:12px; align-items:center; padding:12px 16px; border:0; border-radius:0.75rem; color:#fce7f3; background:transparent; text-align:left; transition:.15s ease; }
     .sidebar .nav-btn.active{ background:rgba(255,255,255,.2); color:#fff; }
     .sidebar .nav-btn:hover{ background:rgba(255,255,255,.1); color:#fff; }
-    .sidebar .foot{ margin-top:auto; font-size:.8rem; color:#e9d5ff; opacity:.9; }
+    .sidebar .foot{ margin-top:auto; font-size:.8rem; color:#fce7f3; opacity:.9; }
 
-    /* Content wrapper */
     .content{ flex:1; display:flex; flex-direction:column; margin-left:var(--sidebar-width); padding-top:var(--header-h); }
-
-    /* Header */
     .app-header{ background:#fff; border-bottom:1px solid #e9ecef; padding:16px 32px; position:fixed; top:0; left:var(--sidebar-width); right:0; height:var(--header-h); z-index:1030; display:flex; align-items:center; }
     .app-header > .d-flex{ width:100%; align-items:center; }
-    .app-header .btn{ height:40px; display:inline-flex; align-items:center; }
-    .app-header .btn .bi{ line-height:1; }
-    .search-wrap input{ height:40px; }
-    .app-header .form-check-input{ width:44px; height:24px; margin:0; }
-    .search-wrap{ position:relative; max-width:520px; }
-    .search-wrap .bi{ position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#6c757d; }
-    .search-wrap input{ padding-left:36px; }
-    .header-right{ display:flex; align-items:center; gap:12px; }
-    .avatar{ width:36px; height:36px; border-radius:50%; background:#f1f3f5; display:inline-flex; align-items:center; justify-content:center; font-weight:600; }
-
-    /* Cards */
-    .card-soft{ border-radius: var(--radius-xl); border:1px solid #e9ecef; }
     .icon-bubble{ width:48px; height:48px; border-radius:0.75rem; display:flex; align-items:center; justify-content:center; }
-
-    /* Tables */
-    .table> :not(caption)>*>*{ background:transparent; }
+    .card-soft{ border-radius: var(--radius-xl); border:1px solid #e9ecef; }
 
     .sidebar.collapsed + .content{ margin-left:72px; }
     .sidebar.collapsed + .content .app-header{ left:72px; }
 
     .chart-container{ position:relative; height:250px; }
     .chart-container canvas{ width:100% !important; height:100% !important; display:block; }
-    
 
-    /* Dark mode */
     [data-bs-theme="dark"] body { background-color: #1e1f25; color: #e2e2e2; }
     [data-bs-theme="dark"] .app-header { background: #252632; border-color: #333842; }
     [data-bs-theme="dark"] .card-soft { background: #2a2b33; border-color: #3b3d47; }
     [data-bs-theme="dark"] .sidebar { background: linear-gradient(180deg, var(--brand), var(--brand-dark)); }
-    [data-bs-theme="dark"] .avatar { background: #333842; color: #e2e2e2; }
     [data-bs-theme="dark"] .table> :not(caption)>*>* { color: #e2e2e2; }
-    [data-bs-theme="dark"] .text-body-secondary { color: #c0c3c9; }
 
     @media (max-width: 992px) {
       .sidebar{ inset:0 auto 0 0; transform:translateX(-100%); transition:transform .2s ease; }
@@ -98,130 +63,47 @@
       .content{ margin-left:0 !important; }
       .app-header{ left:0 !important; }
     }
-
-        /* Estilos para el contenedor de citas */
-    .citas-container {
-      scrollbar-width: thin;
-      scrollbar-color: #dee2e6 transparent;
-    }
-
-    .citas-container::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    .citas-container::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    .citas-container::-webkit-scrollbar-thumb {
-      background-color: #dee2e6;
-      border-radius: 3px;
-    }
-
-    .citas-container::-webkit-scrollbar-thumb:hover {
-      background-color: #adb5bd;
-    }
-
-    .cita-item {
-      transition: all 0.2s ease;
-    }
-
-    .cita-item:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-       
-    .chart-container {
-      min-height: 300px;
-      max-height: 300px;
-    }
-
-    .citas-container {
-      min-height: 200px;
-      max-height: 300px;
-    }
-
-    .cita-item {
-      flex-shrink: 0; /* Evita que los items se compriman */
-    }
-
-    .dropdown-toggle::after {
-        margin-left: 0.5em;
-    }
-
-    .dropdown-menu {
-        min-width: 180px;
-    }
-
-    .dropdown-item.active {
-        background-color: var(--bs-primary);
-        color: white;
-    }
-
-    .dropdown-item .badge {
-        font-size: 0.7em;
-        width: 8px;
-        height: 8px;
-        padding: 0;
-        border-radius: 50%;
-    }
-
-    .btn-sm.dropdown-toggle {
-        font-size: 0.775rem;
-        padding: 0.25rem 0.5rem;
-    }
   </style>
   @stack('head')
 </head>
 <body>
   <div class="app">
-    <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
       <div class="brand">
-        <div class="brand-icon"><i class="bi bi-heart-pulse"></i></div>
+        <div class="brand-icon"><i class="bi bi-scissors"></i></div>
         <div class="brand-text">
           <div class="fw-semibold">VetCare</div>
-          <div class="small" style="opacity:.85">Panel Veterinario</div>
+          <div class="small" style="opacity:.85">Panel Groomer</div>
         </div>
       </div>
       <nav class="d-grid gap-2">
         <button class="nav-btn"><i class="bi bi-house" data-section="home"></i><span>Home</span></button>
+        <button class="nav-btn"><i class="bi bi-calendar2-week" data-section="agenda"></i><span>Mi Agenda</span></button>
         <button class="nav-btn"><i class="bi bi-clock" data-section="actividad"></i><span>Actividad de Hoy</span></button>
         <button class="nav-btn"><i class="bi bi-clock-history" data-section="historial"></i><span>Historial</span></button>
-        <button class="nav-btn"><i class="bi bi-graph-up" data-section="reportes"></i><span>Reportes</span></button>
         <button class="nav-btn"><i class="bi bi-gear" data-section="configuracion"></i><span>Configuración</span></button>
       </nav>
       <div class="foot pt-4">
-        <div>Soporte Veterinario</div>
+        <div>Soporte Groomer</div>
         <div>+1 (555) 123-4567</div>
       </div>
     </aside>
 
-    <!-- Content -->
     <div class="content">
-      <!-- Header -->
       <header class="app-header">
         <div class="d-flex align-items-center justify-content-between gap-3">
           <div class="d-flex align-items-center gap-2">
             <button class="btn btn-outline-secondary" id="btnToggleSidebar" aria-label="Alternar menú"><i class="bi bi-list"></i></button>
-            {{-- <div class="search-wrap w-100">
-              <i class="bi bi-search"></i>
-              <input class="form-control" type="text" placeholder="Buscar mascotas, clientes, citas...">
-            </div> --}}
           </div>
-          <div class="header-right">
+          <div class="header-right d-flex align-items-center gap-3">
             <div class="form-check form-switch m-0">
               <input class="form-check-input" type="checkbox" role="switch" id="switchTheme">
             </div>
-            <button class="btn btn-icon position-relative" aria-label="Notificaciones">
-              <i class="bi bi-bell fs-5"></i>
-              <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"></span>
-            </button>
             <div class="d-flex align-items-center gap-2">
-              <div class="avatar"><span>VT</span></div>
+              <div class="avatar"><span>GR</span></div>
               <div>
-                <div class="small fw-semibold">{{$usuario->nombre}}</div>
-                <div class="small text-body-secondary">Veterinario</div>
+                <div class="small fw-semibold">{{ $usuario->nombre }}</div>
+                <div class="small text-body-secondary">Groomer</div>
               </div>
             </div>
             <form action="{{ route('logout') }}" method="POST">
@@ -232,16 +114,13 @@
         </div>
       </header>
 
-      <!-- Main content -->
       <main class="flex-grow-1 overflow-auto p-4 p-lg-5">
         @yield('content')
       </main>
     </div>
   </div>
 
-  <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
   <script>
     function getTextColor(){
       const theme = document.documentElement.getAttribute('data-bs-theme');
@@ -252,13 +131,10 @@
       const sidebar = document.getElementById('sidebar');
       if(!btn || !sidebar) return;
       const savedCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-      if(window.innerWidth >= 992 && savedCollapsed){
-        sidebar.classList.add('collapsed');
-      }
+      if(window.innerWidth >= 992 && savedCollapsed){ sidebar.classList.add('collapsed'); }
       btn.addEventListener('click', ()=>{
-        if(window.innerWidth < 992){
-          sidebar.classList.toggle('show');
-        } else {
+        if(window.innerWidth < 992){ sidebar.classList.toggle('show'); }
+        else {
           sidebar.classList.toggle('collapsed');
           localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
         }
@@ -270,13 +146,8 @@
         if(!clickInside) sidebar.classList.remove('show');
       });
       window.addEventListener('resize', ()=>{
-        if(window.innerWidth < 992){
-          sidebar.classList.remove('collapsed');
-        } else {
-          sidebar.classList.remove('show');
-          const saved = localStorage.getItem('sidebarCollapsed') === 'true';
-          sidebar.classList.toggle('collapsed', saved);
-        }
+        if(window.innerWidth < 992){ sidebar.classList.remove('collapsed'); }
+        else { sidebar.classList.remove('show'); const saved = localStorage.getItem('sidebarCollapsed') === 'true'; sidebar.classList.toggle('collapsed', saved); }
       });
     }
     function setupTheme(){
@@ -290,11 +161,9 @@
         localStorage.setItem('theme', next);
       });
     }
-    document.addEventListener('DOMContentLoaded', () =>{
-      setupSidebar();
-      setupTheme();
-    });
+    document.addEventListener('DOMContentLoaded', () => { setupSidebar(); setupTheme(); });
   </script>
+  <script src="{{ url('/js/views/dashboard-groomer.js') }}"></script>
   @stack('scripts')
 </body>
 </html>

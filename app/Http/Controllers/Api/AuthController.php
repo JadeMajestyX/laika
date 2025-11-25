@@ -48,14 +48,17 @@ class AuthController extends Controller
                 } catch (\Throwable $e) {
                     // Evitar que un fallo de correo bloquee el login
                 }
-            }
-
-
-                // Log de actividad: registro de usuario con Google
+                // Log de actividad: registro de usuario con Google (solo cuando se crea)
                 ActivityLogger::log($request, 'Registro de usuario (Google)', 'User', $user->id, [
                     'email' => $user->email,
                     'nombre' => $user->nombre,
                 ], $user->id);
+            } else {
+                // Log de actividad: inicio de sesión con Google (usuario existente)
+                ActivityLogger::log($request, 'Inicio de sesión (Google)', 'User', $user->id, [
+                    'email' => $user->email,
+                ], $user->id);
+            }
             // Generar token
             $token = $user->createToken('mobile')->plainTextToken;
 

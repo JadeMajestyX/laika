@@ -17,19 +17,21 @@ class MascotaController extends Controller
         return view('mascotas', compact('usuario', 'mascotas'));
     }
 
-    public function show($id)
+    public function show(Request $request, $id)
     {
-        $usuario = Auth::user();
-        $mascota = Mascota::with('user')->findOrFail($id);
-        return view('mascotas.show', compact('usuario', 'mascota'));
+    $mascota = Mascota::with('user')->findOrFail($id);
+
+    return response()->json($mascota); // ← SIEMPRE JSON PARA FECTH/MODALS
     }
 
+
     public function edit($id)
+
     {
-        $usuario = Auth::user();
-        $mascota = Mascota::findOrFail($id);
-        return view('mascotas.edit', compact('usuario', 'mascota'));
+    $mascota = Mascota::findOrFail($id);
+    return response()->json($mascota);
     }
+
 
     public function update(Request $request, $id)
     {
@@ -40,6 +42,7 @@ class MascotaController extends Controller
             'especie' => 'required|string|max:255',
             'raza' => 'nullable|string|max:255',
             'fecha_nacimiento' => 'nullable|date',
+            'sexo' => 'nullable|string',
             'peso' => 'nullable|numeric',
         ]);
 
@@ -48,11 +51,15 @@ class MascotaController extends Controller
             'especie' => $request->especie,
             'raza' => $request->raza,
             'fecha_nacimiento' => $request->fecha_nacimiento,
+            'sexo' => $request->sexo,
             'peso' => $request->peso,
-        ]);
 
-        return redirect()->route('mascotas')->with('success', 'Mascota actualizada correctamente.');
-    }
+              ]);
+       
+          return response()->json([
+        'message' => 'Mascota actualizada correctamente.'
+    ]);
+}
 
     public function destroy($id)
     {

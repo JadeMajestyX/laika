@@ -13,4 +13,5 @@
   <!-- Chart.js desde CDN y script de la vista sin Vite -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
   <script src="/js/views/dashboard-vet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 @endpush

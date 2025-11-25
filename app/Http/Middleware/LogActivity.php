@@ -19,6 +19,11 @@ class LogActivity
         $response = $next($request);
 
         try {
+            // Evitar duplicados: si algún proceso ya registró actividad explícitamente, no registrar de nuevo
+            if ($request->attributes->get('activity_logged') === true) {
+                return $response;
+            }
+
             $user = $request->user();
             $route = $request->route();
             $action = method_exists($route, 'getActionName') ? $route->getActionName() : null;

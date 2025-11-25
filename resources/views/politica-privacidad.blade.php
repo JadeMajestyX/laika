@@ -126,76 +126,97 @@
   <!-- Contenido -->
   <section class="py-5">
     <div class="container">
-      <div class="card card-policy p-4 p-md-5">
-        <h3 class="section-title mb-3">Política de Privacidad</h3>
+<div class="card card-policy p-4 p-md-5">
+  <h3 class="section-title mb-3">Política de Privacidad</h3>
 
-        <h3>1. Responsable del tratamiento</h3>
-        <p>
-          El responsable del tratamiento de los datos personales recabados a través de esta aplicación es
-          Laika.
-          Para consultas o mas información, puede contactarnos en
-          <a href="mailto:help.vetpet@jademajesty.com">help.vetpet@jademajesty.com</a>.
-        </p>
+  <h3>1. Responsable del tratamiento</h3>
+  <p>
+    El responsable del tratamiento de los datos personales recabados a través de esta aplicación es <strong>Laika</strong>.  
+    Para consultas o más información, puede contactarnos en  
+    <a href="mailto:help.vetpet@jademajesty.com">help.vetpet@jademajesty.com</a>.
+  </p>
 
-        <h3>2. Datos que recopilamos</h3>
-        <ul>
-          <li><strong>Datos de usuario:</strong> nombre completo, correo electrónico, teléfono y contraseña (almacenada cifrada).</li>
-          <li><strong>Datos de mascotas:</strong> nombre, especie, edad, peso, historial médico y registros de vacunación.</li>
-          <li><strong>Datos del dispensador:</strong> porciones dispensadas, horarios programados y estado de conexión.</li>
-        </ul>
+  <h3>2. Datos que recopilamos</h3>
+  <ul>
+    <li><strong>Datos de usuario:</strong> nombre, correo electrónico, teléfono, fecha de nacimiento, fotografía de perfil y contraseña (encriptada).</li>
+    <li><strong>Datos de mascotas:</strong> nombre, foto, especie, edad, peso, historial médico y vacunación.</li>
+    <li><strong>Datos del dispensador:</strong> horarios, porciones, estadísticas de uso y estado de conexión.</li>
+    <li><strong>Datos técnicos:</strong> dirección IP, tipo de dispositivo, sistema operativo, fecha y hora de acceso.</li>
+  </ul>
 
-        <h3>3. Finalidad del tratamiento</h3>
-        <ul>
-          <li>Gestionar y administrar citas veterinarias.</li>
-          <li>Mantener y consultar el historial clínico digital de las mascotas.</li>
-          <li>Controlar y monitorear el dispensador de alimento.</li>
-          <li>Mejorar la seguridad y funcionalidad de la aplicación.</li>
-        </ul>
+  <h3>3. Finalidad del tratamiento</h3>
+  <ul>
+    <li>Administrar citas veterinarias y servicios ofrecidos por Laika.</li>
+    <li>Registrar y consultar el historial clínico digital de las mascotas.</li>
+    <li>Controlar y monitorear el dispensador inteligente de alimento.</li>
+    <li>Mejorar la experiencia, seguridad y rendimiento de la aplicación.</li>
+    <li>Enviar notificaciones relacionadas con servicios y funcionamiento del dispensador (cuando el usuario lo permita).</li>
+  </ul>
 
-        <h3>4. Cesión y transferencia de datos</h3>
-        <p>
-          Laika no vende ni alquila los datos personales de los usuarios. Los datos solo podrán compartirse con proveedores de servicios necesarios para el funcionamiento (hosting, bases de datos, mensajería), obligados a proteger los datos.
-        </p>
+  <h3>4. Eliminación total de la cuenta y datos</h3>
+  <p>
+    El usuario puede solicitar en cualquier momento la <strong>eliminación definitiva de su cuenta</strong>.  
+    Cuando esto sucede:
+  </p>
+  <ul>
+    <li>Se elimina de manera irreversible toda la información personal del usuario.</li>
+    <li>Se eliminan los registros de sus mascotas, citas, historial clínico y configuraciones del dispensador.</li>
+    <li>No se conserva ningún dato en respaldos, logs ni archivos internos.</li>
+    <li>Los datos solo podrán mantenerse si existe una obligación legal de conservación; de no ser así, se eliminan totalmente.</li>
+  </ul>
+  <p>
+    Una vez eliminada la cuenta, <strong>Laika no conserva ningún dato personal asociado al usuario</strong>.
+  </p>
 
-        <h3>5. Medidas de seguridad</h3>
-        <ul>
-          <li>Transmisión cifrada mediante HTTPS.</li>
-          <li>Encriptación de contraseñas y datos sensibles.</li>
-          <li>Controles de acceso y autenticación.</li>
-          <li>Respaldos periódicos y monitoreo de accesos.</li>
-        </ul>
+  <h3>5. Cesión y transferencia de datos</h3>
+  <p>
+    Laika no vende, intercambia ni alquila datos personales.  
+    La información únicamente podrá compartirse con proveedores estrictamente necesarios para el funcionamiento de la aplicación (hosting, base de datos, envío de correos, servicios en la nube) y que estén obligados contractualmente a garantizar la confidencialidad y seguridad de los datos.
+  </p>
 
-        <h3>6. Conservación de datos</h3>
-        <p>
-          Los datos personales se conservarán únicamente durante el tiempo necesario para cumplir con los fines descritos,
-          mientras la cuenta esté activa o según lo establecido por la ley. Una vez cumplido el plazo, los datos se eliminarán
-          o anonimizarán de forma segura.
-        </p>
+  <h3>6. Medidas de seguridad</h3>
+  <ul>
+    <li>Cifrado de datos en tránsito mediante HTTPS.</li>
+    <li>Contraseñas protegidas con algoritmos de hash y sal.</li>
+    <li>Controles de acceso, autenticación y monitoreo de actividad.</li>
+    <li>Respaldo seguro y mitigación ante pérdida de información.</li>
+    <li>Análisis continuo para prevenir accesos no autorizados.</li>
+  </ul>
 
-        <h3>7. Datos de menores</h3>
-        <p>
-          Si el titular de los datos es menor de edad, el uso de la aplicación y el registro deben realizarse con el consentimiento
-          y supervisión de un padre o tutor.
-        </p>
+  <h3>7. Conservación de datos</h3>
+  <p>
+    Los datos se conservarán únicamente mientras la cuenta esté activa o mientras sea estrictamente necesario para cumplir las finalidades descritas.  
+    Cuando los datos ya no sean necesarios, se eliminarán o se anonimizarán siguiendo estándares de seguridad.
+  </p>
 
-        <h3>8. Cambios en la Política</h3>
-        <p>
-          Esta Política de Privacidad puede actualizarse. Cuando se realicen cambios significativos,
-          se notificará a los usuarios mediante la aplicación o correo electrónico con antelación razonable.
-        </p>
+  <h3>8. Derechos del usuario</h3>
+  <p>El usuario puede ejercer los siguientes derechos en cualquier momento:</p>
+  <ul>
+    <li><strong>Acceso:</strong> conocer los datos que Laika almacena.</li>
+    <li><strong>Rectificación:</strong> modificar datos incorrectos o incompletos.</li>
+    <li><strong>Supresión:</strong> solicitar la eliminación total de la cuenta y todos los datos asociados.</li>
+    <li><strong>Oposición:</strong> rechazar ciertos tratamientos no esenciales.</li>
+    <li><strong>Portabilidad:</strong> solicitar una copia de sus datos en formato digital.</li>
+  </ul>
 
-        <h3>9. Contacto</h3>
-        <p>
-          Para dudas o reportes sobre privacidad, escriba a
-          <a href="mailto:help.vetpet@jademajesty.com">help.vetpet@jademajesty.com</a>.
-        </p>
+  <h3>9. Cambios en la Política</h3>
+  <p>
+    Laika podrá actualizar esta Política de Privacidad para reflejar cambios legales, funcionales o de seguridad.  
+    Cuando existan modificaciones relevantes, se notificará al usuario con anticipación mediante la aplicación o correo electrónico.
+  </p>
 
-        <h3>10. Aceptación</h3>
-        <p>
-          Al usar la aplicación, el panel administrativo o registrar un dispositivo dispensador de alimento,
-          usted acepta los términos de esta Política de Privacidad y consiente el tratamiento de sus datos conforme a lo aquí descrito.
-        </p>
-      </div>
+  <h3>10. Contacto</h3>
+  <p>
+    Para ejercer sus derechos o hacer consultas sobre esta política, puede comunicarse a  
+    <a href="mailto:help.vetpet@jademajesty.com">help.vetpet@jademajesty.com</a>.
+  </p>
+
+  <h3>11. Aceptación</h3>
+  <p>
+    Al utilizar la aplicación, el panel administrativo o registrar un dispositivo, usted declara haber leído, comprendido y aceptado esta Política de Privacidad.
+  </p>
+</div>
+
     </div>
   </section>
 

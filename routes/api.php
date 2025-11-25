@@ -19,6 +19,8 @@ use App\Notifications\ResetPasswordCodeNotification;
 use App\Notifications\WelcomeNotification;
 use App\Support\ActivityLogger;
 use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Api\DeviceTokenController;
+use App\Http\Controllers\Api\NotificationsController;
 
 Route::post('/login', function(Request $request){
     $request->validate([
@@ -220,6 +222,13 @@ Route::middleware('auth:sanctum')->get('/mis-dispensadores', function(Request $r
         'dispensadores' => $dispensadores
     ]);
 });
+
+// Device tokens: registrar/actualizar token del dispositivo del usuario
+Route::middleware('auth:sanctum')->post('/device-tokens', [DeviceTokenController::class, 'store']);
+Route::middleware('auth:sanctum')->delete('/device-tokens/{token}', [DeviceTokenController::class, 'destroy']);
+
+// Internal push endpoint: enviar notificación (user_id o topic). Protegido por HEADER X-INTERNAL-KEY (env INTERNAL_PUSH_KEY) o puede quedar abierto si se configura.
+Route::post('/notifications/push', [NotificationsController::class, 'push']);
 
 Route::get('/estado-dispensador', function (Request $request) {
     $codigo = $request->query('codigo');
@@ -581,6 +590,76 @@ Route::middleware('auth:sanctum')->post('/agendar-cita', function(Request $reque
     ]);
 });
 
+// Actualizar una cita (PATCH/PUT parcial)
+Route::middleware('auth:sanctum')->match(['put','patch'], '/citas/{id}', function(Request $request, $id) {
+    $cita = Cita::find($id);
+    if (!$cita) {
+        return response()->json(['success' => false, 'message' => 'Cita no encontrada'], 404);
+    }
+
+    $user = $request->user();
+    $mascota = Mascota::find($cita->mascota_id);
+    $ownerId = $mascota->user_id ?? null;
+
+    // Permitir modificar si es quien creó la cita o el dueño de la mascota
+    if ($user->id !== $cita->creada_por && $user->id !== $ownerId) {
+        return response()->json(['success' => false, 'message' => 'No autorizado'], 403);
+    }
+
+    $request->validate([
+        'clinica_id' => 'sometimes|exists:clinicas,id',
+        'servicio_id' => 'sometimes|exists:servicios,id',
+        'mascota_id' => 'sometimes|exists:mascotas,id',
+        'fecha' => 'sometimes|date',
+        'notas' => 'nullable|string|max:500',
+        'status' => 'sometimes|string',
+    ]);
+
+    $updateData = $request->only(['clinica_id','servicio_id','mascota_id','fecha','notas','status']);
+    $updateData = array_filter($updateData, fn($v) => !is_null($v));
+
+    $original = $cita->getOriginal();
+    $cita->update($updateData);
+
+    $changed = [];
+    foreach ($updateData as $k => $v) {
+        if (!array_key_exists($k, $original) || $original[$k] !== $v) {
+            $changed[] = $k;
+        }
+    }
+
+    ActivityLogger::log($request, 'Actualizar cita', 'Cita', $cita->id, [
+        'changed_fields' => $changed,
+    ], $user->id);
+
+    return response()->json(['success' => true, 'cita' => $cita]);
+});
+
+// Eliminar una cita
+Route::middleware('auth:sanctum')->delete('/citas/{id}', function(Request $request, $id) {
+    $cita = Cita::find($id);
+    if (!$cita) {
+        return response()->json(['success' => false, 'message' => 'Cita no encontrada'], 404);
+    }
+
+    $user = $request->user();
+    $mascota = Mascota::find($cita->mascota_id);
+    $ownerId = $mascota->user_id ?? null;
+
+    if ($user->id !== $cita->creada_por && $user->id !== $ownerId) {
+        return response()->json(['success' => false, 'message' => 'No autorizado'], 403);
+    }
+
+    ActivityLogger::log($request, 'Eliminar cita', 'Cita', $cita->id, [], $user->id);
+    try {
+        $cita->delete();
+    } catch (\Throwable $e) {
+        return response()->json(['success' => false, 'message' => 'Error eliminando la cita'], 500);
+    }
+
+    return response()->json(['success' => true, 'message' => 'Cita eliminada correctamente']);
+});
+
 
 //obtener clinicas
 Route::get('/clinicas', function(){
@@ -793,3 +872,107 @@ Route::middleware('auth:sanctum')->put('/perfil', function(Request $request) {
         'user' => $user
     ]);
 });
+
+
+//eliminar la cuenta de usuario
+Route::middleware('auth:sanctum')->delete('/account', function(Request $request) {
+    $request->validate([
+        'password' => 'required|string'
+    ]);
+
+    $user = $request->user();
+
+    // Verificar contraseña actual
+    if(!Hash::check($request->password, $user->password)) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Contraseña incorrecta'
+        ], 403);
+    }
+
+    // Log de actividad antes de eliminar
+    ActivityLogger::log($request, 'Eliminar cuenta', 'User', $user->id, [
+        'email' => $user->email,
+    ], $user->id);
+
+    // Revocar todos los tokens (logout global)
+    try { $user->tokens()->delete(); } catch(\Throwable $e) {}
+
+    // Limpiar tokens de recuperación de contraseña asociados
+    try { DB::table('password_reset_tokens')->where('email', $user->email)->delete(); } catch(\Throwable $e) {}
+
+    // Eliminar (destruir) usuario definitivamente
+    $user->delete();
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Cuenta eliminada correctamente'
+    ], 200);
+});
+
+
+//editar perfil de usuario con POST (multipart/form-data)
+Route::middleware('auth:sanctum')->post('/perfil', function(Request $request) {
+    $user = $request->user();
+
+    $request->validate([
+        'nombre' => 'sometimes|required|string|max:100',
+        'apellido_paterno' => 'sometimes|required|string|max:100',
+        'apellido_materno' => 'sometimes|nullable|string|max:100',
+        'fecha_nacimiento' => 'sometimes|required|date',
+        'genero' => 'sometimes|required|in:M,F,O',
+        'telefono' => 'sometimes|required|string|max:15|unique:users,telefono,' . $user->id,
+        // aceptar tanto string como archivo imagen
+        'imagen_perfil' => 'sometimes|nullable',
+        'password' => 'sometimes|required|string|min:8|confirmed',
+    ]);
+
+    $updateData = $request->only([
+        'nombre', 'apellido_paterno', 'apellido_materno', 'fecha_nacimiento', 'genero', 'telefono'
+    ]);
+
+    // Manejo opcional de imagen_perfil como archivo (si llega como file en multipart)
+    if ($request->hasFile('imagen_perfil')) {
+        $file = $request->file('imagen_perfil');
+        $ext = $file->getClientOriginalExtension();
+        $filename = time() . '_' . uniqid() . '.' . $ext;
+        $dest = public_path('uploads/perfiles');
+        if (!is_dir($dest)) { @mkdir($dest, 0755, true); }
+        $file->move($dest, $filename);
+        $updateData['imagen_perfil'] = $filename; // guardamos solo el nombre como en mascotas
+    } elseif ($request->filled('imagen_perfil') && is_string($request->imagen_perfil)) {
+        // Si se envía como string (por ejemplo nombre ya existente) lo usamos directamente
+        $updateData['imagen_perfil'] = $request->imagen_perfil;
+    }
+
+    if ($request->filled('password')) {
+        $updateData['password'] = \Illuminate\Support\Facades\Hash::make($request->password);
+    }
+
+    // Filtrar nulos para no sobreescribir con null
+    $updateData = array_filter($updateData, fn($v) => !is_null($v));
+
+    $original = $user->getOriginal();
+    $user->update($updateData);
+
+    $changed = [];
+    foreach ($updateData as $k => $v) {
+        if ($k === 'password') { $changed[] = 'password'; continue; }
+        if (!array_key_exists($k, $original) || $original[$k] !== $v) {
+            $changed[] = $k;
+        }
+    }
+
+    // Log actividad
+    ActivityLogger::log($request, 'Actualizar perfil (POST)', 'User', $user->id, [
+        'changed_fields' => $changed,
+    ], $user->id);
+
+    return response()->json([
+        'success' => true,
+        'user' => $user,
+        'imagen_perfil_url' => $user->imagen_perfil ? asset('uploads/perfiles/' . $user->imagen_perfil) : null,
+    ]);
+});
+// ===============================================================================
+
