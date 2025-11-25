@@ -274,6 +274,35 @@ Route::middleware('auth:sanctum')->get('/mis-dispensadores', function(Request $r
     ]);
 });
 
+    // Desvincular un dispensador del usuario (owner o admin)
+    Route::middleware('auth:sanctum')->post('/dispensadores/{id}/desvincular', function(Request $request, $id) {
+        $user = $request->user();
+        $disp = Dispensador::with('codigoDispensador')->find($id);
+        if (!$disp) {
+            return response()->json(['success' => false, 'message' => 'Dispensador no encontrado'], 404);
+        }
+
+        // Permite si es dueño o si es admin (rol A)
+        if ($user->id !== $disp->usuario_id && ($user->rol ?? null) !== 'A') {
+            return response()->json(['success' => false, 'message' => 'No autorizado'], 403);
+        }
+
+        $codigo = $disp->codigoDispensador->codigo ?? null;
+        $oldOwner = $disp->usuario_id;
+        $disp->usuario_id = null;
+        try {
+            $disp->save();
+            ActivityLogger::log($request, 'Desvincular dispensador', 'Dispensador', $disp->id, [
+                'codigo' => $codigo,
+                'old_owner' => $oldOwner,
+            ], $user->id);
+        } catch (\Throwable $e) {
+            return response()->json(['success' => false, 'message' => 'Error al desvincular dispensador'], 500);
+        }
+
+        return response()->json(['success' => true, 'message' => 'Dispensador desvinculado correctamente']);
+    });
+
 // Device tokens: registrar/actualizar token del dispositivo del usuario
 Route::middleware('auth:sanctum')->post('/device-tokens', [DeviceTokenController::class, 'store']);
 Route::middleware('auth:sanctum')->delete('/device-tokens/{token}', [DeviceTokenController::class, 'destroy']);
