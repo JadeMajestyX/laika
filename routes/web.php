@@ -14,6 +14,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\TrabajadorController;
 use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\VetDashboardController;
+use App\Http\Controllers\GroomerDashboardController;
 use App\Http\Controllers\SearchController;
 
 
@@ -30,6 +31,13 @@ Route::middleware(EnsureUserHasRole::class.':V')->group(function () {
     
     // Capturar subrutas (cualquiera)
     Route::get('/vet-dashboard/{any}', [VetDashboardController::class, 'index'])->where('any', '.*');
+});
+
+// Dashboard Groomer (rol G)
+Route::middleware(EnsureUserHasRole::class.':G')->group(function () {
+    Route::get('/groomer-dashboard', [GroomerDashboardController::class, 'index'])->name('groomer.dashboard');
+    Route::get('/groomer-dashboard/data', [GroomerDashboardController::class, 'getDashboardData'])->name('groomer.dashboard.data');
+    Route::get('/groomer-dashboard/{any}', [GroomerDashboardController::class, 'index'])->where('any', '.*');
 });
 
 Route::middleware(EnsureUserHasRole::class.':A')->group(function () {

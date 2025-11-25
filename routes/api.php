@@ -839,3 +839,69 @@ Route::middleware('auth:sanctum')->delete('/account', function(Request $request)
         'message' => 'Cuenta eliminada correctamente'
     ], 200);
 });
+
+
+//editar perfil de usuario con POST (multipart/form-data)
+Route::middleware('auth:sanctum')->post('/perfil', function(Request $request) {
+    $user = $request->user();
+
+    $request->validate([
+        'nombre' => 'sometimes|required|string|max:100',
+        'apellido_paterno' => 'sometimes|required|string|max:100',
+        'apellido_materno' => 'sometimes|nullable|string|max:100',
+        'fecha_nacimiento' => 'sometimes|required|date',
+        'genero' => 'sometimes|required|in:M,F,O',
+        'telefono' => 'sometimes|required|string|max:15|unique:users,telefono,' . $user->id,
+        // aceptar tanto string como archivo imagen
+        'imagen_perfil' => 'sometimes|nullable',
+        'password' => 'sometimes|required|string|min:8|confirmed',
+    ]);
+
+    $updateData = $request->only([
+        'nombre', 'apellido_paterno', 'apellido_materno', 'fecha_nacimiento', 'genero', 'telefono'
+    ]);
+
+    // Manejo opcional de imagen_perfil como archivo (si llega como file en multipart)
+    if ($request->hasFile('imagen_perfil')) {
+        $file = $request->file('imagen_perfil');
+        $ext = $file->getClientOriginalExtension();
+        $filename = time() . '_' . uniqid() . '.' . $ext;
+        $dest = public_path('uploads/perfiles');
+        if (!is_dir($dest)) { @mkdir($dest, 0755, true); }
+        $file->move($dest, $filename);
+        $updateData['imagen_perfil'] = $filename; // guardamos solo el nombre como en mascotas
+    } elseif ($request->filled('imagen_perfil') && is_string($request->imagen_perfil)) {
+        // Si se envía como string (por ejemplo nombre ya existente) lo usamos directamente
+        $updateData['imagen_perfil'] = $request->imagen_perfil;
+    }
+
+    if ($request->filled('password')) {
+        $updateData['password'] = \Illuminate\Support\Facades\Hash::make($request->password);
+    }
+
+    // Filtrar nulos para no sobreescribir con null
+    $updateData = array_filter($updateData, fn($v) => !is_null($v));
+
+    $original = $user->getOriginal();
+    $user->update($updateData);
+
+    $changed = [];
+    foreach ($updateData as $k => $v) {
+        if ($k === 'password') { $changed[] = 'password'; continue; }
+        if (!array_key_exists($k, $original) || $original[$k] !== $v) {
+            $changed[] = $k;
+        }
+    }
+
+    // Log actividad
+    ActivityLogger::log($request, 'Actualizar perfil (POST)', 'User', $user->id, [
+        'changed_fields' => $changed,
+    ], $user->id);
+
+    return response()->json([
+        'success' => true,
+        'user' => $user,
+        'imagen_perfil_url' => $user->imagen_perfil ? asset('uploads/perfiles/' . $user->imagen_perfil) : null,
+    ]);
+});
+// ===============================================================================
