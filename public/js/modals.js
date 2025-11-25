@@ -65,14 +65,29 @@
 
   function renderObjectAsList(obj) {
     if (!obj || typeof obj !== 'object') return escapeHtml(String(obj ?? '-'));
-    const rows = Object.entries(obj).map(([k,v]) => `<div class="mb-2"><strong>${escapeHtml(prettyKey(k))}:</strong> ${escapeHtml(String(v ?? '-'))}</div>`);
-    return rows.join('');
-  }
+      const skipView = [
+        'id',
+        'created_at',
+        'updated_at',
+        'deleted_at',
+        'imagen',
+        'notas'
+      ];
+     const rows = Object.entries(obj)
+      .filter(([k, v]) => !skipView.includes(k)) // ← FILTRO
+      .map(([k, v]) => `
+        <div class="mb-2">
+          <strong>${escapeHtml(prettyKey(k))}:</strong> 
+          ${escapeHtml(String(v ?? '-'))}
+        </div>
+      `);
+      return rows.join('');
+    }
 
   function buildEditFormFields(data) {
     
     const fields = [];
-    const skip = ['id','created_at','updated_at','password'];
+    const skip = ['id','created_at','updated_at', 'deleted_at', 'imagen','notas','password'];
 
     Object.entries(data).forEach(([k,v]) => {
       if (skip.includes(k)) return;
@@ -154,15 +169,24 @@
       else if (/\b(email|correo)\b/i.test(k)) {
         inputHtml = `<input type="email" name="${k}" value="${escapeHtml(String(v ?? ''))}" class="form-control" />`;
       }
-        else if (/\b(fecha|date|birthday|nacimiento)\b/i.test(k)) {
-      inputHtml = `
-        <input type="date" 
-               name="${k}" 
-               value="${escapeHtml(String(v ?? ''))}" 
-               class="form-control"
-               onkeydown="return false"
-              />`;
-        }
+       else if (k === "fecha_nacimiento") {  //fecha de nacimiento en general (C,A,T)
+            let fechaValor = "";
+
+            if (v && typeof v === "string") {
+              fechaValor = v.split("T")[0];
+            }
+            const hoy = new Date().toISOString().split("T")[0];
+            inputHtml = `
+              <input type="date"
+                    name="${k}"
+                    value="${escapeHtml(fechaValor)}"
+                    class="form-control"
+                    max="${hoy}"
+                    onkeydown="return false"
+              />
+            `;
+          }
+
       else {
           let maxAttr = "";
 
