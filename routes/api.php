@@ -131,31 +131,26 @@ Route::post('/mediciones', function(Request $request){
         $debeNotificarBajo = ($nivel > 0 && $nivel < 40) && ($prevNivel === null || $prevNivel >= 40);
 
         if ($debeNotificarVacio || $debeNotificarBajo) {
-            $tokens = DeviceToken::where('user_id', $userId)->pluck('token')->filter()->values()->all();
-            if (!empty($tokens)) {
-                try {
-                    if (config('fcm.use_v1')) {
-                        $client = new FcmV1Client();
-                        $title = $debeNotificarVacio ? 'Dispensador vacío' : 'Nivel de comida bajo';
-                        $body = $debeNotificarVacio
-                            ? 'Tu dispensador se ha quedado sin comida. Por favor rellénalo.'
-                            : 'El nivel de comida del dispensador es menor al 40%. Revisa el alimento.';
-                        $dataPayload = [
-                            'tipo' => 'dispensador_alerta',
-                            'codigo' => $request->codigo,
-                            'nivel' => (string)$nivel,
-                        ];
-                        foreach ($tokens as $tk) {
-                            $client->sendToToken($tk, $title, $body, $dataPayload);
-                        }
-                        $alertaEnviada = true;
+            try {
+                if (config('fcm.use_v1')) {
+                    $client = new FcmV1Client();
+                    $title = $debeNotificarVacio ? 'Dispensador vacío' : 'Nivel de comida bajo';
+                    $body = $debeNotificarVacio
+                        ? 'Tu dispensador se ha quedado sin comida. Por favor rellénalo.'
+                        : 'El nivel de comida del dispensador es menor al 40%. Revisa el alimento.';
+                    $dataPayload = [
+                        'tipo' => 'dispensador_alerta',
+                        'codigo' => $request->codigo,
+                        'nivel' => (string)$nivel,
+                    ];
+                    $sendSummary = $client->sendToUser($userId, $title, $body, $dataPayload);
+                    if ($sendSummary['sent'] > 0) {
+                        $alertaEnviada = $sendSummary['success'] > 0;
                         $alertaTipo = $debeNotificarVacio ? 'vacío' : 'bajo';
                     }
-                    // (Si se requiere fallback legacy, podría añadirse aquí)
-                } catch (\Throwable $e) {
-                    // Silenciar error para no romper ingestión; se podría loggear
-                    Log::warning('Error enviando notificación de nivel comida: ' . $e->getMessage());
                 }
+            } catch (\Throwable $e) {
+                Log::warning('Error enviando notificación de nivel comida: ' . $e->getMessage());
             }
         }
     }
