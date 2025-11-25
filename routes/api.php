@@ -661,7 +661,7 @@ Route::middleware('auth:sanctum')->match(['put','patch'], '/citas/{id}', functio
         'clinica_id' => 'sometimes|exists:clinicas,id',
         'servicio_id' => 'sometimes|exists:servicios,id',
         'mascota_id' => 'sometimes|exists:mascotas,id',
-        'fecha' => 'sometimes|date',
+        'fecha' => 'sometimes|date|after:today',
         'notas' => 'nullable|string|max:500',
         'status' => 'sometimes|string',
     ]);
