@@ -71,7 +71,6 @@ Route::middleware(EnsureUserHasRole::class.':A')->group(function () {
     Route::get('/reportes', [ReporteController::class, 'index'])->name('reportes');
     Route::get('/reportes/data', [ReporteController::class, 'data'])->name('reportes.data');
     Route::get('/reportes/citas/export', [ReporteController::class, 'exportCitas'])->name('reportes.citas.export');
-    Route::get('/reportes/citas/export/xlsx', [ReporteController::class, 'exportCitasXlsx'])->name('reportes.citas.export.xlsx');
     Route::get('/reportes/citas/export/pdf', [ReporteController::class, 'exportCitasPdf'])->name('reportes.citas.export.pdf');
     Route::get('/inventario', [App\Http\Controllers\InventarioController::class, 'index'])->name('inventario');
     Route::get('/configuracion', [ConfiguracionController::class, 'index'])->name('configuracion');

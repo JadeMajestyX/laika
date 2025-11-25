@@ -8,7 +8,6 @@
     rol: $('#filtro-rol'), // actualmente no se filtra por rol en backend
     trabajador: $('#filtro-trabajador'),
     btnAplicar: $('#btn-aplicar-filtro'),
-    btnExportarXlsx: $('#btn-exportar-xlsx'),
     btnExportarPdf: $('#btn-exportar-pdf'),
     mCitas: $('#metric-citas-realizadas'),
     mMascotas: $('#metric-mascotas-atendidas'),
@@ -286,12 +285,6 @@
     ui.btnAplicar?.addEventListener('click', (e) => {
       e.preventDefault();
       loadData().catch(err => console.error(err));
-    });
-    ui.btnExportarXlsx?.addEventListener('click', (e) => {
-      e.preventDefault();
-      const qs = buildQuery();
-      const url = `/reportes/citas/export/xlsx${qs ? `?${qs}` : ''}`;
-      window.location.href = url;
     });
     ui.btnExportarPdf?.addEventListener('click', (e) => {
       e.preventDefault();

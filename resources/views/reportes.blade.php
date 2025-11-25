@@ -87,7 +87,6 @@
                   <i class="bi bi-download"></i> Exportar
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end">
-                  <li><a class="dropdown-item" href="#" id="btn-exportar-xlsx">Exportar XLSX</a></li>
                   <li><a class="dropdown-item" href="#" id="btn-exportar-pdf">Exportar PDF</a></li>
                 </ul>
               </div>

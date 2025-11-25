@@ -11,8 +11,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Box\Spout\Writer\Common\Creator\WriterEntityFactory;
-use Box\Spout\Writer\Common\Creator\Style\StyleBuilder;
 
 class ReporteController extends Controller
 {
@@ -37,15 +35,8 @@ class ReporteController extends Controller
         $rol = $request->input('rol'); // string opcional
 
         // Base query para citas en el rango
-        $citasQuery = Cita::query()
-            ->when($trabajadorId, fn($q) => $q->where('creada_por', $trabajadorId))
-            ->when($rol, function ($q) use ($rol) {
-                // filtrar por rol del creador de la cita
-                return $q->join('users as u_rol', 'citas.creada_por', '=', 'u_rol.id')
-                         ->where('u_rol.rol', $rol);
-            })
-            ->whereBetween('fecha', [$from->copy()->startOfDay(), $to->copy()->endOfDay()])
-            ->with(['servicio']);
+        $citasBase = $this->buildCitasBaseQuery($from, $to, $trabajadorId, $rol);
+        $citasQuery = (clone $citasBase)->with(['servicio']);
 
         // Métricas básicas
         $citasAtendidas = (clone $citasQuery)->where('status', 'realizada')->count();
@@ -95,14 +86,8 @@ class ReporteController extends Controller
         $trabajadorId = $request->integer('trabajador_id');
         $rol = $request->input('rol');
 
-        $query = Cita::query()
+        $query = (clone $this->buildCitasBaseQuery($from, $to, $trabajadorId, $rol))
             ->with(['servicio', 'mascota'])
-            ->when($trabajadorId, fn($q) => $q->where('creada_por', $trabajadorId))
-            ->when($rol, function ($q) use ($rol) {
-                return $q->join('users as u_rol', 'citas.creada_por', '=', 'u_rol.id')
-                         ->where('u_rol.rol', $rol);
-            })
-            ->whereBetween('fecha', [$from->copy()->startOfDay(), $to->copy()->endOfDay()])
             ->orderBy('fecha');
 
         $filename = 'citas_' . $from->format('Ymd') . '_' . $to->format('Ymd') . '.csv';
@@ -137,63 +122,6 @@ class ReporteController extends Controller
     }
 
     /**
-     * Exportación XLSX formateada usando Spout (streaming, memoria constante).
-     */
-    public function exportCitasXlsx(Request $request)
-    {
-        [$from, $to] = $this->resolveDateRange($request->input('from'), $request->input('to'));
-        $trabajadorId = $request->integer('trabajador_id');
-        $rol = $request->input('rol');
-
-        $query = Cita::query()
-            ->with(['servicio', 'mascota'])
-            ->when($trabajadorId, fn($q) => $q->where('creada_por', $trabajadorId))
-            ->when($rol, function ($q) use ($rol) {
-                return $q->join('users as u_rol', 'citas.creada_por', '=', 'u_rol.id')
-                    ->where('u_rol.rol', $rol);
-            })
-            ->whereBetween('fecha', [$from->copy()->startOfDay(), $to->copy()->endOfDay()])
-            ->orderBy('fecha');
-
-        $filename = 'citas_' . $from->format('Ymd') . '_' . $to->format('Ymd') . '.xlsx';
-
-        // Para evitar problemas de buffering/respuestas inválidas en algunos servidores,
-        // escribimos primero a un archivo temporal y luego lo servimos.
-        $tmpPath = tempnam(sys_get_temp_dir(), 'citas_');
-        $tmpXlsx = $tmpPath . '.xlsx';
-        // Spout requiere una ruta con extensión .xlsx
-        rename($tmpPath, $tmpXlsx);
-
-        $writer = WriterEntityFactory::createXLSXWriter();
-        $writer->openToFile($tmpXlsx);
-
-        $headerStyle = (new StyleBuilder())->setFontBold()->build();
-        $headers = ['Fecha', 'Status', 'Servicio', 'Precio', 'Mascota', 'TrabajadorID'];
-        $rowFromValues = WriterEntityFactory::createRowFromArray($headers, $headerStyle);
-        $writer->addRow($rowFromValues);
-
-        $query->chunk(500, function ($citas) use ($writer) {
-            foreach ($citas as $cita) {
-                $values = [
-                    optional($cita->fecha)->format('Y-m-d H:i'),
-                    (string) $cita->status,
-                    optional($cita->servicio)->nombre,
-                    optional($cita->servicio)->precio,
-                    optional($cita->mascota)->nombre,
-                    $cita->creada_por,
-                ];
-                $writer->addRow(WriterEntityFactory::createRowFromArray($values));
-            }
-        });
-
-        $writer->close();
-
-        return response()->download($tmpXlsx, $filename, [
-            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        ])->deleteFileAfterSend(true);
-    }
-
-    /**
      * Exportación PDF con tabla formateada.
      */
     public function exportCitasPdf(Request $request)
@@ -202,21 +130,62 @@ class ReporteController extends Controller
         $trabajadorId = $request->integer('trabajador_id');
         $rol = $request->input('rol');
 
-        $citas = Cita::query()
+        $baseQuery = $this->buildCitasBaseQuery($from, $to, $trabajadorId, $rol);
+        $citas = (clone $baseQuery)
             ->with(['servicio', 'mascota'])
-            ->when($trabajadorId, fn($q) => $q->where('creada_por', $trabajadorId))
-            ->when($rol, function ($q) use ($rol) {
-                return $q->join('users as u_rol', 'citas.creada_por', '=', 'u_rol.id')
-                    ->where('u_rol.rol', $rol);
-            })
-            ->whereBetween('fecha', [$from->copy()->startOfDay(), $to->copy()->endOfDay()])
             ->orderBy('fecha')
             ->get();
+
+        $resumenCitas = (clone $baseQuery)
+            ->select('status as label', DB::raw('COUNT(*) as value'))
+            ->groupBy('status')
+            ->get();
+
+        $totalResumen = max(1, $resumenCitas->sum('value'));
+        $palette = ['#6f42c1', '#0d6efd', '#20c997', '#fd7e14', '#ffc107', '#198754', '#dc3545'];
+        $chartResumen = $resumenCitas->values()->map(function ($row, $idx) use ($totalResumen, $palette) {
+            $percentage = round((($row->value ?? 0) / $totalResumen) * 100, 2);
+            $percentage = max(min($percentage, 100), 0);
+            $colorIndex = $idx % count($palette);
+            return [
+                'label' => $row->label ?? '—',
+                'value' => (int) ($row->value ?? 0),
+                'percentage' => $percentage,
+                'width' => max($percentage, 0),
+                'color' => $palette[$colorIndex],
+                'color_class' => 'chart-color-' . $colorIndex,
+            ];
+        });
+
+        $metrics = [
+            'citas_atendidas' => (clone $baseQuery)->where('status', 'realizada')->count(),
+            'mascotas_atendidas' => (clone $baseQuery)->where('status', 'realizada')->distinct('mascota_id')->count('mascota_id'),
+            'usuarios_nuevos' => User::whereBetween('created_at', [$from->copy()->startOfDay(), $to->copy()->endOfDay()])->count(),
+        ];
+
+        $chartMetricas = collect([
+            ['label' => 'Citas atendidas', 'value' => $metrics['citas_atendidas'], 'color_idx' => 0],
+            ['label' => 'Mascotas atendidas', 'value' => $metrics['mascotas_atendidas'], 'color_idx' => 2],
+            ['label' => 'Usuarios nuevos', 'value' => $metrics['usuarios_nuevos'], 'color_idx' => 1],
+        ]);
+        $chartMetricasMax = max(1, $chartMetricas->max('value'));
+        $chartMetricas = $chartMetricas->map(function ($metric) use ($chartMetricasMax, $palette) {
+            $ratio = $chartMetricasMax ? round(($metric['value'] / $chartMetricasMax) * 100, 2) : 0;
+            $ratio = max(min($ratio, 100), 0);
+            $colorIndex = $metric['color_idx'] % count($palette);
+            return array_merge($metric, [
+                'ratio' => $ratio,
+                'color' => $palette[$colorIndex],
+                'color_class' => 'chart-color-' . $colorIndex,
+            ]);
+        })->values();
 
         $data = [
             'from' => $from->toDateTimeString(),
             'to' => $to->toDateTimeString(),
             'citas' => $citas,
+            'chart_resumen' => $chartResumen,
+            'chart_metricas' => $chartMetricas,
         ];
 
         $pdf = Pdf::loadView('reportes.export_citas_pdf', $data)->setPaper('letter', 'portrait');
@@ -238,5 +207,16 @@ class ReporteController extends Controller
         }
 
         return [$start, $end];
+    }
+
+    private function buildCitasBaseQuery(Carbon $from, Carbon $to, ?int $trabajadorId, ?string $rol)
+    {
+        return Cita::query()
+            ->when($trabajadorId, fn($q) => $q->where('creada_por', $trabajadorId))
+            ->when($rol, function ($q) use ($rol) {
+                return $q->join('users as u_rol', 'citas.creada_por', '=', 'u_rol.id')
+                    ->where('u_rol.rol', $rol);
+            })
+            ->whereBetween('fecha', [$from->copy()->startOfDay(), $to->copy()->endOfDay()]);
     }
 }
