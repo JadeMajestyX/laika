@@ -23,6 +23,7 @@ use App\Support\ActivityLogger;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Api\DeviceTokenController;
 use App\Http\Controllers\Api\NotificationsController;
+use Carbon\Carbon;
 
 Route::post('/login', function(Request $request){
     $request->validate([
@@ -708,6 +709,41 @@ Route::middleware('auth:sanctum')->delete('/citas/{id}', function(Request $reque
     }
 
     return response()->json(['success' => true, 'message' => 'Cita eliminada correctamente']);
+});
+
+// Cancelar todas las citas pasadas no atendidas (pendiente/confirmada -> cancelada)
+Route::middleware('auth:sanctum')->post('/citas/cancelar-pasadas', function(Request $request) {
+    $user = $request->user();
+    // Solo admin (rol A) puede ejecutar
+    if (!$user || $user->rol !== 'A') {
+        return response()->json(['success' => false, 'message' => 'No autorizado'], 403);
+    }
+
+    $ahora = Carbon::now();
+    $citas = Cita::where('fecha', '<', $ahora)
+        ->whereNotIn('status', ['completada', 'cancelada'])
+        ->get();
+
+    $total = $citas->count();
+    $canceladas = 0;
+    $ids = [];
+    foreach ($citas as $cita) {
+        $cita->status = 'cancelada';
+        $cita->save();
+        $canceladas++;
+        $ids[] = $cita->id;
+        ActivityLogger::log($request, 'Cancelar cita pasada', 'Cita', $cita->id, [
+            'motivo' => 'Auto-cancelación por fecha pasada',
+            'fecha' => $cita->fecha,
+        ], $user->id);
+    }
+
+    return response()->json([
+        'success' => true,
+        'total_revisadas' => $total,
+        'total_canceladas' => $canceladas,
+        'ids_canceladas' => $ids,
+    ]);
 });
 
 
