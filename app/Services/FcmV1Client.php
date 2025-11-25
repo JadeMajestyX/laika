@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Http;
 use App\Models\DeviceToken;
 use Illuminate\Support\Str;
 use RuntimeException;
+use App\Support\NotificationLogger;
 
 class FcmV1Client
 {
@@ -224,11 +225,16 @@ class FcmV1Client
                 }
             }
         }
-        return [
+        $summary = [
             'sent' => count($tokens),
             'success' => count(array_filter($results, fn($r) => $r['ok'])),
             'fail' => count(array_filter($results, fn($r) => !$r['ok'])),
             'results' => $results,
         ];
+
+        // Log persistente de la notificación
+        NotificationLogger::log($userId, $title, $body, $data, $tokens, $summary);
+
+        return $summary;
     }
 }

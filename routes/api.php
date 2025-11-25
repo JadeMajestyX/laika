@@ -1062,3 +1062,84 @@ Route::middleware('auth:sanctum')->post('/perfil', function(Request $request) {
 });
 // ===============================================================================
 
+// ================== NOTIFICACIONES (LOG DE ENVÍOS) ==================
+// Listar notificaciones enviadas al usuario autenticado
+Route::middleware('auth:sanctum')->get('/mis-notificaciones', function(Request $request) {
+    $user = $request->user();
+
+    $perPage = (int) min(max((int)$request->query('per_page', 20), 1), 100);
+    $page = (int) max((int)$request->query('page', 1), 1);
+    $afterId = $request->query('after_id'); // para sync incremental: traer > after_id
+    $since = $request->query('since'); // fecha ISO opcional
+    $q = trim((string)$request->query('q', ''));
+
+    $query = \App\Models\NotificationLog::where('user_id', $user->id);
+
+    if ($afterId) {
+        $query->where('id', '>', (int)$afterId);
+    }
+    if ($since) {
+        // Intentar parsear fecha
+        try { $sinceDt = \Carbon\Carbon::parse($since); $query->where('created_at', '>=', $sinceDt); } catch(\Throwable $e) {}
+    }
+    if ($q !== '') {
+        $query->where(function($sub) use ($q) {
+            $sub->where('title', 'like', "%$q%")
+                ->orWhere('body', 'like', "%$q%");
+        });
+    }
+
+    $total = $query->count();
+    $logs = $query->orderByDesc('id')
+        ->skip(($page - 1) * $perPage)
+        ->take($perPage)
+        ->get()
+        ->map(function($log){
+            return [
+                'id' => $log->id,
+                'title' => $log->title,
+                'body' => $log->body,
+                'data' => $log->data_json ? json_decode($log->data_json, true) : null,
+                'tokens' => $log->tokens_json ? json_decode($log->tokens_json, true) : null,
+                'success' => $log->success,
+                'fail' => $log->fail,
+                'total' => $log->total,
+                'created_at' => $log->created_at->toIso8601String(),
+            ];
+        });
+
+    return response()->json([
+        'success' => true,
+        'page' => $page,
+        'per_page' => $perPage,
+        'total' => $total,
+        'last_page' => (int) ceil($total / $perPage),
+        'notificaciones' => $logs,
+    ]);
+});
+
+// Detalle de una notificación (solo si pertenece al usuario)
+Route::middleware('auth:sanctum')->get('/mis-notificaciones/{id}', function(Request $request, $id) {
+    $user = $request->user();
+    $log = \App\Models\NotificationLog::where('id', $id)->where('user_id', $user->id)->first();
+    if (!$log) {
+        return response()->json(['success' => false, 'message' => 'No encontrado'], 404);
+    }
+    return response()->json([
+        'success' => true,
+        'notificacion' => [
+            'id' => $log->id,
+            'title' => $log->title,
+            'body' => $log->body,
+            'data' => $log->data_json ? json_decode($log->data_json, true) : null,
+            'tokens' => $log->tokens_json ? json_decode($log->tokens_json, true) : null,
+            'success' => $log->success,
+            'fail' => $log->fail,
+            'total' => $log->total,
+            'results' => $log->results_json ? json_decode($log->results_json, true) : null,
+            'created_at' => $log->created_at->toIso8601String(),
+        ]
+    ]);
+});
+// ================================================================
+
