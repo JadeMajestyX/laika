@@ -590,6 +590,76 @@ Route::middleware('auth:sanctum')->post('/agendar-cita', function(Request $reque
     ]);
 });
 
+// Actualizar una cita (PATCH/PUT parcial)
+Route::middleware('auth:sanctum')->match(['put','patch'], '/citas/{id}', function(Request $request, $id) {
+    $cita = Cita::find($id);
+    if (!$cita) {
+        return response()->json(['success' => false, 'message' => 'Cita no encontrada'], 404);
+    }
+
+    $user = $request->user();
+    $mascota = Mascota::find($cita->mascota_id);
+    $ownerId = $mascota->user_id ?? null;
+
+    // Permitir modificar si es quien creó la cita o el dueño de la mascota
+    if ($user->id !== $cita->creada_por && $user->id !== $ownerId) {
+        return response()->json(['success' => false, 'message' => 'No autorizado'], 403);
+    }
+
+    $request->validate([
+        'clinica_id' => 'sometimes|exists:clinicas,id',
+        'servicio_id' => 'sometimes|exists:servicios,id',
+        'mascota_id' => 'sometimes|exists:mascotas,id',
+        'fecha' => 'sometimes|date',
+        'notas' => 'nullable|string|max:500',
+        'status' => 'sometimes|string',
+    ]);
+
+    $updateData = $request->only(['clinica_id','servicio_id','mascota_id','fecha','notas','status']);
+    $updateData = array_filter($updateData, fn($v) => !is_null($v));
+
+    $original = $cita->getOriginal();
+    $cita->update($updateData);
+
+    $changed = [];
+    foreach ($updateData as $k => $v) {
+        if (!array_key_exists($k, $original) || $original[$k] !== $v) {
+            $changed[] = $k;
+        }
+    }
+
+    ActivityLogger::log($request, 'Actualizar cita', 'Cita', $cita->id, [
+        'changed_fields' => $changed,
+    ], $user->id);
+
+    return response()->json(['success' => true, 'cita' => $cita]);
+});
+
+// Eliminar una cita
+Route::middleware('auth:sanctum')->delete('/citas/{id}', function(Request $request, $id) {
+    $cita = Cita::find($id);
+    if (!$cita) {
+        return response()->json(['success' => false, 'message' => 'Cita no encontrada'], 404);
+    }
+
+    $user = $request->user();
+    $mascota = Mascota::find($cita->mascota_id);
+    $ownerId = $mascota->user_id ?? null;
+
+    if ($user->id !== $cita->creada_por && $user->id !== $ownerId) {
+        return response()->json(['success' => false, 'message' => 'No autorizado'], 403);
+    }
+
+    ActivityLogger::log($request, 'Eliminar cita', 'Cita', $cita->id, [], $user->id);
+    try {
+        $cita->delete();
+    } catch (\Throwable $e) {
+        return response()->json(['success' => false, 'message' => 'Error eliminando la cita'], 500);
+    }
+
+    return response()->json(['success' => true, 'message' => 'Cita eliminada correctamente']);
+});
+
 
 //obtener clinicas
 Route::get('/clinicas', function(){
@@ -905,3 +975,4 @@ Route::middleware('auth:sanctum')->post('/perfil', function(Request $request) {
     ]);
 });
 // ===============================================================================
+
