@@ -6,573 +6,810 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Agendar cita - Laika</title>
 
-  <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
     :root {
       --brand: #3A7CA5;
-      --brand-dark: #2f6485;
-      --muted: #6b7a82;
-      --card-bg: #ffffff;
-      --surface: #f8f9fa;
+      --brand-hover: #2c5f7f;
+      --brand-light: #eef6fa;
+      --text-main: #2c3e50;
+      --text-muted: #6c757d;
+      --border-color: #e2e8f0;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
+      --shadow-hover: 0 8px 16px rgba(58,124,165,0.1);
     }
+    
     body {
-      font-family: 'Inter', system-ui, sans-serif;
-      background-color: var(--surface);
-      color: #333;
+      font-family: 'Inter', sans-serif;
+      background-color: #f4f7f9;
+      color: var(--text-main);
       padding-top: 80px;
+      padding-bottom: 40px;
     }
-    .card { border-radius: 1rem; }
 
-    /* STEPper + conectores azules */
+    /* --- Utilities & Form Styling --- */
+    .form-wrapper { max-width: 850px; margin: 0 auto; }
+    
+    .card-main {
+      border: none;
+      border-radius: var(--radius-lg);
+      background: #fff;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+      overflow: hidden;
+    }
+
+    .form-control, .form-select {
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+      font-size: 0.95rem;
+    }
+    .form-control:focus, .form-select:focus {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 4px rgba(58, 124, 165, 0.15);
+    }
+    .form-label { font-weight: 500; font-size: 0.9rem; margin-bottom: 0.5rem; color: #4a5568; }
+    .required { color: #dc3545; }
+
+    /* --- Stepper Moderno --- */
+    .stepper-container {
+      padding: 1.5rem 0;
+      margin-bottom: 2rem;
+      position: relative;
+    }
     .stepper {
-      display:flex;
-      gap:.75rem;
-      justify-content:center;
-      margin-bottom:1.25rem;
-      align-items:center;
-      position:relative;
-      /* espacio lateral para que los conectores no se corten */
-      padding: 0 12px;
+      display: flex;
+      justify-content: space-between;
+      position: relative;
+      margin-bottom: 10px;
     }
-    .step {
-      width:42px;
-      height:42px;
-      border-radius:50%;
-      background:#e9f2f7;
-      color:var(--brand);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-weight:700;
-      box-shadow:0 2px 4px rgba(0,0,0,0.04);
-      position:relative;
-      z-index:2; /* encima de la barra */
-    }
-
-    /* barra / conector entre números (excepto el último) */
-    .step:not(:last-child)::after{
-      content: "";
+    /* Línea de fondo */
+    .stepper::before {
+      content: '';
       position: absolute;
-      top: 50%;
-      right: -27px;              /* ajusta para centrar la barra entre círculos */
+      top: 50%; left: 0; right: 0;
       transform: translateY(-50%);
-      width: 54px;               /* ancho aproximado entre centros (42 + gap≈12) */
-      height: 6px;
-      border-radius: 6px;
-      background: rgba(58,124,165,0.15); /* estado inactivo por defecto */
-      z-index:1;
+      height: 4px;
+      background: #e9ecef;
+      z-index: 1;
+      border-radius: 4px;
     }
-
-    /* cuando el paso es activo, que la barra desde ese paso hacia la siguiente sea azul/gradiente */
-    .step.active::after{
-      background: linear-gradient(90deg, var(--brand), var(--brand-dark));
-      height: 6px;
+    /* Línea de progreso (se llena con JS si quieres, o estático por paso) */
+    .progress-line {
+      position: absolute;
+      top: 50%; left: 0;
+      transform: translateY(-50%);
+      height: 4px;
+      background: var(--brand);
+      z-index: 1;
+      transition: width 0.4s ease;
+      border-radius: 4px;
     }
-
-    /* Si queremos que los pasos anteriores al activo muestren la barra activa también:
-       seleccionamos todos los .step anteriores al active con JS o con una clase .completed.
-       En este ejemplo no usamos JS adicional; si deseas que pasos previos muestren la barra
-       activa, en la función de navegación añade/remueve la clase .completed en los .step. */
-    .step.completed::after{
-      background: linear-gradient(90deg, var(--brand), var(--brand-dark));
-      height: 6px;
+    
+    .step-item {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: default;
     }
+    .step-circle {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: #fff;
+      border: 2px solid #e9ecef;
+      display: flex;
+      align-items: center; justify-content: center;
+      font-weight: 600; color: var(--text-muted);
+      transition: all 0.3s ease;
+      font-size: 0.9rem;
+    }
+    .step-item.active .step-circle {
+      border-color: var(--brand);
+      background: var(--brand);
+      color: #fff;
+      box-shadow: 0 0 0 4px rgba(58,124,165,0.2);
+    }
+    .step-item.completed .step-circle {
+      border-color: var(--brand);
+      background: #fff;
+      color: var(--brand);
+    }
+    .step-label {
+      margin-top: 8px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .step-item.active .step-label { color: var(--brand); }
 
-    .step.active { background:linear-gradient(180deg,var(--brand),var(--brand-dark)); color:#fff; }
+    /* --- Radio Cards (Selección Visual) --- */
+    /* Ocultamos el radio button real */
+    .radio-card-input { display: none; }
+    
+    .radio-card {
+      display: block;
+      cursor: pointer;
+      height: 100%;
+    }
+    .radio-card-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-md);
+      background: #fff;
+      transition: all 0.2s ease;
+      height: 100%;
+      text-align: center;
+    }
+    .radio-card:hover .radio-card-content {
+      border-color: #cbd5e0;
+      background: #f8fafc;
+    }
+    /* Estado seleccionado */
+    .radio-card-input:checked + .radio-card-content {
+      border-color: var(--brand);
+      background: var(--brand-light);
+      color: var(--brand);
+      box-shadow: 0 4px 12px rgba(58,124,165,0.15);
+    }
+    .radio-icon {
+      font-size: 2rem;
+      margin-bottom: 0.75rem;
+      color: #a0aec0;
+      transition: color 0.2s;
+    }
+    .radio-card-input:checked + .radio-card-content .radio-icon {
+      color: var(--brand);
+    }
+    .radio-title { font-weight: 600; font-size: 1rem; }
 
-    .step-labels { display:flex; gap:1.25rem; justify-content:center; margin-bottom:1.5rem; font-size:.9rem; color:var(--muted); }
-
-    /* calendario / botones horarios (sin cambios importantes) */
-    .calendar {
+    /* --- Calendario Mejorado --- */
+    .calendar-container {
+      background: #fff;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+    }
+    .calendar-header {
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 1rem;
+      color: var(--brand);
+      text-transform: capitalize;
+    }
+    .calendar-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
-      gap: .5rem;
+      gap: 8px;
       text-align: center;
-      margin-top: 1rem;
     }
-    .calendar .day {
-      padding: .6rem 0;
+    .day-name { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; margin-bottom: 8px;}
+    .day-number {
+      height: 38px;
+      display: flex;
+      align-items: center; justify-content: center;
       border-radius: 50%;
+      font-size: 0.95rem;
       cursor: pointer;
-      color: #333;
+      transition: all 0.2s;
     }
-    .calendar .day:hover { background-color: #e9f2f7; }
-    .calendar .day.active {
-      background-color: var(--brand);
-      color: #fff;
-      font-weight: 600;
+    .day-number:hover:not(.active) { background: #f1f5f9; color: var(--brand); }
+    .day-number.active { background: var(--brand); color: #fff; font-weight: 600; box-shadow: 0 4px 10px rgba(58,124,165,0.3); }
+    
+    .time-slots {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      gap: 10px;
+      margin-top: 1.5rem;
     }
-    .hour-btn {
-      border: 1px solid var(--brand);
-      color: var(--brand);
+    .time-btn {
+      border: 1px solid var(--border-color);
+      background: #fff;
+      color: var(--text-main);
+      padding: 0.5rem;
       border-radius: 8px;
-      background: transparent;
-      padding: .4rem 1.25rem;
-      margin: .3rem;
-      transition: all .2s ease;
+      font-size: 0.9rem;
+      transition: all 0.2s;
     }
-    .hour-btn:hover, .hour-btn.active {
-      background-color: var(--brand);
-      color: #fff;
+    .time-btn:hover { border-color: var(--brand); color: var(--brand); }
+    .time-btn.active { background: var(--brand); color: #fff; border-color: var(--brand); }
+
+    /* --- Animation --- */
+    .step-content { animation: fadeInUp 0.5s ease-out; }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
-    /* --- Estilos del resumen tipo tarjeta (similar a la imagen) --- */
-    .summary-card {
-      background: var(--card-bg);
-      border-radius: 14px;
-      box-shadow: 0 6px 22px rgba(31,50,68,0.06);
-      padding: 16px;
-      max-width: 560px;
-      margin: 0 auto;
-      border: 1px solid rgba(58,124,165,0.06);
+    /* --- Summary Card --- */
+    .summary-box {
+      background: #f8fafc;
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      border: 1px solid var(--border-color);
     }
-    .summary-list { list-style: none; padding: 0; margin: 0; }
-    .summary-item {
-      display:flex;
-      justify-content:space-between;
-      gap:.75rem;
-      align-items:flex-start;
-      padding: 14px 6px;
-      border-bottom: 1px solid rgba(20,40,60,0.04);
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #edf2f7;
     }
-    .summary-item:last-child { border-bottom: none; }
-    .summary-left { display:flex; gap:.75rem; align-items:flex-start; min-width:0; }
-    .summary-icon {
-      width:28px; height:28px; border-radius:50%;
-      display:flex; align-items:center; justify-content:center;
-      background: linear-gradient(180deg, rgba(58,124,165,0.12), rgba(47,100,133,0.08));
-      color: var(--brand);
-      flex:0 0 36px;
-      font-size: 16px;
-      margin-top:2px;
-    }
-    .summary-text { min-width:0; }
-    .summary-title { font-weight:600; color:#24323b; font-size:.98rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .summary-sub { display:block; color:var(--muted); font-size:.85rem; margin-top:4px; white-space:normal; }
-    .modify-link {
-      color: var(--brand);
-      text-decoration:none;
-      font-weight:700;
-      font-size:.95rem;
-      margin-left: 8px;
-      white-space:nowrap;
-    }
-    .modify-link:hover { text-decoration: underline; color: var(--brand-dark); }
-
-    @media (min-width:992px){ .form-wrapper{max-width:920px; margin:0 auto;} }
-
-    /* responsive: reduce gap y conector en pantallas pequeñas */
-    @media (max-width: 576px) {
-      :root { --step-gap: 1.25rem; --step-size: 36px; --connector-height: 5px; }
-      .step-labels > div { font-size: .8rem; width: var(--step-size); }
-    }
+    .summary-row:last-child { border-bottom: none; }
+    .summary-label { display: flex; align-items: center; gap: 10px; font-weight: 500; color: #64748b; }
+    .summary-label i { color: var(--brand); font-size: 1.1rem; }
+    .summary-value { font-weight: 600; color: #2d3748; text-align: right; }
+    .btn-edit { font-size: 0.8rem; color: var(--brand); text-decoration: none; margin-left: 10px; font-weight: 600;}
+    
   </style>
 </head>
 
 <body>
-  <nav class="navbar navbar-expand-lg navbar-dark fixed-top shadow-sm" style="background: linear-gradient(90deg,var(--brand),var(--brand-dark));">
+  <nav class="navbar navbar-expand-lg fixed-top shadow-sm" style="background: #3A7CA5; height: 70px;">
     <div class="container">
-      <a class="navbar-brand fw-bold d-flex align-items-center" href="{{ route('welcome') }}">
-        <i class="bi bi-heart-pulse-fill me-2"></i> Laika
+      <a class="navbar-brand fw-bold d-flex align-items-center text-dark" href="{{ route('welcome') }}">
+        <i class="bi bi-heart-pulse-fill text-white me-2" style="font-size: 1.5rem;"></i> 
+        <span style="letter-spacing: -0.5px;" class="text-white">Laika</span>
       </a>
     </div>
   </nav>
 
   <main class="container form-wrapper">
-    <div class="card shadow-sm p-4 mb-4">
-      <div class="d-flex justify-content-between align-items-center">
+    <div class="d-flex align-items-center mb-4">
+        <a href="{{ route('welcome') }}" class="btn btn-light rounded-circle me-3 shadow-sm" style="width:40px; height:40px; display:flex; align-items:center; justify-content:center;">
+            <i class="bi bi-arrow-left"></i>
+        </a>
         <div>
-          <h2 class="mb-1">Agendar cita</h2>
-          <small class="text-muted">Sigue los pasos para programar la cita de tu mascota</small>
+            <h3 class="fw-bold mb-0">Agendar nueva cita</h3>
+            <p class="text-muted small mb-0">Completa los pasos para reservar</p>
         </div>
-        <a href="{{ route('welcome') }}" class="btn btn-link small text-decoration-none"><i class="bi bi-arrow-left"></i> Volver</a>
-      </div>
+    </div>
 
-      {{-- Recordatorio de citas movido al dashboard (sección citas) --}}
-
-      <!-- Stepper -->
-      <div class="mt-4">
-        <div class="stepper" id="stepper">
-          <div class="step active" data-step="1">1</div>
-          <div class="step" data-step="2">2</div>
-          <div class="step" data-step="3">3</div>
-          <div class="step" data-step="4">4</div>
-          <div class="step" data-step="5">5</div>
-        </div>
-        <div class="step-labels">
-          <div>Clínica</div>
-          <div>Servicio</div>
-          <div>Mascota</div>
-          <div>Fecha y profesional</div>
-          <div>Resumen</div>
+    <div class="card card-main p-4 p-md-5">
+      
+      <div class="stepper-container">
+        <div class="stepper">
+            <div class="progress-line" id="progressLine" style="width: 0%;"></div>
+            
+            <div class="step-item active" data-step="1">
+                <div class="step-circle">1</div>
+                <div class="step-label d-none d-sm-block">Clínica</div>
+            </div>
+            <div class="step-item" data-step="2">
+                <div class="step-circle">2</div>
+                <div class="step-label d-none d-sm-block">Servicio</div>
+            </div>
+            <div class="step-item" data-step="3">
+                <div class="step-circle">3</div>
+                <div class="step-label d-none d-sm-block">Mascota</div>
+            </div>
+            <div class="step-item" data-step="4">
+                <div class="step-circle">4</div>
+                <div class="step-label d-none d-sm-block">Fecha</div>
+            </div>
+            <div class="step-item" data-step="5">
+                <div class="step-circle">5</div>
+                <div class="step-label d-none d-sm-block">Fin</div>
+            </div>
         </div>
       </div>
 
       <form id="appointmentForm" method="POST">
         @csrf
 
-        <!-- STEP 1: Clínica -->
         <div class="step-content" data-step="1">
+          <h5 class="fw-bold mb-4">¿En qué clínica te gustaría ser atendido?</h5>
           <div class="row g-3">
             <div class="col-12">
-              <label for="clinic" class="form-label">Selecciona la clínica <span class="required">*</span></label>
-              <select id="clinic" name="clinic" class="form-select" required>
-                <option value="">Selecciona una clínica</option>
-                <option value="Vetalia - Condesa">Vetalia - Condesa</option>
-                <option value="Clínica Laika Norte">Clínica Laika Norte</option>
-                <option value="Clínica Laika Sur">Clínica Laika Sur</option>
-              </select>
+                <div class="form-floating">
+                    <select id="clinic" name="clinic" class="form-select" required style="height: 65px;">
+                        <option value="">Seleccionar ubicación...</option>
+                    </select>
+                    <label for="clinic">Ubicación</label>
+                </div>
+                <div class="mt-3 p-3 bg-light rounded border" id="clinicInfo" style="display:none;">
+                    <small class="text-muted d-block fw-bold">Dirección:</small>
+                    <span id="clinicAddressDisplay" class="small"></span>
+                </div>
             </div>
           </div>
         </div>
 
-        <!-- STEP 2: Servicio -->
         <div class="step-content d-none" data-step="2">
-          <div class="col-12 mb-3">
-            <label for="service" class="form-label">Servicio requerido <span class="required">*</span></label>
-            <select id="service" name="service" class="form-select" required>
-              <option value="">Selecciona un servicio</option>
-              <option value="Corte de pelo y baño">Corte de pelo y baño</option>
-              <option value="Baño">Baño</option>
-              <option value="Visita médica">Visita médica</option>
-            </select>
-          </div>
+            <h5 class="fw-bold mb-4">¿Qué servicio necesita tu mascota?</h5>
+            
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <label class="radio-card">
+                        <input type="radio" name="service" value="Corte de pelo y baño" class="radio-card-input" required>
+                        <div class="radio-card-content">
+                            <i class="bi bi-scissors radio-icon"></i>
+                            <div class="radio-title">Estética</div>
+                            <small class="text-muted">Corte y baño</small>
+                        </div>
+                    </label>
+                </div>
+                <div class="col-md-4">
+                    <label class="radio-card">
+                        <input type="radio" name="service" value="Baño" class="radio-card-input">
+                        <div class="radio-card-content">
+                            <i class="bi bi-droplet-half radio-icon"></i>
+                            <div class="radio-title">Sólo Baño</div>
+                            <small class="text-muted">Limpieza profunda</small>
+                        </div>
+                    </label>
+                </div>
+                <div class="col-md-4">
+                    <label class="radio-card">
+                        <input type="radio" name="service" value="Visita médica" class="radio-card-input">
+                        <div class="radio-card-content">
+                            <i class="bi bi-heart-pulse radio-icon"></i>
+                            <div class="radio-title">Consulta</div>
+                            <small class="text-muted">Revisión médica</small>
+                        </div>
+                    </label>
+                </div>
+            </div>
 
-          <div id="medical-options" class="d-none">
-            <label for="medical_reason" class="form-label">Motivo de la cita médica</label>
-            <select id="medical_reason" name="medical_reason" class="form-select">
-              <option value="">Selecciona una opción</option>
-              <option value="Consulta general">Consulta general</option>
-              <option value="Vacunación">Vacunación</option>
-            </select>
-          </div>
+            <div id="medical-options" class="d-none mt-3">
+                <label for="medical_reason" class="form-label">Tipo de consulta</label>
+                <select id="medical_reason" name="medical_reason" class="form-select">
+                    <option value="">Selecciona...</option>
+                    <option value="Consulta general">Consulta general</option>
+                    <option value="Vacunación">Vacunación</option>
+                    <option value="Desparasitación">Desparasitación</option>
+                </select>
+            </div>
         </div>
 
-        <!-- STEP 3: Mascota -->
         <div class="step-content d-none" data-step="3">
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label for="pet_name" class="form-label">Nombre de la mascota <span class="required">*</span></label>
-              <input type="text" id="pet_name" name="pet_name" class="form-control" required>
+            <h5 class="fw-bold mb-4">Datos del paciente</h5>
+            
+            <label class="form-label">Especie <span class="required">*</span></label>
+            <div class="row g-3 mb-4">
+                <div class="col-6 col-md-3">
+                    <label class="radio-card">
+                        <input type="radio" name="species" value="Perro" class="radio-card-input" required>
+                        <div class="radio-card-content p-3">
+                            <i class="bi bi-emoji-smile radio-icon mb-1"></i> <div class="radio-title fs-6">Perro</div>
+                        </div>
+                    </label>
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="radio-card">
+                        <input type="radio" name="species" value="Gato" class="radio-card-input">
+                        <div class="radio-card-content p-3">
+                            <i class="bi bi-emoji-heart-eyes radio-icon mb-1"></i>
+                            <div class="radio-title fs-6">Gato</div>
+                        </div>
+                    </label>
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="radio-card">
+                        <input type="radio" name="species" value="Otro" class="radio-card-input">
+                        <div class="radio-card-content p-3">
+                            <i class="bi bi-question-circle radio-icon mb-1"></i>
+                            <div class="radio-title fs-6">Otro</div>
+                        </div>
+                    </label>
+                </div>
             </div>
-            <div class="col-md-6">
-              <label for="species" class="form-label">Especie <span class="required">*</span></label>
-              <select id="species" name="species" class="form-select" required>
-                <option value="">Selecciona una especie</option>
-                <option value="Perro">Perro</option>
-                <option value="Gato">Gato</option>
-                <option value="Otro">Otro</option>
-              </select>
+
+            <div class="row g-3">
+                <div class="col-md-12">
+                    <label for="pet_name" class="form-label">Nombre de la mascota <span class="required">*</span></label>
+                    <input type="text" id="pet_name" name="pet_name" class="form-control form-control-lg" placeholder="Ej. Firulais" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="breed" class="form-label">Raza</label>
+                    <input type="text" id="breed" name="breed" class="form-control" placeholder="Opcional">
+                </div>
+                <div class="col-md-6">
+                    <label for="age" class="form-label">Edad (Años/Meses)</label>
+                    <input type="text" id="age" name="age" class="form-control" placeholder="Ej. 2 años">
+                </div>
             </div>
-            <div class="col-md-6">
-              <label for="breed" class="form-label">Raza</label>
-              <input type="text" id="breed" name="breed" class="form-control">
-            </div>
-            <div class="col-md-6">
-              <label for="age" class="form-label">Edad aproximada</label>
-              <input type="text" id="age" name="age" class="form-control">
-            </div>
-          </div>
         </div>
 
-        <!-- STEP 4: Fecha y profesional -->
         <div class="step-content d-none" data-step="4">
-          <label class="form-label">Selecciona un profesional</label>
-          <select id="professional" name="professional" class="form-select mb-3" required>
-            <option value="">Cualquier profesional</option>
-            <option value="Dra. Gómez">Dra. Gómez</option>
-            <option value="Dr. Martínez">Dr. Martínez</option>
-            <option value="Dra. Hernández">Dra. Hernández</option>
-          </select>
+            <h5 class="fw-bold mb-4">Elige fecha y hora</h5>
+            
+            <div class="row">
+                <div class="col-lg-6 mb-4">
+                    <label class="form-label">Especialista preferido</label>
+                    <select id="professional" name="professional" class="form-select mb-3">
+                        <option value="">Cualquier profesional disponible</option>
+                        <option value="Dra. Gómez">Dra. Gómez</option>
+                        <option value="Dr. Martínez">Dr. Martínez</option>
+                        <option value="Dra. Hernández">Dra. Hernández</option>
+                    </select>
 
-          <div class="text-center mb-2 fw-semibold">Noviembre</div>
-          <div class="calendar" id="calendar"></div>
-
-          <div id="timeSlots" class="text-center mt-3"></div>
-        </div>
-
-        <!-- STEP 5: Resumen (nuevo estilo tipo tarjeta) -->
-        <div class="step-content d-none" data-step="5">
-          <h5 class="mb-3">Revisar datos y confirmar cita</h5>
-
-          <div class="summary-card">
-            <ul class="summary-list">
-              <li class="summary-item">
-                <div class="summary-left">
-                  <div class="summary-icon"><i class="bi bi-geo-alt-fill"></i></div>
-                  <div class="summary-text">
-                    <div class="summary-title" id="sum_clinic">—</div>
-                    <div class="summary-sub" id="sum_clinic_address">—</div>
-                  </div>
+                    <div class="calendar-container">
+                        <div class="calendar-header" id="calendarHeader">Mes Año</div>
+                        <div class="calendar-grid" id="calendar">
+                            </div>
+                    </div>
                 </div>
-                <div><a href="#" class="modify-link" data-step="1">Modificar</a></div>
-              </li>
 
-              <li class="summary-item">
-                <div class="summary-left">
-                  <div class="summary-icon"><i class="bi bi-heart-fill"></i></div>
-                  <div class="summary-text">
-                    <div class="summary-title" id="sum_service">—</div>
-                    <div class="summary-sub" id="sum_service_sub"></div>
-                  </div>
+                <div class="col-lg-6">
+                    <div class="alert alert-light border text-center" id="dateFeedback">
+                        <i class="bi bi-calendar-check me-2 text-brand"></i> Selecciona un día para ver horarios
+                    </div>
+                    
+                    <div id="timeContainer" class="d-none animate-fade">
+                        <p class="small text-muted text-center fw-bold">Horarios disponibles</p>
+                        <div class="time-slots" id="timeSlots"></div>
+                    </div>
                 </div>
-                <div><a href="#" class="modify-link" data-step="2">Modificar</a></div>
-              </li>
-
-              <li class="summary-item">
-                <div class="summary-left">
-                  <div class="summary-icon"><i class="bi bi-person-fill"></i></div>
-                  <div class="summary-text">
-                    <div class="summary-title" id="sum_owner">—</div>
-                  </div>
-                </div>
-                <div><a href="#" class="modify-link" data-step="3">Modificar</a></div>
-              </li>
-
-              <li class="summary-item">
-                <div class="summary-left">
-                  <div class="summary-icon"><i class="bi bi-paw-fill"></i></div>
-                  <div class="summary-text">
-                    <div class="summary-title" id="sum_pet">—</div>
-                    <div class="summary-sub" id="sum_pet_sub">—</div>
-                  </div>
-                </div>
-                <div><a href="#" class="modify-link" data-step="3">Modificar</a></div>
-              </li>
-
-              <li class="summary-item">
-                <div class="summary-left">
-                  <div class="summary-icon"><i class="bi bi-person-badge-fill"></i></div>
-                  <div class="summary-text">
-                    <div class="summary-title" id="sum_professional">Cualquier profesional</div>
-                  </div>
-                </div>
-                <div><a href="#" class="modify-link" data-step="4">Modificar</a></div>
-              </li>
-
-              <li class="summary-item">
-                <div class="summary-left">
-                  <div class="summary-icon"><i class="bi bi-calendar-fill"></i></div>
-                  <div class="summary-text">
-                    <div class="summary-title" id="sum_date">—</div>
-                    <div class="summary-sub" id="sum_time">—</div>
-                  </div>
-                </div>
-                <div><a href="#" class="modify-link" data-step="4">Modificar</a></div>
-              </li>
-            </ul>
-          </div>
-
-          <div class="d-flex justify-content-between mt-4">
-            <button type="button" id="prevBtn" class="btn btn-outline-secondary">
-              <i class="bi bi-chevron-left"></i> Anterior
-            </button>
-            <div>
-              <button type="submit" id="submitBtn" class="btn btn-primary">Confirmar cita</button>
             </div>
-          </div>
         </div>
 
-        <!-- Botones generales (para pasos 1-4, se ocultan en step 5) -->
-        <div class="d-flex justify-content-between mt-4" id="navButtons">
-          <button type="button" id="prevBtnGeneral" class="btn btn-outline-secondary" style="visibility:hidden;">
-            <i class="bi bi-chevron-left"></i> Anterior
+        <div class="step-content d-none" data-step="5">
+            <div class="text-center mb-4">
+                <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                    <i class="bi bi-check-lg text-success fs-2"></i>
+                </div>
+                <h4 class="fw-bold">Confirma tu cita</h4>
+                <p class="text-muted">Verifica que los datos sean correctos antes de finalizar.</p>
+            </div>
+
+            <div class="summary-box">
+                <div class="summary-row">
+                    <div class="summary-label"><i class="bi bi-geo-alt"></i> Clínica</div>
+                    <div class="text-end">
+                        <div class="summary-value" id="sum_clinic"></div>
+                        <small class="d-block text-muted" id="sum_clinic_address" style="font-size:0.75rem; max-width:200px; margin-left:auto;"></small>
+                        <a href="#" class="btn-edit" data-step="1">Cambiar</a>
+                    </div>
+                </div>
+
+                <div class="summary-row">
+                    <div class="summary-label"><i class="bi bi-stars"></i> Servicio</div>
+                    <div class="text-end">
+                        <div class="summary-value" id="sum_service"></div>
+                        <small class="d-block text-muted" id="sum_service_sub"></small>
+                        <a href="#" class="btn-edit" data-step="2">Cambiar</a>
+                    </div>
+                </div>
+
+                <div class="summary-row">
+                    <div class="summary-label"><i class="bi bi-paw"></i> Mascota</div>
+                    <div class="text-end">
+                        <div class="summary-value" id="sum_pet"></div>
+                        <small class="d-block text-muted" id="sum_pet_sub"></small>
+                        <a href="#" class="btn-edit" data-step="3">Cambiar</a>
+                    </div>
+                </div>
+
+                <div class="summary-row">
+                    <div class="summary-label"><i class="bi bi-calendar-event"></i> Fecha</div>
+                    <div class="text-end">
+                        <div class="summary-value" id="sum_date"></div>
+                        <div class="summary-value text-primary" id="sum_time"></div>
+                        <a href="#" class="btn-edit" data-step="4">Cambiar</a>
+                    </div>
+                </div>
+
+                <div class="summary-row">
+                    <div class="summary-label"><i class="bi bi-person-badge"></i> Profesional</div>
+                    <div class="text-end">
+                        <div class="summary-value" id="sum_professional"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 pt-2 d-flex gap-3">
+                <button type="button" id="prevBtnFinal" class="btn btn-outline-secondary flex-grow-1 py-2">Volver</button>
+                <button type="submit" id="submitBtn" class="btn btn-primary flex-grow-1 py-2 fw-bold">Confirmar Reserva</button>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between mt-5" id="navButtons">
+          <button type="button" id="prevBtn" class="btn btn-outline-secondary px-4 rounded-pill" style="visibility:hidden;">
+            <i class="bi bi-arrow-left me-1"></i> Atrás
           </button>
-          <div>
-            <button type="button" id="nextBtn" class="btn btn-primary">Siguiente <i class="bi bi-chevron-right"></i></button>
-          </div>
+          <button type="button" id="nextBtn" class="btn btn-primary px-4 rounded-pill">
+            Siguiente <i class="bi bi-arrow-right ms-1"></i>
+          </button>
         </div>
 
       </form>
     </div>
   </main>
 
-  <!-- JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    (function(){
-      const steps = document.querySelectorAll('.step');
+    document.addEventListener('DOMContentLoaded', function(){
+      const steps = document.querySelectorAll('.step-item');
       const contents = document.querySelectorAll('.step-content');
-      const prevBtn = document.getElementById('prevBtnGeneral');
+      const progressLine = document.getElementById('progressLine');
+      
+      const prevBtn = document.getElementById('prevBtn');
       const nextBtn = document.getElementById('nextBtn');
-      const submitBtn = document.getElementById('submitBtn');
-      let current = 1;
+      const prevBtnFinal = document.getElementById('prevBtnFinal'); // boton volver en el ultimo paso
+      
 
-      const calendarEl = document.getElementById('calendar');
-      const timeSlotsEl = document.getElementById('timeSlots');
+      //lista de clinicas
+      const clinic = document.getElementById('clinic');
+      
 
-      // elementos resumen
-      const sum_clinic = document.getElementById('sum_clinic');
-      const sum_clinic_address = document.getElementById('sum_clinic_address');
-      const sum_service = document.getElementById('sum_service');
-      const sum_service_sub = document.getElementById('sum_service_sub');
-      const sum_owner = document.getElementById('sum_owner');
-      const sum_pet = document.getElementById('sum_pet');
-      const sum_pet_sub = document.getElementById('sum_pet_sub');
-      const sum_professional = document.getElementById('sum_professional');
-      const sum_date = document.getElementById('sum_date');
-      const sum_time = document.getElementById('sum_time');
+      let currentStep = 1;
+      const totalSteps = 5;
 
-      // inputs
-      const clinicEl = document.getElementById('clinic');
-      const serviceEl = document.getElementById('service');
-      const petNameEl = document.getElementById('pet_name');
-      const speciesEl = document.getElementById('species');
-      const breedEl = document.getElementById('breed');
-      const professionalEl = document.getElementById('professional');
+      //get all clinics
 
-      let selectedDate = null, selectedTime = null;
+        fetch('/clinicas-open')
+        .then(response => response.json())
+        .then(data => {
+            data.forEach(clinica => {
+                const option = document.createElement('option');
+                option.value = clinica.nombre;
+                option.textContent = clinica.nombre;
+                clinic.appendChild(option);
+            });
+            if(data.length === 0){
+                const option = document.createElement('option');
+                option.value = "";
+                option.classList.add("text-dark")
+                option.textContent = "No hay clínicas disponibles";
+                clinic.appendChild(option);
+            }
+        })
 
-      // direcciones demo para cada clínica (ajústalas a tu BD real)
+        .catch(error => {
+          console.error('Error fetching clinics:', error);
+          const option = document.createElement('option');
+          option.value = "";
+          option.classList.add("text-dark")
+          option.textContent = "Error al cargar clínicas";
+          clinic.appendChild(option);
+        });
+        
+        //get servicios de la clinica con su id
+
+            
+
+      // Inputs clave
+      const clinicSelect = document.getElementById('clinic');
+      const clinicInfo = document.getElementById('clinicInfo');
+      const clinicAddressDisplay = document.getElementById('clinicAddressDisplay');
+      
+      const serviceRadios = document.getElementsByName('service');
+      const medicalOptions = document.getElementById('medical-options');
+      
+      // Data Mock
       const clinicAddresses = {
-        "Vetalia - Condesa": "Av Nuevo León 155, Hipódromo, Cuauhtémoc, 06100 Ciudad de México, CDMX, México",
-        "Clínica Laika Norte": "Av Norte 200, Col. Norte, CP 12345",
-        "Clínica Laika Sur": "Av Sur 50, Col. Sur, CP 54321"
+        "Vetalia - Condesa": "Av Nuevo León 155, Hipódromo, CDMX",
+        "Clínica Laika Norte": "Av Norte 200, Col. Norte",
+        "Clínica Laika Sur": "Av Sur 50, Col. Sur"
       };
 
-      // Generar calendario actual (mes completo)
+      // --- LOGICA UI ---
+      
+      // Mostrar info dirección al cambiar clinica
+      clinicSelect.addEventListener('change', function(){
+          const val = this.value;
+          if(val && clinicAddresses[val]){
+              clinicInfo.style.display = 'block';
+              clinicAddressDisplay.textContent = clinicAddresses[val];
+          } else {
+              clinicInfo.style.display = 'none';
+          }
+      });
+
+      // Mostrar sub-opciones medicas
+      Array.from(serviceRadios).forEach(radio => {
+          radio.addEventListener('change', function(){
+              if(this.value === 'Visita médica'){
+                  medicalOptions.classList.remove('d-none');
+              } else {
+                  medicalOptions.classList.add('d-none');
+              }
+          });
+      });
+
+      // --- NAVEGACION ---
+      function updateStepperUI(step) {
+          // Barra de progreso (simple cálculo: paso actual / total-1 * 100)
+          const percentage = ((step - 1) / (totalSteps - 1)) * 100;
+          progressLine.style.width = percentage + "%";
+
+          steps.forEach(s => {
+              const sIndex = parseInt(s.dataset.step);
+              s.classList.remove('active', 'completed');
+              if(sIndex < step) s.classList.add('completed');
+              if(sIndex === step) s.classList.add('active');
+          });
+
+          contents.forEach(c => {
+              const cIndex = parseInt(c.dataset.step);
+              if(cIndex === step) {
+                  c.classList.remove('d-none');
+              } else {
+                  c.classList.add('d-none');
+              }
+          });
+
+          // Control botones
+          if(step === 1) prevBtn.style.visibility = 'hidden';
+          else prevBtn.style.visibility = 'visible';
+
+          // Ocultar botones generales en el paso final (resumen)
+          if(step === totalSteps) {
+              document.getElementById('navButtons').style.display = 'none';
+              populateSummary();
+          } else {
+              document.getElementById('navButtons').style.display = 'flex';
+          }
+      }
+
+      nextBtn.addEventListener('click', () => {
+          if(!validateStep(currentStep)) return; // Pequeña validación básica
+          if(currentStep < totalSteps) {
+              currentStep++;
+              updateStepperUI(currentStep);
+          }
+      });
+
+      prevBtn.addEventListener('click', () => {
+          if(currentStep > 1) {
+              currentStep--;
+              updateStepperUI(currentStep);
+          }
+      });
+      
+      if(prevBtnFinal) {
+          prevBtnFinal.addEventListener('click', () => {
+              currentStep--;
+              updateStepperUI(currentStep);
+          });
+      }
+
+      // Links de "Modificar" en el resumen
+      document.querySelectorAll('.btn-edit').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+              e.preventDefault();
+              const target = parseInt(btn.dataset.step);
+              currentStep = target;
+              updateStepperUI(currentStep);
+          });
+      });
+
+      function validateStep(step) {
+          // Validación simple para el ejemplo
+          if(step === 1 && !clinicSelect.value) {
+              alert("Por favor selecciona una clínica");
+              return false;
+          }
+          if(step === 2) {
+              let selected = false;
+              serviceRadios.forEach(r => { if(r.checked) selected = true; });
+              if(!selected) {
+                  alert("Selecciona un servicio");
+                  return false;
+              }
+          }
+          if(step === 3 && !document.getElementById('pet_name').value) {
+              alert("Ingresa el nombre de la mascota");
+              return false;
+          }
+          // Puedes agregar más validaciones
+          return true;
+      }
+
+      // --- CALENDARIO LOGIC (Simplificada) ---
+      const calendarEl = document.getElementById('calendar');
+      const headerEl = document.getElementById('calendarHeader');
+      const timeSlotsEl = document.getElementById('timeSlots');
+      const dateFeedback = document.getElementById('dateFeedback');
+      
       const now = new Date();
-      const year = now.getFullYear();
-      const month = now.getMonth();
-      const firstDay = new Date(year, month, 1).getDay();
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-      const dayNames = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
-
-      // Mostrar nombres de días
-      dayNames.forEach(d => {
-        const label = document.createElement('div');
-        label.innerHTML = `<strong>${d}</strong>`;
-        label.classList.add('small', 'text-muted');
-        calendarEl.appendChild(label);
+      const monthNames = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+      const dayLetters = ["L","M","M","J","V","S","D"];
+      
+      headerEl.textContent = `${monthNames[now.getMonth()]} ${now.getFullYear()}`;
+      
+      // Dibujar letras
+      dayLetters.forEach(l => {
+          const div = document.createElement('div');
+          div.className = 'day-name';
+          div.textContent = l;
+          calendarEl.appendChild(div);
       });
+      
+      // Dibujar dias (Dummy logic - asumiendo inicio en dia X)
+      // Ajustar esto según el mes real
+      for(let i=0; i<3; i++) calendarEl.appendChild(document.createElement('div')); // padding vacio
+      
+      let selectedDayEl = null;
+      let selectedDateText = "";
+      let selectedTimeText = "";
 
-      // ajustar primer día (asumiendo Lunes como primer columna)
-      const offset = (firstDay === 0) ? 6 : firstDay - 1;
-      for (let i = 0; i < offset; i++) {
-        const empty = document.createElement('div');
-        calendarEl.appendChild(empty);
-      }
-
-      for (let d = 1; d <= daysInMonth; d++) {
-        const day = document.createElement('div');
-        day.classList.add('day');
-        day.textContent = d;
-        day.onclick = (e) => selectDate(d, e);
-        calendarEl.appendChild(day);
-      }
-
-      function selectDate(day, e) {
-        selectedDate = new Date(year, month, day);
-        document.querySelectorAll('.calendar .day').forEach(d=>d.classList.remove('active'));
-        e.currentTarget.classList.add('active');
-        showTimeSlots();
-      }
-
-      function showTimeSlots() {
-        const hours = ["09:00","09:30","10:00","10:30","11:00","11:30","12:00","12:30","13:00","13:30","15:00","15:30","16:00","16:30","17:00","17:30"];
-        timeSlotsEl.innerHTML = hours.map(h=>`<button type="button" class="hour-btn">${h}</button>`).join('');
-        document.querySelectorAll('.hour-btn').forEach(btn=>{
-          btn.onclick=()=>{
-            document.querySelectorAll('.hour-btn').forEach(b=>b.classList.remove('active'));
-            btn.classList.add('active');
-            selectedTime = btn.textContent;
-            // pasar automáticamente al resumen
-            goToStep(5);
-            populateSummary();
+      for(let d=1; d<=30; d++){
+          const day = document.createElement('div');
+          day.className = 'day-number';
+          day.textContent = d;
+          day.onclick = () => {
+              if(selectedDayEl) selectedDayEl.classList.remove('active');
+              day.classList.add('active');
+              selectedDayEl = day;
+              
+              // Mostrar horarios
+              selectedDateText = `${d} de ${monthNames[now.getMonth()]}`;
+              dateFeedback.innerHTML = `<i class="bi bi-calendar-check-fill text-success"></i> ${selectedDateText}`;
+              dateFeedback.classList.remove('alert-light');
+              dateFeedback.classList.add('alert-success');
+              
+              document.getElementById('timeContainer').classList.remove('d-none');
+              generateTimes();
           };
-        });
+          calendarEl.appendChild(day);
       }
 
-      function populateSummary(){
-        // Clínica y dirección
-        const clinic = clinicEl.value || '—';
-        sum_clinic.textContent = clinic;
-        sum_clinic_address.textContent = clinicAddresses[clinic] || '';
-
-        // Servicio
-        const service = serviceEl.value || '—';
-        sum_service.textContent = service;
-        // si hay motivo médico
-        const medReason = document.getElementById('medical_reason')?.value || '';
-        sum_service_sub.textContent = medReason ? medReason : '';
-
-        // Dueño/solicitante
-        sum_owner.textContent = "{{ Auth::user()->name ?? 'Jose Angel' }}";
-
-        // Mascota (nombre + especie, raza)
-        const petName = petNameEl.value || '—';
-        const species = speciesEl.value ? `, ${speciesEl.value}` : '';
-        sum_pet.textContent = petName + (species ? species : '');
-        sum_pet_sub.textContent = breedEl.value ? breedEl.value : '';
-
-        // Profesional
-        const prof = professionalEl.value || 'Cualquier profesional';
-        sum_professional.textContent = prof;
-
-        // Fecha y hora
-        if (selectedDate) {
-          const opts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-          sum_date.textContent = selectedDate.toLocaleDateString('es-ES', opts);
-        } else {
-          sum_date.textContent = '—';
-        }
-        sum_time.textContent = selectedTime || '—';
+      function generateTimes() {
+          const times = ["09:00", "09:30", "10:00", "11:30", "15:00", "16:30"];
+          timeSlotsEl.innerHTML = "";
+          times.forEach(t => {
+              const btn = document.createElement('button');
+              btn.type = "button";
+              btn.className = "time-btn";
+              btn.textContent = t;
+              btn.onclick = () => {
+                  document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+                  btn.classList.add('active');
+                  selectedTimeText = t;
+                  // Auto avance opcional
+                  // currentStep++; updateStepperUI(currentStep);
+              };
+              timeSlotsEl.appendChild(btn);
+          });
       }
 
-      function showStep(step){
-        current = step;
-        steps.forEach(s=>{
-          const isActive = Number(s.dataset.step)===step;
-          s.classList.toggle('active', isActive);
-          const stepIndex = Number(s.dataset.step);
-          s.classList.toggle('completed', stepIndex < step);
-        });
-        contents.forEach(c=>c.classList.toggle('d-none',Number(c.dataset.step)!==step));
+      // --- RESUMEN ---
+      function populateSummary() {
+          // Clinica
+          document.getElementById('sum_clinic').textContent = clinicSelect.value || 'No seleccionada';
+          document.getElementById('sum_clinic_address').textContent = clinicAddresses[clinicSelect.value] || '';
+          
+          // Servicio (Radio)
+          let srv = "";
+          serviceRadios.forEach(r => { if(r.checked) srv = r.value; });
+          document.getElementById('sum_service').textContent = srv || 'No seleccionado';
+          
+          const medReason = document.getElementById('medical_reason').value;
+          document.getElementById('sum_service_sub').textContent = (srv === 'Visita médica') ? medReason : '';
 
-        document.getElementById('navButtons').style.display = (step===5)?'none':'flex';
-        prevBtn.style.visibility = step===1?'hidden':'visible';
+          // Mascota
+          const pName = document.getElementById('pet_name').value;
+          // Especie
+          let species = "";
+          document.getElementsByName('species').forEach(r => { if(r.checked) species = r.value; });
+          
+          document.getElementById('sum_pet').textContent = pName;
+          document.getElementById('sum_pet_sub').textContent = `${species} - ${document.getElementById('breed').value || ''}`;
+
+          // Fecha
+          document.getElementById('sum_date').textContent = selectedDateText || 'Pendiente';
+          document.getElementById('sum_time').textContent = selectedTimeText || '';
+          
+          // Profesional
+          const prof = document.getElementById('professional').value;
+          document.getElementById('sum_professional').textContent = prof || 'Cualquiera disponible';
       }
 
-      function goToStep(step){
-        if (step === 5) populateSummary();
-        showStep(step);
-      }
-
-      nextBtn.onclick = () => {
-        if (current < contents.length) {
-          goToStep(current + 1);
-          if (current+1 === 5) populateSummary();
-        }
-      };
-      prevBtn.onclick = () => {
-        if (current > 1) goToStep(current - 1);
-      };
-
-      document.querySelectorAll('.modify-link').forEach(link => {
-        link.addEventListener('click', (e) => {
-          e.preventDefault();
-          const step = Number(link.getAttribute('data-step')) || 1;
-          goToStep(step);
-        });
-      });
-
-      [clinicEl, serviceEl, petNameEl, speciesEl, breedEl, professionalEl].forEach(inp=>{
-        if(!inp) return;
-        inp.addEventListener('change', () => {
-          if (current === 5) populateSummary();
-        });
-      });
-
-      showStep(current);
-
-      document.getElementById('appointmentForm').addEventListener('submit', function(e){
-        // enviar normalmente
-      });
-    })();
+    });
   </script>
 </body>
 </html>

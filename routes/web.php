@@ -3,6 +3,7 @@
 // use App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Admin\ActividadController;
+use App\Http\Controllers\AgendarCitaController;
 use App\Http\Controllers\CitaController;
 use App\Http\Controllers\ConfiguracionController;
 use App\Http\Controllers\DashboardController;
@@ -210,7 +211,11 @@ Route::get('/terms', function(){
     return view('terms');
 })->name('terms');
 
+//clinicas
+Route::get('/clinicas-open', [AgendarCitaController::class, 'getClinicas'])->name('clinicas.available');
 
+//obtener servicios de una clinica con el id
+Route::post('/getServicios', [AgendarCitaController::class, 'getServices'])->name('clinicas.servicios');
 
 //eliminar cuenta
 Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
