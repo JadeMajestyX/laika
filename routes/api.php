@@ -10,6 +10,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
 use App\Models\Medicion;
+use App\Models\DeviceToken;
+use App\Services\FcmV1Client;
 use App\Models\Status;
 use NunoMaduro\Collision\Adapters\Phpunit\State;
 use Illuminate\Support\Facades\DB;
@@ -101,15 +103,68 @@ Route::post('/mediciones', function(Request $request){
         'peso_comida' => 'required|numeric|min:0|max:1000',
     ]);
 
+    $codigoModel = CodigoDispensador::where('codigo', $request->codigo)->first();
     $medicion = Medicion::create([
-        'dispensador_id' => CodigoDispensador::where('codigo', $request->codigo)->first()->id,
+        // Nota: en el esquema actual 'dispensador_id' almacena el id del codigo, siguiendo pauta previa
+        'dispensador_id' => $codigoModel->id,
         'nivel_comida' => $request->nivel_comida,
         'peso_comida' => $request->peso_comida,
     ]);
 
+    $nivel = (int)$request->nivel_comida;
+    $alertaEnviada = false;
+    $alertaTipo = null;
+
+    // Obtener dispensador real para identificar usuario dueño
+    $dispensador = Dispensador::where('codigo_dispensador_id', $codigoModel->id)->first();
+    $userId = $dispensador?->usuario_id;
+
+    if ($userId) {
+        // Ver transición para evitar spam: buscar medición previa distinta
+        $prev = Medicion::where('dispensador_id', $codigoModel->id)
+            ->where('id', '<', $medicion->id)
+            ->orderByDesc('id')
+            ->first();
+        $prevNivel = $prev?->nivel_comida;
+
+        $debeNotificarVacio = ($nivel <= 0) && ($prevNivel === null || $prevNivel > 0);
+        $debeNotificarBajo = ($nivel > 0 && $nivel < 40) && ($prevNivel === null || $prevNivel >= 40);
+
+        if ($debeNotificarVacio || $debeNotificarBajo) {
+            $tokens = DeviceToken::where('user_id', $userId)->pluck('token')->filter()->values()->all();
+            if (!empty($tokens)) {
+                try {
+                    if (config('fcm.use_v1')) {
+                        $client = new FcmV1Client();
+                        $title = $debeNotificarVacio ? 'Dispensador vacío' : 'Nivel de comida bajo';
+                        $body = $debeNotificarVacio
+                            ? 'Tu dispensador se ha quedado sin comida. Por favor rellénalo.'
+                            : 'El nivel de comida del dispensador es menor al 40%. Revisa el alimento.';
+                        $dataPayload = [
+                            'tipo' => 'dispensador_alerta',
+                            'codigo' => $request->codigo,
+                            'nivel' => (string)$nivel,
+                        ];
+                        foreach ($tokens as $tk) {
+                            $client->sendToToken($tk, $title, $body, $dataPayload);
+                        }
+                        $alertaEnviada = true;
+                        $alertaTipo = $debeNotificarVacio ? 'vacío' : 'bajo';
+                    }
+                    // (Si se requiere fallback legacy, podría añadirse aquí)
+                } catch (\Throwable $e) {
+                    // Silenciar error para no romper ingestión; se podría loggear
+                    Log::warning('Error enviando notificación de nivel comida: ' . $e->getMessage());
+                }
+            }
+        }
+    }
+
     return response()->json([
         'message' => 'Medición creada exitosamente',
-        'data' => $medicion
+        'data' => $medicion,
+        'alerta_enviada' => $alertaEnviada,
+        'alerta_tipo' => $alertaTipo,
     ]);
 });
 
