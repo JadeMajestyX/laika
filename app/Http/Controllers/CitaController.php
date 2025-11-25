@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Cita;
 use Illuminate\Support\Facades\Auth;
+use App\Services\FcmV1Client;
+use App\Support\ActivityLogger;
+use Carbon\Carbon;
 
 class CitaController extends Controller
 {
     public function index(){
-
 
         return view('agendarCita');
     }
@@ -86,5 +88,79 @@ class CitaController extends Controller
 
         $paginator = $query->paginate($perPage);
         return response()->json($paginator);
+    }
+
+    /**
+     * Envía recordatorio de cita a todos los usuarios con citas para hoy.
+     * Solo debe ser invocado por administradores (middleware ya protege la ruta).
+     */
+    public function enviarRecordatorioHoy(Request $request)
+    {
+        $hoy = Carbon::today();
+        $citasHoy = Cita::with(['mascota.user','servicio'])
+            ->whereDate('fecha', $hoy)
+            ->get();
+
+        $usuariosCitas = [];
+        foreach ($citasHoy as $cita) {
+            $userId = $cita->mascota?->user?->id;
+            if ($userId) {
+                $usuariosCitas[$userId][] = $cita; // agrupar las citas por usuario
+            }
+        }
+
+        $totalUsuarios = count($usuariosCitas);
+        $enviados = 0;
+        $fallos = 0;
+        $detalles = [];
+
+        if (config('fcm.use_v1') && $totalUsuarios > 0) {
+            $client = new FcmV1Client();
+            foreach ($usuariosCitas as $userId => $citasDelUsuario) {
+                $primera = $citasDelUsuario[0];
+                $mascotaNombre = $primera->mascota?->nombre ?? 'tu mascota';
+                $total = count($citasDelUsuario);
+                $title = 'Recordatorio de cita';
+                $body = $total > 1
+                    ? "Tienes $total citas programadas para hoy. No olvides asistir."
+                    : "Tienes una cita hoy para $mascotaNombre. ¡Te esperamos!";
+                $data = [
+                    'tipo' => 'cita_recordatorio',
+                    'fecha' => (string)$hoy->toDateString(),
+                    'total_citas' => (string)$total,
+                ];
+                try {
+                    $summary = $client->sendToUser($userId, $title, $body, $data);
+                    $enviados += $summary['success'];
+                    $fallos += $summary['fail'];
+                    $detalles[$userId] = $summary;
+                    ActivityLogger::log($request, 'Enviar recordatorio cita hoy', 'User', $userId, [
+                        'total_citas' => $total,
+                        'success' => $summary['success'],
+                        'fail' => $summary['fail'],
+                    ], Auth::id());
+                } catch (\Throwable $e) {
+                    $fallos++;
+                    $detalles[$userId] = ['error' => $e->getMessage()];
+                }
+            }
+        }
+
+        // Si se envía vía fetch JSON
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'usuarios_notificados' => $totalUsuarios,
+                'envios_exitosos' => $enviados,
+                'envios_fallidos' => $fallos,
+                'detalles' => $detalles,
+            ]);
+        }
+
+        return redirect()->back()->with('recordatorio_result', [
+            'usuarios' => $totalUsuarios,
+            'exitosos' => $enviados,
+            'fallidos' => $fallos,
+        ]);
     }
 }

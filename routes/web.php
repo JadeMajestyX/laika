@@ -81,6 +81,7 @@ Route::middleware(EnsureUserHasRole::class.':A')->group(function () {
     Route::put('/usuarios/{id}', [UserController::class, 'update'])->name('usuarios.update');
     Route::delete('/usuarios/{id}', [UserController::class, 'destroy'])->name('usuarios.destroy');
     Route::get('/citas', [App\Http\Controllers\CitaController::class, 'index'])->name('citas');
+    Route::post('/citas/recordatorio-hoy', [App\Http\Controllers\CitaController::class, 'enviarRecordatorioHoy'])->name('citas.recordatorio.hoy');
     // Endpoint JSON paginado para citas (hoy por defecto, soporte búsqueda en pasadas)
     Route::get('/citas/json', [App\Http\Controllers\CitaController::class, 'getCitasJson'])->name('citas.json');
 
