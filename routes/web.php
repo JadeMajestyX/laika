@@ -83,6 +83,8 @@ Route::middleware(EnsureUserHasRole::class.':A')->group(function () {
     Route::get('/citas', [App\Http\Controllers\CitaController::class, 'index'])->name('citas');
     // Endpoint JSON paginado para citas (hoy por defecto, soporte búsqueda en pasadas)
     Route::get('/citas/json', [App\Http\Controllers\CitaController::class, 'getCitasJson'])->name('citas.json');
+    // Enviar recordatorios de citas de hoy (admin)
+    Route::post('/citas/recordatorio-hoy', [App\Http\Controllers\CitaController::class, 'enviarRecordatorioHoy'])->name('citas.recordatorio.hoy');
 
     Route::get('/mascotas', [MascotaController::class, 'index'])->name('mascotas');
     // Primero la ruta JSON para que no la capture /mascotas/{id}
