@@ -28,7 +28,7 @@ Route::get('/', function () {
 })->name('welcome');
 
 Route::middleware(EnsureUserHasRole::class.':V')->group(function () {
-    Route::get('/vet-dashboard', [VetDashboardController::class, 'index'])->name('vet.dashboard');
+    Route::get('/dashboard/home', [VetDashboardController::class, 'index'])->name('vet.dashboard');
     
     // Endpoint para obtener datos del dashboard veterinario
     Route::get('/vet-dashboard/data/home', [VetDashboardController::class, 'getDashboardData'])->name('vet.dashboard.data');
