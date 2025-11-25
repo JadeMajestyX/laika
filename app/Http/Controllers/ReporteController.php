@@ -26,16 +26,15 @@ class ReporteController extends Controller
 
     /**
      * Endpoint JSON con estadísticas y datos agregados para reportes.
-     * Parámetros opcionales: from (Y-m-d), to (Y-m-d), trabajador_id (creada_por)
+     * Parámetros opcionales: from (Y-m-d), to (Y-m-d), rol
      */
     public function data(Request $request)
     {
         [$from, $to] = $this->resolveDateRange($request->input('from'), $request->input('to'));
-        $trabajadorId = $request->integer('trabajador_id');
         $rol = $request->input('rol'); // string opcional
 
         // Base query para citas en el rango
-        $citasBase = $this->buildCitasBaseQuery($from, $to, $trabajadorId, $rol);
+        $citasBase = $this->buildCitasBaseQuery($from, $to, $rol);
         $citasQuery = (clone $citasBase)->with(['servicio']);
 
         // Métricas básicas
@@ -64,7 +63,6 @@ class ReporteController extends Controller
             'filters' => [
                 'from' => $from->toDateString(),
                 'to' => $to->toDateString(),
-                'trabajador_id' => $trabajadorId,
                 'rol' => $rol,
             ],
             'roles' => $rolesDisponibles,
@@ -78,15 +76,14 @@ class ReporteController extends Controller
     }
 
     /**
-     * Exporta a CSV las citas del rango (opcionalmente por trabajador) con columnas básicas.
+     * Exporta a CSV las citas del rango con columnas básicas.
      */
     public function exportCitas(Request $request): StreamedResponse
     {
         [$from, $to] = $this->resolveDateRange($request->input('from'), $request->input('to'));
-        $trabajadorId = $request->integer('trabajador_id');
         $rol = $request->input('rol');
 
-        $query = (clone $this->buildCitasBaseQuery($from, $to, $trabajadorId, $rol))
+        $query = (clone $this->buildCitasBaseQuery($from, $to, $rol))
             ->with(['servicio', 'mascota'])
             ->orderBy('fecha');
 
@@ -127,10 +124,9 @@ class ReporteController extends Controller
     public function exportCitasPdf(Request $request)
     {
         [$from, $to] = $this->resolveDateRange($request->input('from'), $request->input('to'));
-        $trabajadorId = $request->integer('trabajador_id');
         $rol = $request->input('rol');
 
-        $baseQuery = $this->buildCitasBaseQuery($from, $to, $trabajadorId, $rol);
+        $baseQuery = $this->buildCitasBaseQuery($from, $to, $rol);
         $citas = (clone $baseQuery)
             ->with(['servicio', 'mascota'])
             ->orderBy('fecha')
@@ -209,10 +205,9 @@ class ReporteController extends Controller
         return [$start, $end];
     }
 
-    private function buildCitasBaseQuery(Carbon $from, Carbon $to, ?int $trabajadorId, ?string $rol)
+    private function buildCitasBaseQuery(Carbon $from, Carbon $to, ?string $rol)
     {
         return Cita::query()
-            ->when($trabajadorId, fn($q) => $q->where('creada_por', $trabajadorId))
             ->when($rol, function ($q) use ($rol) {
                 return $q->join('users as u_rol', 'citas.creada_por', '=', 'u_rol.id')
                     ->where('u_rol.rol', $rol);

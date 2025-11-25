@@ -75,12 +75,7 @@
               @endisset
             </select>
           </div>
-          <div class="col-md-2">
-            <label class="form-label">Trabajador (ID):</label>
-            <input id="filtro-trabajador" type="number" class="form-control" placeholder="Ej. 12">
-          </div>
-          
-            <div class="col-md-2 d-flex justify-content-end gap-2">
+          <div class="col-md-4 d-flex justify-content-end gap-2">
               <button id="btn-aplicar-filtro" class="btn text-white" style="background:#6f42c1;"><i class="bi bi-funnel"></i> Aplicar filtro</button>
               <div class="btn-group">
                 <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
