@@ -57,6 +57,32 @@
         .tendencia-negativa {
             color: #dc3545;
         }
+        .charts {
+            margin: 30px 0;
+        }
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        .chart-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            text-align: center;
+        }
+        .chart-card h3 {
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        .chart-img {
+            max-width: 100%;
+            height: auto;
+        }
+        .chart-empty {
+            color: #888;
+            font-style: italic;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -83,6 +109,36 @@
             <div class="metrica-item">
                 <div class="metrica-valor">{{ $data['metricas']['mascotas'] }}</div>
                 <div class="metrica-label">Mascotas Atendidas</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="charts">
+        <h2>Gráficas</h2>
+        <div class="chart-grid">
+            <div class="chart-card">
+                <h3>Mascotas atendidas</h3>
+                @if(!empty($data['charts']['mascotasAtendidas']))
+                    <img src="{{ $data['charts']['mascotasAtendidas'] }}" alt="Gráfica de mascotas atendidas" class="chart-img">
+                @else
+                    <p class="chart-empty">No hay datos suficientes para esta gráfica.</p>
+                @endif
+            </div>
+            <div class="chart-card">
+                <h3>Distribución por especie</h3>
+                @if(!empty($data['charts']['mascotasEspecie']))
+                    <img src="{{ $data['charts']['mascotasEspecie'] }}" alt="Gráfica de especies" class="chart-img">
+                @else
+                    <p class="chart-empty">No hay datos suficientes para esta gráfica.</p>
+                @endif
+            </div>
+            <div class="chart-card">
+                <h3>Estados de citas</h3>
+                @if(!empty($data['charts']['resumenEstados']))
+                    <img src="{{ $data['charts']['resumenEstados'] }}" alt="Gráfica de estados" class="chart-img">
+                @else
+                    <p class="chart-empty">No hay datos suficientes para esta gráfica.</p>
+                @endif
             </div>
         </div>
     </div>
