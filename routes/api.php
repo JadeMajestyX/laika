@@ -422,35 +422,80 @@ Route::get('/activar-calibrar', function (Request $request) {
 });
 
 
-//activar dispensador
-Route::get('/activar-dispensador', function (Request $request) {
-    $codigo = $request->query('codigo');
+// Activar dispensador con objetivo de peso (cantidad)
+// Lógica: recibe 'codigo' y 'cantidad' (peso objetivo). Consulta últimas mediciones;
+// si el peso_actual >= cantidad, pone status=0 (detener). Si aún no alcanza, pone status=1 (seguir dispensando).
+Route::match(['get','post'], '/activar-dispensador', function (Request $request) {
+    $codigo = $request->input('codigo') ?? $request->query('codigo');
+    $cantidad = $request->input('cantidad') ?? $request->query('cantidad');
+
     if (!$codigo) {
         return response()->json(['success' => false, 'message' => 'Código no proporcionado'], 400);
     }
-    // Buscar el dispensador por su código
-    $dispensador = CodigoDispensador::where('codigo', $codigo)->first();
-    if (!$dispensador) {
-        return response()->json(['success' => false, 'message' => 'Dispensador no encontrado'], 404);
-    }
-    // Buscar o crear el estado
-    $statuss = Status::firstOrCreate(
-        ['dispensador_id' => $dispensador->id],
-        ['status' => false]
-    );
-    // Guardamos el estado actual antes de modificarlo
-    $estadoActual = $statuss->status;
-    // Si el estado era false, cambiarlo a true y guardar en BD
-    if ($estadoActual === false) {
-        $statuss->status = true;
-        $statuss->save();
+
+    // Validar cantidad si llega
+    if ($cantidad !== null) {
+        if (!is_numeric($cantidad) || (float)$cantidad <= 0) {
+            return response()->json(['success' => false, 'message' => 'Cantidad inválida'], 422);
+        }
+        $cantidad = (float)$cantidad;
     }
 
-    return response()->json([
-        'success' => true,
-        'estado' => $estadoActual ? 1 : 0,
-        'message' => $estadoActual ? 'Estado cambiado a true' : 'Estado ya era true'
-    ]);
+    // Buscar el dispensador por su código
+    $codigoModel = CodigoDispensador::where('codigo', $codigo)->first();
+    if (!$codigoModel) {
+        return response()->json(['success' => false, 'message' => 'Dispensador no encontrado'], 404);
+    }
+
+    // Buscar o crear el estado de control
+    $statuss = Status::firstOrCreate(
+        ['dispensador_id' => $codigoModel->id],
+        ['status' => false, 'calibrar' => false]
+    );
+
+    // Obtener última medición registrada para este dispensador (en esquema actual: 'dispensador_id' guarda id del código)
+    $ultimaMedicion = Medicion::where('dispensador_id', $codigoModel->id)
+        ->orderByDesc('id')
+        ->first();
+
+    $pesoActual = $ultimaMedicion?->peso_comida ?? 0.0;
+
+    // Si no se proporcionó cantidad, solo activar (status=1) para iniciar dispensado
+    if ($cantidad === null) {
+        $statuss->status = true; // 1 = dispensando
+        $statuss->save();
+        return response()->json([
+            'success' => true,
+            'estado' => 1,
+            'message' => 'Dispensador activado (sin objetivo).',
+            'peso_actual' => (float)$pesoActual,
+        ]);
+    }
+
+    // Con objetivo: decidir si continuar dispensando o detener
+    if ($pesoActual >= $cantidad) {
+        // Objetivo alcanzado: detener
+        $statuss->status = false; // 0 = detener
+        $statuss->save();
+        return response()->json([
+            'success' => true,
+            'estado' => 0,
+            'message' => 'Objetivo alcanzado. Dispensador detenido.',
+            'peso_actual' => (float)$pesoActual,
+            'objetivo' => $cantidad,
+        ]);
+    } else {
+        // Aún no alcanza: activar
+        $statuss->status = true; // 1 = dispensando
+        $statuss->save();
+        return response()->json([
+            'success' => true,
+            'estado' => 1,
+            'message' => 'Dispensando hasta alcanzar el objetivo.',
+            'peso_actual' => (float)$pesoActual,
+            'objetivo' => $cantidad,
+        ]);
+    }
 });
 
 
