@@ -784,9 +784,11 @@ Route::middleware('auth:sanctum')->post('/agendar-cita', function(Request $reque
         ], 422);
     }
 
+    // Ocupada si hay cualquier cita dentro del rango de esa hora [inicio, fin)
+    $slotFin = $slotInicio->copy()->addHour();
     $ocupada = Cita::where('clinica_id', $request->clinica_id)
-        ->whereDate('fecha', $slotInicio->toDateString())
-        ->whereTime('fecha', $slotInicio->format('H:i:s'))
+        ->where('fecha', '>=', $slotInicio->toDateTimeString())
+        ->where('fecha', '<', $slotFin->toDateTimeString())
         ->exists();
 
     if ($ocupada) {
