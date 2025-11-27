@@ -27,9 +27,15 @@ class AuthenticatedSessionController extends Controller
         $request->authenticate();
 
         $request->session()->regenerate();
-        
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        // Si el rol del usuario es 'V' redireccionar directamente (sin intended) al dashboard de veterinario
+            if (Auth::user()->rol === 'V') {
+            return redirect()->route('vet.dashboard');
+        }else
+        {
+        // Para otros roles: admin (A), groomer (G), etc. usa su dashboard
+        return redirect()->route('dashboard');
+    }
     }
 
     /**

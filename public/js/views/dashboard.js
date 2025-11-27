@@ -840,6 +840,18 @@ function renderSection(section, data) {
     mainContent.innerHTML = `
       <div class="card shadow-sm mt-4">
         <div class="card-body">
+          <div id="citasRecordatorioMsg"></div>
+          <div class="d-flex flex-column flex-md-row gap-2 justify-content-between align-items-md-center mb-3">
+            <div class="flex-grow-1">
+              <h5 class="mb-1">Citas</h5>
+              <small class="text-body-secondary">Listado y gestión de citas programadas.</small>
+            </div>
+            <div class="d-flex gap-2">
+              <button id="btnRecordatorioHoyDashboard" class="btn btn-outline-primary" type="button">
+                <i class="bi bi-bell"></i> Recordatorio citas de hoy
+              </button>
+            </div>
+          </div>
           <div class="d-flex flex-column flex-md-row gap-2 justify-content-between align-items-md-center mb-3">
             <div class="input-group" style="max-width: 420px;">
               <span class="input-group-text"><i class="bi bi-search"></i></span>
@@ -885,10 +897,34 @@ function renderSection(section, data) {
     const rangeBtn = document.getElementById('citasRangeBtn');
     const searchInput = document.getElementById('citasSearch');
     const radios = document.querySelectorAll('input[name="citasScope"]');
+    const btnRecordatorio = document.getElementById('btnRecordatorioHoyDashboard');
     searchBtn?.addEventListener('click', () => fetchCitasAndRender(1));
     rangeBtn?.addEventListener('click', () => fetchCitasAndRender(1));
     searchInput?.addEventListener('keydown', (e) => { if (e.key === 'Enter') fetchCitasAndRender(1); });
     radios.forEach(r => r.addEventListener('change', () => fetchCitasAndRender(1)));
+    btnRecordatorio?.addEventListener('click', () => {
+      const msgBox = document.getElementById('citasRecordatorioMsg');
+      if (msgBox) msgBox.innerHTML = '<div class="alert alert-info mb-3">Enviando recordatorios...</div>';
+      fetch('/citas/recordatorio-hoy', {
+        method: 'POST',
+        headers: {
+          'X-CSRF-TOKEN': getCsrfToken(),
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({})
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (msgBox) {
+            msgBox.innerHTML = `<div class="alert alert-success mb-3">Recordatorio enviado a ${data.usuarios_notificados} usuarios. Éxitos: ${data.envios_exitosos}, Fallos: ${data.envios_fallidos}</div>`;
+          }
+        })
+        .catch(err => {
+          console.error('Error enviando recordatorio de citas:', err);
+          if (msgBox) msgBox.innerHTML = '<div class="alert alert-danger mb-3">Error enviando recordatorios. Intenta más tarde.</div>';
+        });
+    });
     // carga inicial
     fetchCitasAndRender();
   } else if (section === 'trabajadores') {
@@ -966,13 +1002,13 @@ function renderSection(section, data) {
       <style>
         .text-purple{ color:#6f42c1 !important; }
         .metric-card{ border:1px solid #e9ecef; border-radius: var(--radius-xl); }
-        .metric-card .icon-bubble{ width:46px; height:46px; border-radius: .75rem; display:flex; align-items:center; justify-content:center; background: rgba(111,66,193,.12); color:#6f42c1; }
+        .icon-bubble{ width:46px; height:46px; border-radius: .75rem; display:flex; align-items:center; justify-content:center; }
+        .metric-card .icon-bubble{ background: rgba(111,66,193,.12); color:#6f42c1; }
         .skeleton{ position:relative; overflow:hidden; background:#e9ecef; color:transparent !important; border-radius:.25rem; }
         .skeleton::after{ content:""; position:absolute; inset:0; transform:translateX(-100%); background:linear-gradient(90deg, transparent, rgba(255,255,255,.6), transparent); animation:shimmer 1.2s infinite; }
         @keyframes shimmer{ 100%{ transform:translateX(100%);} }
         .chart-wrap{ position:relative; height:280px; }
         .chart-wrap canvas{ width:100% !important; height:100% !important; }
-        .chart-spinner{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:transparent; }
         .table thead th{ font-weight:600; }
       </style>
       <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
@@ -1008,18 +1044,13 @@ function renderSection(section, data) {
               <option value="">Todos</option>
             </select>
           </div>
-          <div class="col-md-2">
-            <label class="form-label">Trabajador (ID):</label>
-            <input id="filtro-trabajador" type="number" class="form-control" placeholder="Ej. 12">
-          </div>
-          <div class="col-md-2 d-flex justify-content-end gap-2">
+          <div class="col-md-4 d-flex justify-content-end gap-2">
             <button id="btn-aplicar-filtro" class="btn text-white" style="background:#6f42c1;"><i class="bi bi-funnel"></i> Aplicar filtro</button>
             <div class="btn-group">
               <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
                 <i class="bi bi-download"></i> Exportar
               </button>
               <ul class="dropdown-menu dropdown-menu-end">
-                <li><a class="dropdown-item" href="#" id="btn-exportar-xlsx">Exportar XLSX</a></li>
                 <li><a class="dropdown-item" href="#" id="btn-exportar-pdf">Exportar PDF</a></li>
               </ul>
             </div>
@@ -1028,73 +1059,86 @@ function renderSection(section, data) {
       </div>
 
       <div class="row mt-4 g-3">
-        <div class="col-md-3">
+        <div class="col-md-4">
           <div class="metric-card p-3 shadow-sm text-center">
             <div class="d-flex justify-content-center"><div class="icon-bubble"><i class="bi bi-calendar-check"></i></div></div>
             <h4 id="metric-citas-realizadas" class="mt-2 mb-0">—</h4>
-            <div class="text-body-secondary">Citas realizadas</div>
+            <div class="text-body-secondary">Citas atendidas</div>
           </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-4">
           <div class="metric-card p-3 shadow-sm text-center">
             <div class="d-flex justify-content-center"><div class="icon-bubble"><i class="bi bi-heart-pulse"></i></div></div>
             <h4 id="metric-mascotas-atendidas" class="mt-2 mb-0">—</h4>
             <div class="text-body-secondary">Mascotas atendidas</div>
           </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-4">
           <div class="metric-card p-3 shadow-sm text-center">
             <div class="d-flex justify-content-center"><div class="icon-bubble"><i class="bi bi-person-check"></i></div></div>
             <h4 id="metric-clientes-nuevos" class="mt-2 mb-0">—</h4>
-            <div class="text-body-secondary">Clientes nuevos</div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="metric-card p-3 shadow-sm text-center">
-            <div class="d-flex justify-content-center"><div class="icon-bubble"><i class="bi bi-cash-stack"></i></div></div>
-            <h4 id="metric-ingresos-totales" class="mt-2 mb-0">—</h4>
-            <div class="text-body-secondary">Ingresos totales</div>
+            <div class="text-body-secondary">Usuarios nuevos</div>
           </div>
         </div>
       </div>
 
       <div class="row mt-4 g-3">
         <div class="col-md-6">
-          <div class="card p-3">
-            <h6 class="fw-bold mb-2">Citas por servicio</h6>
-            <div class="chart-wrap">
-              <div id="spinner-citas" class="chart-spinner d-none"><div class="spinner-border" role="status"></div></div>
-              <canvas id="chartCitas"></canvas>
+          <div class="card p-4 h-100">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <h6 class="fw-bold mb-1">Citas atendidas</h6>
+                <div class="display-6 mb-1" id="panel-citas-atendidas">—</div>
+                <p class="text-body-secondary small mb-0">Total de citas completadas en el rango seleccionado.</p>
+              </div>
+              <div class="icon-bubble bg-opacity-25 bg-success-subtle text-success">
+                <i class="bi bi-clipboard2-check"></i>
+              </div>
             </div>
           </div>
         </div>
         <div class="col-md-6">
-          <div class="card p-3">
-            <h6 class="fw-bold mb-2">Mascotas por especie</h6>
-            <div class="chart-wrap">
-              <div id="spinner-mascotas" class="chart-spinner d-none"><div class="spinner-border" role="status"></div></div>
-              <canvas id="chartMascotas"></canvas>
+          <div class="card p-4 h-100">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <h6 class="fw-bold mb-1">Usuarios nuevos</h6>
+                <div class="display-6 mb-1" id="panel-usuarios-nuevos">—</div>
+                <p class="text-body-secondary small mb-0">Clientes registrados en el periodo consultado.</p>
+              </div>
+              <div class="icon-bubble bg-opacity-25 bg-primary-subtle text-primary">
+                <i class="bi bi-person-plus"></i>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       <div class="row mt-4 g-3">
-        <div class="col-md-6">
-          <div class="card p-3">
-            <h6 class="fw-bold mb-2">Ingresos mensuales</h6>
+        <div class="col-lg-6">
+          <div class="card p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div>
+                <h6 class="fw-bold mb-1">Distribución por estado</h6>
+                <p class="text-body-secondary small mb-0">Proporción de citas según su estado actual.</p>
+              </div>
+              <span class="badge bg-light text-body-secondary">Citas</span>
+            </div>
             <div class="chart-wrap">
-              <div id="spinner-ingresos" class="chart-spinner d-none"><div class="spinner-border" role="status"></div></div>
-              <canvas id="chartIngresos"></canvas>
+              <canvas id="chart-resumen-citas"></canvas>
             </div>
           </div>
         </div>
-        <div class="col-md-6">
-          <div class="card p-3">
-            <h6 class="fw-bold mb-2">Servicios más solicitados</h6>
+        <div class="col-lg-6">
+          <div class="card p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div>
+                <h6 class="fw-bold mb-1">Indicadores clave</h6>
+                <p class="text-body-secondary small mb-0">Comparativa de las métricas principales.</p>
+              </div>
+              <span class="badge bg-light text-body-secondary">Top 3</span>
+            </div>
             <div class="chart-wrap">
-              <div id="spinner-servicios" class="chart-spinner d-none"><div class="spinner-border" role="status"></div></div>
-              <canvas id="chartProductos"></canvas>
+              <canvas id="chart-metricas"></canvas>
             </div>
           </div>
         </div>
@@ -1122,27 +1166,7 @@ function renderSection(section, data) {
         </div>
       </div>
 
-      <div class="card shadow-sm mt-4 mb-5">
-        <div class="card-header d-flex justify-content-between align-items-center">
-          <span>Servicios más solicitados</span>
-          <a href="#">Ver todos</a>
-        </div>
-        <div class="card-body p-0">
-          <table class="table table-hover mb-0">
-            <thead class="table-light">
-              <tr>
-                <th>Servicio</th>
-                <th>Cantidad</th>
-                <th>Ingresos</th>
-                <th>Variación</th>
-              </tr>
-            </thead>
-            <tbody id="tabla-servicios-top">
-              <tr class="placeholder-row"><td colspan="4" class="text-center text-body-secondary">Cargando…</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <div class="mb-5"></div>
     `;
 
     // Cargar el script de reportes una sola vez y ejecutar

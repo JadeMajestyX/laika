@@ -3,6 +3,7 @@
 // use App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Admin\ActividadController;
+use App\Http\Controllers\AgendarCitaController;
 use App\Http\Controllers\CitaController;
 use App\Http\Controllers\ConfiguracionController;
 use App\Http\Controllers\DashboardController;
@@ -15,6 +16,9 @@ use App\Http\Controllers\TrabajadorController;
 use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\VetDashboardController;
 use App\Http\Controllers\GroomerDashboardController;
+use App\Http\Controllers\VetActividadesController;
+use App\Http\Controllers\VetHistorialController;
+use App\Http\Controllers\VetReportesController;
 use App\Http\Controllers\SearchController;
 
 
@@ -27,7 +31,28 @@ Route::get('/', function () {
 Route::middleware(EnsureUserHasRole::class.':V')->group(function () {
     Route::get('/vet-dashboard', [VetDashboardController::class, 'index'])->name('vet.dashboard');
     
-    Route::get('/vet-dashboard/data', [VetDashboardController::class, 'getDashboardData'])->name('vet.dashboard.data');
+    // Endpoint para obtener datos del dashboard veterinario
+    Route::get('/vet-dashboard/data/home', [VetDashboardController::class, 'getDashboardData'])->name('vet.dashboard.data');
+    
+    // Rutas para actividades del veterinario
+    Route::get('/vet-dashboard/citas-disponibles', [VetActividadesController::class, 'getCitasDisponibles'])->name('vet.citas.disponibles');
+    Route::post('/vet-dashboard/asignar-cita', [VetActividadesController::class, 'asignarCita'])->name('vet.citas.asignar');
+    Route::get('/vet-dashboard/actividades-hoy', [VetActividadesController::class, 'getActividadesHoy'])->name('vet.actividades.hoy');
+    Route::put('/vet-dashboard/actualizar-actividad', [VetActividadesController::class, 'actualizarEstadoActividad'])->name('vet.actividades.actualizar');
+    Route::post('/vet-dashboard/actualizar-estado-actividad', [VetActividadesController::class, 'actualizarEstadoActividad'])->name('vet.actualizar-estado-actividad');
+    Route::get('/vet-dashboard/get-cita-detalle/{citaId}', [VetActividadesController::class, 'getCitaDetalle']);
+    Route::post('/vet-dashboard/finalizar-cita', [VetActividadesController::class, 'finalizarCita']);
+    Route::post('/vet-dashboard/cancelar-cita', [VetActividadesController::class, 'cancelarCita']);
+    
+    //Crear consulta manual
+    Route::post('/vet-dashboard/crear-consulta-manual', [VetActividadesController::class, 'crearConsultaManual'])->name('vet.crear-consulta-manual');
+    
+    // Historial de actividades pasadas para el veterinario (API)
+    Route::get('/vet-dashboard/historial/data', [VetHistorialController::class, 'getHistorial'])->name('vet.historial.data');
+
+    // Rutas para reportes (NO FUNCIONA XD)
+    Route::get('/vet-dashboard/data/reportes', [VetReportesController::class, 'getReportesData'])->name('vet.reportes.data');
+    Route::get('/vet-reportes/export/pdf', [VetReportesController::class, 'exportarPDF'])->name('vet.reportes.export.pdf');
     
     // Capturar subrutas (cualquiera)
     Route::get('/vet-dashboard/{any}', [VetDashboardController::class, 'index'])->where('any', '.*');
@@ -59,6 +84,8 @@ Route::middleware(EnsureUserHasRole::class.':A')->group(function () {
     Route::get('/citas', [App\Http\Controllers\CitaController::class, 'index'])->name('citas');
     // Endpoint JSON paginado para citas (hoy por defecto, soporte búsqueda en pasadas)
     Route::get('/citas/json', [App\Http\Controllers\CitaController::class, 'getCitasJson'])->name('citas.json');
+    // Enviar recordatorios de citas de hoy (admin)
+    Route::post('/citas/recordatorio-hoy', [App\Http\Controllers\CitaController::class, 'enviarRecordatorioHoy'])->name('citas.recordatorio.hoy');
 
     Route::get('/mascotas', [MascotaController::class, 'index'])->name('mascotas');
     // Primero la ruta JSON para que no la capture /mascotas/{id}
@@ -83,7 +110,6 @@ Route::middleware(EnsureUserHasRole::class.':A')->group(function () {
     Route::get('/reportes', [ReporteController::class, 'index'])->name('reportes');
     Route::get('/reportes/data', [ReporteController::class, 'data'])->name('reportes.data');
     Route::get('/reportes/citas/export', [ReporteController::class, 'exportCitas'])->name('reportes.citas.export');
-    Route::get('/reportes/citas/export/xlsx', [ReporteController::class, 'exportCitasXlsx'])->name('reportes.citas.export.xlsx');
     Route::get('/reportes/citas/export/pdf', [ReporteController::class, 'exportCitasPdf'])->name('reportes.citas.export.pdf');
     Route::get('/inventario', [App\Http\Controllers\InventarioController::class, 'index'])->name('inventario');
     // Listado de clínicas (selección)
@@ -185,7 +211,11 @@ Route::get('/terms', function(){
     return view('terms');
 })->name('terms');
 
+//clinicas
+Route::get('/clinicas-open', [AgendarCitaController::class, 'getClinicas'])->name('clinicas.available');
 
+//obtener servicios de una clinica con el id
+Route::post('/getServicios', [AgendarCitaController::class, 'getServices'])->name('clinicas.servicios');
 
 //eliminar cuenta
 Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');

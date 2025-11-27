@@ -10,6 +10,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
 use App\Models\Medicion;
+use App\Models\DeviceToken;
+use App\Services\FcmV1Client;
 use App\Models\Status;
 use NunoMaduro\Collision\Adapters\Phpunit\State;
 use Illuminate\Support\Facades\DB;
@@ -21,6 +23,7 @@ use App\Support\ActivityLogger;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Api\DeviceTokenController;
 use App\Http\Controllers\Api\NotificationsController;
+use Carbon\Carbon;
 
 Route::post('/login', function(Request $request){
     $request->validate([
@@ -101,15 +104,63 @@ Route::post('/mediciones', function(Request $request){
         'peso_comida' => 'required|numeric|min:0|max:1000',
     ]);
 
+    $codigoModel = CodigoDispensador::where('codigo', $request->codigo)->first();
     $medicion = Medicion::create([
-        'dispensador_id' => CodigoDispensador::where('codigo', $request->codigo)->first()->id,
+        // Nota: en el esquema actual 'dispensador_id' almacena el id del codigo, siguiendo pauta previa
+        'dispensador_id' => $codigoModel->id,
         'nivel_comida' => $request->nivel_comida,
         'peso_comida' => $request->peso_comida,
     ]);
 
+    $nivel = (int)$request->nivel_comida;
+    $alertaEnviada = false;
+    $alertaTipo = null;
+
+    // Obtener dispensador real para identificar usuario dueño
+    $dispensador = Dispensador::where('codigo_dispensador_id', $codigoModel->id)->first();
+    $userId = $dispensador?->usuario_id;
+
+    if ($userId) {
+        // Ver transición para evitar spam: buscar medición previa distinta
+        $prev = Medicion::where('dispensador_id', $codigoModel->id)
+            ->where('id', '<', $medicion->id)
+            ->orderByDesc('id')
+            ->first();
+        $prevNivel = $prev?->nivel_comida;
+
+        $debeNotificarVacio = ($nivel <= 0) && ($prevNivel === null || $prevNivel > 0);
+        $debeNotificarBajo = ($nivel > 0 && $nivel < 40) && ($prevNivel === null || $prevNivel >= 40);
+
+        if ($debeNotificarVacio || $debeNotificarBajo) {
+            try {
+                if (config('fcm.use_v1')) {
+                    $client = new FcmV1Client();
+                    $title = $debeNotificarVacio ? 'Dispensador vacío' : 'Nivel de comida bajo';
+                    $body = $debeNotificarVacio
+                        ? 'Tu dispensador se ha quedado sin comida. Por favor rellénalo.'
+                        : 'El nivel de comida del dispensador es menor al 40%. Revisa el alimento.';
+                    $dataPayload = [
+                        'tipo' => 'dispensador_alerta',
+                        'codigo' => $request->codigo,
+                        'nivel' => (string)$nivel,
+                    ];
+                    $sendSummary = $client->sendToUser($userId, $title, $body, $dataPayload);
+                    if ($sendSummary['sent'] > 0) {
+                        $alertaEnviada = $sendSummary['success'] > 0;
+                        $alertaTipo = $debeNotificarVacio ? 'vacío' : 'bajo';
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Error enviando notificación de nivel comida: ' . $e->getMessage());
+            }
+        }
+    }
+
     return response()->json([
         'message' => 'Medición creada exitosamente',
-        'data' => $medicion
+        'data' => $medicion,
+        'alerta_enviada' => $alertaEnviada,
+        'alerta_tipo' => $alertaTipo,
     ]);
 });
 
@@ -222,6 +273,35 @@ Route::middleware('auth:sanctum')->get('/mis-dispensadores', function(Request $r
         'dispensadores' => $dispensadores
     ]);
 });
+
+    // Desvincular un dispensador del usuario (owner o admin)
+    Route::middleware('auth:sanctum')->post('/dispensadores/{id}/desvincular', function(Request $request, $id) {
+        $user = $request->user();
+        $disp = Dispensador::with('codigoDispensador')->find($id);
+        if (!$disp) {
+            return response()->json(['success' => false, 'message' => 'Dispensador no encontrado'], 404);
+        }
+
+        // Permite si es dueño o si es admin (rol A)
+        if ($user->id !== $disp->usuario_id && ($user->rol ?? null) !== 'A') {
+            return response()->json(['success' => false, 'message' => 'No autorizado'], 403);
+        }
+
+        $codigo = $disp->codigoDispensador->codigo ?? null;
+        $oldOwner = $disp->usuario_id;
+        $disp->usuario_id = null;
+        try {
+            $disp->save();
+            ActivityLogger::log($request, 'Desvincular dispensador', 'Dispensador', $disp->id, [
+                'codigo' => $codigo,
+                'old_owner' => $oldOwner,
+            ], $user->id);
+        } catch (\Throwable $e) {
+            return response()->json(['success' => false, 'message' => 'Error al desvincular dispensador'], 500);
+        }
+
+        return response()->json(['success' => true, 'message' => 'Dispensador desvinculado correctamente']);
+    });
 
 // Device tokens: registrar/actualizar token del dispositivo del usuario
 Route::middleware('auth:sanctum')->post('/device-tokens', [DeviceTokenController::class, 'store']);
@@ -590,6 +670,111 @@ Route::middleware('auth:sanctum')->post('/agendar-cita', function(Request $reque
     ]);
 });
 
+// Actualizar una cita (PATCH/PUT parcial)
+Route::middleware('auth:sanctum')->match(['put','patch'], '/citas/{id}', function(Request $request, $id) {
+    $cita = Cita::find($id);
+    if (!$cita) {
+        return response()->json(['success' => false, 'message' => 'Cita no encontrada'], 404);
+    }
+
+    $user = $request->user();
+    $mascota = Mascota::find($cita->mascota_id);
+    $ownerId = $mascota->user_id ?? null;
+
+    // Permitir modificar si es quien creó la cita o el dueño de la mascota
+    if ($user->id !== $cita->creada_por && $user->id !== $ownerId) {
+        return response()->json(['success' => false, 'message' => 'No autorizado'], 403);
+    }
+
+    $request->validate([
+        'clinica_id' => 'sometimes|exists:clinicas,id',
+        'servicio_id' => 'sometimes|exists:servicios,id',
+        'mascota_id' => 'sometimes|exists:mascotas,id',
+        'fecha' => 'sometimes|date|after:today',
+        'notas' => 'nullable|string|max:500',
+        'status' => 'sometimes|string',
+    ]);
+
+    $updateData = $request->only(['clinica_id','servicio_id','mascota_id','fecha','notas','status']);
+    $updateData = array_filter($updateData, fn($v) => !is_null($v));
+
+    $original = $cita->getOriginal();
+    $cita->update($updateData);
+
+    $changed = [];
+    foreach ($updateData as $k => $v) {
+        if (!array_key_exists($k, $original) || $original[$k] !== $v) {
+            $changed[] = $k;
+        }
+    }
+
+    ActivityLogger::log($request, 'Actualizar cita', 'Cita', $cita->id, [
+        'changed_fields' => $changed,
+    ], $user->id);
+
+    return response()->json(['success' => true, 'cita' => $cita]);
+});
+
+// Eliminar una cita
+Route::middleware('auth:sanctum')->delete('/citas/{id}', function(Request $request, $id) {
+    $cita = Cita::find($id);
+    if (!$cita) {
+        return response()->json(['success' => false, 'message' => 'Cita no encontrada'], 404);
+    }
+
+    $user = $request->user();
+    $mascota = Mascota::find($cita->mascota_id);
+    $ownerId = $mascota->user_id ?? null;
+
+    if ($user->id !== $cita->creada_por && $user->id !== $ownerId) {
+        return response()->json(['success' => false, 'message' => 'No autorizado'], 403);
+    }
+
+    ActivityLogger::log($request, 'Eliminar cita', 'Cita', $cita->id, [], $user->id);
+    try {
+        $cita->delete();
+    } catch (\Throwable $e) {
+        return response()->json(['success' => false, 'message' => 'Error eliminando la cita'], 500);
+    }
+
+    return response()->json(['success' => true, 'message' => 'Cita eliminada correctamente']);
+});
+
+// Cancelar todas las citas pasadas no atendidas (pendiente/confirmada -> cancelada)
+Route::middleware('auth:sanctum')->post('/citas/cancelar-pasadas', function(Request $request) {
+    $user = $request->user();
+    // Solo admin (rol A) puede ejecutar
+    if (!$user || $user->rol !== 'A') {
+        return response()->json(['success' => false, 'message' => 'No autorizado'], 403);
+    }
+
+    $ahora = Carbon::now();
+    $citas = Cita::where('fecha', '<', $ahora)
+        ->whereNotIn('status', ['completada', 'cancelada'])
+        ->get();
+
+    $total = $citas->count();
+    $canceladas = 0;
+    $ids = [];
+    foreach ($citas as $cita) {
+        $cita->status = 'cancelada';
+        $cita->save();
+        $canceladas++;
+        $ids[] = $cita->id;
+        ActivityLogger::log($request, 'Cancelar cita pasada', 'Cita', $cita->id, [
+            'motivo' => 'Auto-cancelación por fecha pasada',
+            'fecha' => $cita->fecha,
+        ], $user->id);
+    }
+
+    return response()->json([
+        'success' => true,
+        'total_revisadas' => $total,
+        'total_canceladas' => $canceladas,
+        'ids_canceladas' => $ids,
+    ]);
+});
+
 
 //obtener clinicas
 Route::get('/clinicas', function(){
@@ -905,3 +1090,85 @@ Route::middleware('auth:sanctum')->post('/perfil', function(Request $request) {
     ]);
 });
 // ===============================================================================
+
+// ================== NOTIFICACIONES (LOG DE ENVÍOS) ==================
+// Listar notificaciones enviadas al usuario autenticado
+Route::middleware('auth:sanctum')->get('/mis-notificaciones', function(Request $request) {
+    $user = $request->user();
+
+    $perPage = (int) min(max((int)$request->query('per_page', 20), 1), 100);
+    $page = (int) max((int)$request->query('page', 1), 1);
+    $afterId = $request->query('after_id'); // para sync incremental: traer > after_id
+    $since = $request->query('since'); // fecha ISO opcional
+    $q = trim((string)$request->query('q', ''));
+
+    $query = \App\Models\NotificationLog::where('user_id', $user->id);
+
+    if ($afterId) {
+        $query->where('id', '>', (int)$afterId);
+    }
+    if ($since) {
+        // Intentar parsear fecha
+        try { $sinceDt = \Carbon\Carbon::parse($since); $query->where('created_at', '>=', $sinceDt); } catch(\Throwable $e) {}
+    }
+    if ($q !== '') {
+        $query->where(function($sub) use ($q) {
+            $sub->where('title', 'like', "%$q%")
+                ->orWhere('body', 'like', "%$q%");
+        });
+    }
+
+    $total = $query->count();
+    $logs = $query->orderByDesc('id')
+        ->skip(($page - 1) * $perPage)
+        ->take($perPage)
+        ->get()
+        ->map(function($log){
+            return [
+                'id' => $log->id,
+                'title' => $log->title,
+                'body' => $log->body,
+                'data' => $log->data_json ? json_decode($log->data_json, true) : null,
+                'tokens' => $log->tokens_json ? json_decode($log->tokens_json, true) : null,
+                'success' => $log->success,
+                'fail' => $log->fail,
+                'total' => $log->total,
+                'created_at' => $log->created_at->toIso8601String(),
+            ];
+        });
+
+    return response()->json([
+        'success' => true,
+        'page' => $page,
+        'per_page' => $perPage,
+        'total' => $total,
+        'last_page' => (int) ceil($total / $perPage),
+        'notificaciones' => $logs,
+    ]);
+});
+
+// Detalle de una notificación (solo si pertenece al usuario)
+Route::middleware('auth:sanctum')->get('/mis-notificaciones/{id}', function(Request $request, $id) {
+    $user = $request->user();
+    $log = \App\Models\NotificationLog::where('id', $id)->where('user_id', $user->id)->first();
+    if (!$log) {
+        return response()->json(['success' => false, 'message' => 'No encontrado'], 404);
+    }
+    return response()->json([
+        'success' => true,
+        'notificacion' => [
+            'id' => $log->id,
+            'title' => $log->title,
+            'body' => $log->body,
+            'data' => $log->data_json ? json_decode($log->data_json, true) : null,
+            'tokens' => $log->tokens_json ? json_decode($log->tokens_json, true) : null,
+            'success' => $log->success,
+            'fail' => $log->fail,
+            'total' => $log->total,
+            'results' => $log->results_json ? json_decode($log->results_json, true) : null,
+            'created_at' => $log->created_at->toIso8601String(),
+        ]
+    ]);
+});
+// ================================================================
+

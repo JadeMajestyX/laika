@@ -5,8 +5,10 @@ namespace App\Services;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
+use App\Models\DeviceToken;
 use Illuminate\Support\Str;
 use RuntimeException;
+use App\Support\NotificationLogger;
 
 class FcmV1Client
 {
@@ -196,5 +198,43 @@ class FcmV1Client
             return null; // omitir 'data' para evitar enviar []
         }
         return $filtered;
+    }
+
+    /**
+     * Envía una notificación a todos los tokens de dispositivo activos del usuario.
+     * Hace pruning básico de tokens inválidos (NOT_FOUND / UNREGISTERED / INVALID_ARGUMENT).
+     * Devuelve resumen con resultados individuales.
+     */
+    public function sendToUser(int $userId, string $title, string $body, array $data = [], array $options = []): array
+    {
+        $tokens = DeviceToken::where('user_id', $userId)->pluck('token')->filter()->values()->all();
+        $results = [];
+        foreach ($tokens as $tk) {
+            $res = $this->sendToToken($tk, $title, $body, $data, $options);
+            $results[] = [
+                'token' => $tk,
+                'ok' => $res['ok'],
+                'status' => $res['status'],
+                'body' => $res['body'],
+            ];
+            // Pruning de tokens inválidos
+            if (!$res['ok']) {
+                $errStatus = $res['body']['error']['status'] ?? null;
+                if (in_array($errStatus, ['NOT_FOUND', 'UNREGISTERED', 'INVALID_ARGUMENT'], true)) {
+                    DeviceToken::where('user_id', $userId)->where('token', $tk)->delete();
+                }
+            }
+        }
+        $summary = [
+            'sent' => count($tokens),
+            'success' => count(array_filter($results, fn($r) => $r['ok'])),
+            'fail' => count(array_filter($results, fn($r) => !$r['ok'])),
+            'results' => $results,
+        ];
+
+        // Log persistente de la notificación
+        NotificationLogger::log($userId, $title, $body, $data, $tokens, $summary);
+
+        return $summary;
     }
 }

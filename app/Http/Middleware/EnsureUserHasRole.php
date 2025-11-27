@@ -23,8 +23,14 @@ class EnsureUserHasRole
 
         $user = Auth::user();
 
-        // Verifica si el usuario tiene el rol
+        // Verifica si el usuario tiene el rol esperado
         if (!$user->hasRole($rol)) {
+            // Caso específico: si intenta entrar a rutas de Admin ('A') siendo Veterinario ('V'), redirigir a su dashboard
+            if ($rol === 'A' && ($user->rol ?? null) === 'V') {
+                return redirect()->route('vet.dashboard');
+            }
+
+            // En otros casos, negar acceso
             abort(403, 'No tienes permiso para acceder a esta página.');
         }
 
