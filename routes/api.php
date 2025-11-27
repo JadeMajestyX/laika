@@ -477,13 +477,14 @@ Route::match(['get','post'], '/activar-dispensador', function (Request $request)
     $objetivo = $pesoActual + $cantidad;
 
     // Verificar si en las últimas 3 lecturas no ha cambiado el peso
-    // Si no cambia, detener y notificar problema
+    // y que dicha condición se mantenga durante una ventana de 30s.
     $ultimas = Medicion::where('dispensador_id', $codigoModel->id)
         ->orderByDesc('id')
         ->take(3)
         ->get();
 
     $sinCambio = false;
+    $ventanaOk = false; // true si el rango temporal entre la medición más reciente y la más antigua >= 30s
     if ($ultimas->count() >= 3) {
         // Considerar un umbral pequeño (1g) para variaciones
         $epsilon = 1.0;
@@ -497,9 +498,18 @@ Route::match(['get','post'], '/activar-dispensador', function (Request $request)
                 break;
             }
         }
+
+        // Evaluar ventana de 30s usando created_at de las mediciones
+        try {
+            $masReciente = \Carbon\Carbon::parse($ultimas[0]->created_at);
+            $masAntigua = \Carbon\Carbon::parse($ultimas[$ultimas->count()-1]->created_at);
+            $ventanaOk = $masReciente->diffInSeconds($masAntigua) >= 30;
+        } catch (\Throwable $e) {
+            $ventanaOk = false;
+        }
     }
 
-    if ($sinCambio) {
+    if ($sinCambio && $ventanaOk) {
         // Detener dispensado
         $statuss->status = false; // 0 = detener
         $statuss->save();
@@ -526,6 +536,19 @@ Route::match(['get','post'], '/activar-dispensador', function (Request $request)
             'success' => true,
             'estado' => 0,
             'message' => 'Sin cambio en 3 lecturas. Dispensador detenido y problema notificado.',
+            'peso_actual' => (float)$pesoActual,
+            'objetivo' => (float)$objetivo,
+        ]);
+    }
+
+    // Si no hubo cambio pero la ventana de 30s aún no se cumple, seguimos dispensando sin notificar
+    if ($sinCambio && !$ventanaOk) {
+        $statuss->status = true; // 1 = dispensando
+        $statuss->save();
+        return response()->json([
+            'success' => true,
+            'estado' => 1,
+            'message' => 'Evaluando: aún no se cumplen 30s de observación.',
             'peso_actual' => (float)$pesoActual,
             'objetivo' => (float)$objetivo,
         ]);
