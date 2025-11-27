@@ -773,13 +773,38 @@ Route::middleware('auth:sanctum')->post('/agendar-cita', function(Request $reque
         'notas' => 'nullable|string|max:500',
     ]);
 
-    // Crear la cita
+    // Normalizar fecha a inicio de hora y prevenir doble reserva (misma clínica, mismo día y hora)
+    try {
+        $slotInicio = \Carbon\Carbon::parse($request->fecha, config('app.timezone'))
+            ->minute(0)->second(0);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Formato de fecha inválido'
+        ], 422);
+    }
+
+    $ocupada = Cita::where('clinica_id', $request->clinica_id)
+        ->whereDate('fecha', $slotInicio->toDateString())
+        ->whereTime('fecha', $slotInicio->format('H:i:s'))
+        ->exists();
+
+    if ($ocupada) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Horario ocupado para esa fecha y hora',
+            'hora' => $slotInicio->format('H:00'),
+            'fecha' => $slotInicio->toDateString(),
+        ], 422);
+    }
+
+    // Crear la cita con fecha normalizada al inicio de la hora
     $cita = Cita::create([
         'clinica_id' => $request->clinica_id,
         'servicio_id' => $request->servicio_id,
         'creada_por' => $request->user()->id,
         'mascota_id' => $request->mascota_id,
-        'fecha' => $request->fecha,
+        'fecha' => $slotInicio->toDateTimeString(),
         'notas' => $request->notas,
     ]);
 
