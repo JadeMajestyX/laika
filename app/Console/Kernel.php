@@ -16,9 +16,9 @@ class Kernel extends ConsoleKernel
         $schedule->command('citas:cancelar-pasadas')->dailyAt('00:10');
 
         // Para entornos de prueba se puede activar cada minuto (comentar en producción):
-        // $schedule->command('citas:cancelar-pasadas')->everyMinute();
+        $schedule->command('citas:cancelar-pasadas')->everyMinute();
         // Recordatorio diario a las 23:46 para citas del día siguiente
-        $schedule->command('citas:recordatorio-manana')->dailyAt('23:46');
+        // $schedule->command('citas:recordatorio-manana')->dailyAt('23:46');
     }
 
     /**
