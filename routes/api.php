@@ -106,109 +106,16 @@ Route::post('/mediciones', function(Request $request){
         'peso_comida' => 'required|numeric|min:0|max:1000',
     ]);
 
-    $codigoModel = CodigoDispensador::where('codigo', $request->codigo)->first();
+    // Crear la medición
     $medicion = Medicion::create([
-        // Nota: en el esquema actual 'dispensador_id' almacena el id del codigo, siguiendo pauta previa
-        'dispensador_id' => $codigoModel->id,
+        'dispensador_id' => CodigoDispensador::where('codigo', $request->codigo)->first()->id,
         'nivel_comida' => $request->nivel_comida,
         'peso_comida' => $request->peso_comida,
     ]);
 
-    $nivel = (int)$request->nivel_comida;
-    $alertaEnviada = false;
-    $alertaTipo = null;
-    // Detección de cambio rápido (peso o porcentaje) y marcado del anterior hasta 5 consecutivos
-    $marcarAnterior = false;
-    $cambiosConsecutivos = 0;
-
-    // Obtener dispensador real para identificar usuario dueño
-    $dispensador = Dispensador::where('codigo_dispensador_id', $codigoModel->id)->first();
-    $userId = $dispensador?->usuario_id;
-
-    if ($userId) {
-        // Ver transición para evitar spam: buscar medición previa distinta
-        $prev = Medicion::where('dispensador_id', $codigoModel->id)
-            ->where('id', '<', $medicion->id)
-            ->orderByDesc('id')
-            ->first();
-        $prevNivel = $prev?->nivel_comida;
-        $prevPeso = $prev?->peso_comida;
-
-        $debeNotificarVacio = ($nivel <= 0) && ($prevNivel === null || $prevNivel > 0);
-        $debeNotificarBajo = ($nivel > 0 && $nivel < 40) && ($prevNivel === null || $prevNivel >= 40);
-
-        // Umbrales para considerar cambio rápido
-        $umbralPeso = 10.0; // gramos
-        $umbralNivel = 10;  // porcentaje
-
-        $deltaPeso = null;
-        $deltaNivel = null;
-        if ($prev) {
-            $deltaPeso = abs(((float)$medicion->peso_comida) - ((float)$prevPeso));
-            $deltaNivel = abs(((int)$nivel) - ((int)$prevNivel));
-        }
-
-        // Gestionar contador de cambios rápidos por dispensador (máximo 5 consecutivos)
-        $cacheKey = 'disp_cambios_rapidos_' . $codigoModel->id;
-        $cambiosConsecutivos = (int) (Cache::get($cacheKey) ?? 0);
-
-        $cambioRapido = false;
-        if ($prev) {
-            $cambioRapido = (
-                ($deltaPeso !== null && $deltaPeso >= $umbralPeso) ||
-                ($deltaNivel !== null && $deltaNivel >= $umbralNivel)
-            );
-        }
-
-        if ($cambioRapido) {
-            // Incrementar contador hasta 5
-            $cambiosConsecutivos = min(5, $cambiosConsecutivos + 1);
-            Cache::put($cacheKey, $cambiosConsecutivos, now()->addMinutes(30));
-            // Marcar el anterior mientras no superemos 5 consecutivos
-            $marcarAnterior = ($cambiosConsecutivos <= 5);
-        } else {
-            // Reiniciar contador si no hay cambio rápido
-            if ($cambiosConsecutivos !== 0) {
-                Cache::forget($cacheKey);
-            }
-            $cambiosConsecutivos = 0;
-            $marcarAnterior = false;
-        }
-
-        if ($debeNotificarVacio || $debeNotificarBajo) {
-            try {
-                if (config('fcm.use_v1')) {
-                    $client = new FcmV1Client();
-                    $title = $debeNotificarVacio ? 'Dispensador vacío' : 'Nivel de comida bajo';
-                    $body = $debeNotificarVacio
-                        ? 'Tu dispensador se ha quedado sin comida. Por favor rellénalo.'
-                        : 'El nivel de comida del dispensador es menor al 40%. Revisa el alimento.';
-                    $dataPayload = [
-                        'tipo' => 'dispensador_alerta',
-                        'codigo' => $request->codigo,
-                        'nivel' => (string)$nivel,
-                        'marcar_anterior' => $marcarAnterior ? '1' : '0',
-                        'cambios_consecutivos' => (string)$cambiosConsecutivos,
-                    ];
-                    $sendSummary = $client->sendToUser($userId, $title, $body, $dataPayload);
-                    if ($sendSummary['sent'] > 0) {
-                        $alertaEnviada = $sendSummary['success'] > 0;
-                        $alertaTipo = $debeNotificarVacio ? 'vacío' : 'bajo';
-                    }
-                }
-            } catch (\Throwable $e) {
-                Log::warning('Error enviando notificación de nivel comida: ' . $e->getMessage());
-            }
-        }
-    }
-
     return response()->json([
         'message' => 'Medición creada exitosamente',
-        'data' => $medicion,
-        'alerta_enviada' => $alertaEnviada,
-        'alerta_tipo' => $alertaTipo,
-        'marcar_anterior' => $marcarAnterior,
-        'cambios_consecutivos' => $cambiosConsecutivos,
+        'data' => $medicion
     ]);
 });
 
