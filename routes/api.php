@@ -1344,6 +1344,7 @@ Route::get('/horarios-disponibles', function(Request $request) {
 
     // Generar slots por cada hora completa [inicio, fin)
     $slots = [];
+    $horas = [];
     $cursor = $inicio->copy()->minute(0)->second(0);
     if ($cursor->lt($inicio)) { $cursor->addHour(); }
 
@@ -1364,6 +1365,8 @@ Route::get('/horarios-disponibles', function(Request $request) {
                 'fin' => $slotFin->format('Y-m-d H:00:00'),
                 'label' => $slotInicio->format('H:00') . ' - ' . $slotFin->format('H:00'),
             ];
+            // también listado simple de horas (ej. 9,10,11)
+            $horas[] = (int) $slotInicio->format('H');
         }
 
         $cursor->addHour();
@@ -1374,6 +1377,7 @@ Route::get('/horarios-disponibles', function(Request $request) {
         'clinica_id' => $clinicaId,
         'fecha' => $fechaStr,
         'slots' => $slots,
+        'horas' => $horas,
     ]);
 });
 
