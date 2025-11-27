@@ -729,7 +729,7 @@ Route::middleware('auth:sanctum')->get('/mis-citas', function(Request $request) 
             'id' => $cita->id,
             'mascota' => $cita->mascota ? $cita->mascota->nombre : null,
             'motivo' => $cita->servicio ? $cita->servicio->nombre : null,
-            'fecha' => \Carbon\Carbon::parse($cita->fecha)->format('d/m/Y'),
+            'fecha' => \Carbon\Carbon::parse($cita->fecha)->format('d/m/Y H:i'),
         ];
     });
 
