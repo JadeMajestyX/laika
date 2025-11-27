@@ -10,22 +10,26 @@ class Kernel extends ConsoleKernel
     /**
      * Define the application's command schedule.
      */
-    protected function schedule(Schedule $schedule): void
+    protected function schedule(Schedule $schedule)
     {
         // Ejecutar diariamente a las 00:10
         $schedule->command('citas:cancelar-pasadas')->dailyAt('00:10');
 
         // Para entornos de prueba se puede activar cada minuto (comentar en producción):
-        // $schedule->command('citas:cancelar-pasadas')->everyMinute();
+        $schedule->command('citas:cancelar-pasadas')->everyMinute();
+        // Recordatorio diario a las 23:46 para citas del día siguiente
+        // $schedule->command('citas:recordatorio-manana')->dailyAt('23:46');
     }
 
     /**
      * Register the commands for the application.
      */
-    protected function commands(): void
+    protected function commands()
     {
         $this->load(__DIR__.'/Commands');
 
         require base_path('routes/console.php');
+
     }
+
 }

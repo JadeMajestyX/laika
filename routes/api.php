@@ -13,6 +13,7 @@ use App\Models\Medicion;
 use App\Models\DeviceToken;
 use App\Services\FcmV1Client;
 use App\Models\Status;
+use App\Models\Horario;
 use NunoMaduro\Collision\Adapters\Phpunit\State;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
@@ -422,35 +423,161 @@ Route::get('/activar-calibrar', function (Request $request) {
 });
 
 
-//activar dispensador
-Route::get('/activar-dispensador', function (Request $request) {
-    $codigo = $request->query('codigo');
+// Activar dispensador con objetivo de peso (cantidad)
+// Lógica: recibe 'codigo' y 'cantidad' (peso objetivo). Consulta últimas mediciones;
+// si el peso_actual >= cantidad, pone status=0 (detener). Si aún no alcanza, pone status=1 (seguir dispensando).
+Route::match(['get','post'], '/activar-dispensador', function (Request $request) {
+    $codigo = $request->input('codigo') ?? $request->query('codigo');
+    $cantidad = $request->input('cantidad') ?? $request->query('cantidad');
+
     if (!$codigo) {
         return response()->json(['success' => false, 'message' => 'Código no proporcionado'], 400);
     }
-    // Buscar el dispensador por su código
-    $dispensador = CodigoDispensador::where('codigo', $codigo)->first();
-    if (!$dispensador) {
-        return response()->json(['success' => false, 'message' => 'Dispensador no encontrado'], 404);
-    }
-    // Buscar o crear el estado
-    $statuss = Status::firstOrCreate(
-        ['dispensador_id' => $dispensador->id],
-        ['status' => false]
-    );
-    // Guardamos el estado actual antes de modificarlo
-    $estadoActual = $statuss->status;
-    // Si el estado era false, cambiarlo a true y guardar en BD
-    if ($estadoActual === false) {
-        $statuss->status = true;
-        $statuss->save();
+
+    // Validar cantidad si llega
+    if ($cantidad !== null) {
+        if (!is_numeric($cantidad) || (float)$cantidad <= 0) {
+            return response()->json(['success' => false, 'message' => 'Cantidad inválida'], 422);
+        }
+        $cantidad = (float)$cantidad;
     }
 
-    return response()->json([
-        'success' => true,
-        'estado' => $estadoActual ? 1 : 0,
-        'message' => $estadoActual ? 'Estado cambiado a true' : 'Estado ya era true'
-    ]);
+    // Buscar el dispensador por su código
+    $codigoModel = CodigoDispensador::where('codigo', $codigo)->first();
+    if (!$codigoModel) {
+        return response()->json(['success' => false, 'message' => 'Dispensador no encontrado'], 404);
+    }
+
+    // Buscar o crear el estado de control
+    $statuss = Status::firstOrCreate(
+        ['dispensador_id' => $codigoModel->id],
+        ['status' => false, 'calibrar' => false]
+    );
+
+    // Obtener última medición registrada para este dispensador (en esquema actual: 'dispensador_id' guarda id del código)
+    $ultimaMedicion = Medicion::where('dispensador_id', $codigoModel->id)
+        ->orderByDesc('id')
+        ->first();
+
+    $pesoActual = $ultimaMedicion?->peso_comida ?? 0.0;
+
+    // Si no se proporcionó cantidad, solo activar (status=1) para iniciar dispensado
+    if ($cantidad === null) {
+        $statuss->status = true; // 1 = dispensando
+        $statuss->save();
+        return response()->json([
+            'success' => true,
+            'estado' => 1,
+            'message' => 'Dispensador activado (sin objetivo).',
+            'peso_actual' => (float)$pesoActual,
+        ]);
+    }
+
+    // Con objetivo: el objetivo real es peso_actual + cantidad solicitada
+    $objetivo = $pesoActual + $cantidad;
+
+    // Verificar si en las últimas 3 lecturas no ha cambiado el peso
+    // y que dicha condición se mantenga durante una ventana de 30s.
+    $ultimas = Medicion::where('dispensador_id', $codigoModel->id)
+        ->orderByDesc('id')
+        ->take(3)
+        ->get();
+
+    $sinCambio = false;
+    $ventanaOk = false; // true si el rango temporal entre la medición más reciente y la más antigua >= 30s
+    if ($ultimas->count() >= 3) {
+        // Considerar un umbral pequeño (1g) para variaciones
+        $epsilon = 1.0;
+        $pesos = $ultimas->pluck('peso_comida')->all();
+        // Comparar todas entre sí respecto al primero
+        $base = (float) $pesos[0];
+        $sinCambio = true;
+        foreach ($pesos as $p) {
+            if (abs(((float)$p) - $base) > $epsilon) {
+                $sinCambio = false;
+                break;
+            }
+        }
+
+        // Evaluar ventana de 30s usando created_at de las mediciones
+        try {
+            $masReciente = \Carbon\Carbon::parse($ultimas[0]->created_at);
+            $masAntigua = \Carbon\Carbon::parse($ultimas[$ultimas->count()-1]->created_at);
+            $ventanaOk = $masReciente->diffInSeconds($masAntigua) >= 30;
+        } catch (\Throwable $e) {
+            $ventanaOk = false;
+        }
+    }
+
+    if ($sinCambio && $ventanaOk) {
+        // Detener dispensado
+        $statuss->status = false; // 0 = detener
+        $statuss->save();
+
+        // Notificar al dueño del dispensador si existe
+        try {
+            $dispensadorReal = Dispensador::where('codigo_dispensador_id', $codigoModel->id)->first();
+            $userId = $dispensadorReal?->usuario_id;
+            if ($userId && config('fcm.use_v1')) {
+                $client = new FcmV1Client();
+                $title = 'Problema con dispensador';
+                $body = 'No se detecta cambio de peso tras 3 intentos. Revisa el mecanismo.';
+                $dataPayload = [
+                    'tipo' => 'dispensador_problema',
+                    'codigo' => $codigo,
+                ];
+                $client->sendToUser($userId, $title, $body, $dataPayload);
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Error notificando problema de dispensador: ' . $e->getMessage());
+        }
+
+        return response()->json([
+            'success' => true,
+            'estado' => 0,
+            'message' => 'Sin cambio en 3 lecturas. Dispensador detenido y problema notificado.',
+            'peso_actual' => (float)$pesoActual,
+            'objetivo' => (float)$objetivo,
+        ]);
+    }
+
+    // Si no hubo cambio pero la ventana de 30s aún no se cumple, seguimos dispensando sin notificar
+    if ($sinCambio && !$ventanaOk) {
+        $statuss->status = true; // 1 = dispensando
+        $statuss->save();
+        return response()->json([
+            'success' => true,
+            'estado' => 1,
+            'message' => 'Evaluando: aún no se cumplen 30s de observación.',
+            'peso_actual' => (float)$pesoActual,
+            'objetivo' => (float)$objetivo,
+        ]);
+    }
+
+    // Decidir si continuar dispensando o detener en función del objetivo
+    if ($pesoActual >= $objetivo) {
+        // Objetivo alcanzado: detener
+        $statuss->status = false; // 0 = detener
+        $statuss->save();
+        return response()->json([
+            'success' => true,
+            'estado' => 0,
+            'message' => 'Objetivo alcanzado. Dispensador detenido.',
+            'peso_actual' => (float)$pesoActual,
+            'objetivo' => (float)$objetivo,
+        ]);
+    } else {
+        // Aún no alcanza: activar
+        $statuss->status = true; // 1 = dispensando
+        $statuss->save();
+        return response()->json([
+            'success' => true,
+            'estado' => 1,
+            'message' => 'Dispensando hasta alcanzar el objetivo.',
+            'peso_actual' => (float)$pesoActual,
+            'objetivo' => (float)$objetivo,
+        ]);
+    }
 });
 
 
@@ -625,7 +752,7 @@ Route::middleware('auth:sanctum')->get('/mis-citas', function(Request $request) 
             'id' => $cita->id,
             'mascota' => $cita->mascota ? $cita->mascota->nombre : null,
             'motivo' => $cita->servicio ? $cita->servicio->nombre : null,
-            'fecha' => $cita->fecha,
+            'fecha' => \Carbon\Carbon::parse($cita->fecha)->format('d/m/Y H:i'),
         ];
     });
 
@@ -646,13 +773,40 @@ Route::middleware('auth:sanctum')->post('/agendar-cita', function(Request $reque
         'notas' => 'nullable|string|max:500',
     ]);
 
-    // Crear la cita
+    // Normalizar fecha a inicio de hora y prevenir doble reserva (misma clínica, mismo día y hora)
+    try {
+        $slotInicio = \Carbon\Carbon::parse($request->fecha, config('app.timezone'))
+            ->minute(0)->second(0);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Formato de fecha inválido'
+        ], 422);
+    }
+
+    // Ocupada si hay cualquier cita dentro del rango de esa hora [inicio, fin)
+    $slotFin = $slotInicio->copy()->addHour();
+    $ocupada = Cita::where('clinica_id', $request->clinica_id)
+        ->where('fecha', '>=', $slotInicio->toDateTimeString())
+        ->where('fecha', '<', $slotFin->toDateTimeString())
+        ->exists();
+
+    if ($ocupada) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Horario ocupado para esa fecha y hora',
+            'hora' => $slotInicio->format('H:00'),
+            'fecha' => $slotInicio->toDateString(),
+        ], 422);
+    }
+
+    // Crear la cita con fecha normalizada al inicio de la hora
     $cita = Cita::create([
         'clinica_id' => $request->clinica_id,
         'servicio_id' => $request->servicio_id,
         'creada_por' => $request->user()->id,
         'mascota_id' => $request->mascota_id,
-        'fecha' => $request->fecha,
+        'fecha' => $slotInicio->toDateTimeString(),
         'notas' => $request->notas,
     ]);
 
@@ -1171,4 +1325,86 @@ Route::middleware('auth:sanctum')->get('/mis-notificaciones/{id}', function(Requ
     ]);
 });
 // ================================================================
+
+// Listar horarios disponibles por hora para una clínica y fecha (YYYY-MM-DD)
+Route::get('/horarios-disponibles', function(Request $request) {
+    $request->validate([
+        'clinica_id' => 'required|exists:clinicas,id',
+        'fecha' => 'required|date_format:Y-m-d',
+    ]);
+
+    $clinicaId = (int) $request->query('clinica_id');
+    $fechaStr = $request->query('fecha');
+
+    // Determinar día de la semana (0=domingo ... 6=sábado) usando timezone de la app
+    $fecha = Carbon::createFromFormat('Y-m-d', $fechaStr, config('app.timezone'));
+    $dow = (int) $fecha->dayOfWeek; // 0..6
+
+    // Obtener horario de la clínica para ese día
+    $horario = Horario::where('clinica_id', $clinicaId)
+        ->where('dia_semana', $dow)
+        ->first();
+
+    if (!$horario) {
+        return response()->json([
+            'success' => true,
+            'clinica_id' => $clinicaId,
+            'fecha' => $fechaStr,
+            'slots' => [],
+            'message' => 'La clínica no tiene horario configurado para ese día',
+        ]);
+    }
+
+    // Se asume columnas: hora_inicio (HH:MM:SS), hora_fin (HH:MM:SS)
+    $inicio = Carbon::parse($fechaStr . ' ' . $horario->hora_inicio, config('app.timezone'));
+    $fin = Carbon::parse($fechaStr . ' ' . $horario->hora_fin, config('app.timezone'));
+
+    if ($fin->lessThanOrEqualTo($inicio)) {
+        return response()->json([
+            'success' => true,
+            'clinica_id' => $clinicaId,
+            'fecha' => $fechaStr,
+            'slots' => [],
+            'message' => 'Horario inválido (fin <= inicio)',
+        ]);
+    }
+
+    // Generar slots por cada hora completa [inicio, fin)
+    $slots = [];
+    $horas = [];
+    $cursor = $inicio->copy()->minute(0)->second(0);
+    if ($cursor->lt($inicio)) { $cursor->addHour(); }
+
+    while ($cursor->lt($fin)) {
+        $slotInicio = $cursor->copy();
+        $slotFin = $cursor->copy()->addHour();
+        if ($slotFin->gt($fin)) { break; }
+
+        // Verificar si ya existe una cita que ocupe exactamente esa hora de inicio
+        $existe = Cita::where('clinica_id', $clinicaId)
+            ->whereDate('fecha', $fechaStr)
+            ->whereTime('fecha', $slotInicio->format('H:i:s'))
+            ->exists();
+
+        if (!$existe) {
+            $slots[] = [
+                'inicio' => $slotInicio->format('Y-m-d H:00:00'),
+                'fin' => $slotFin->format('Y-m-d H:00:00'),
+                'label' => $slotInicio->format('H:00') . ' - ' . $slotFin->format('H:00'),
+            ];
+            // también listado simple de horas (ej. 9,10,11)
+            $horas[] = (int) $slotInicio->format('H');
+        }
+
+        $cursor->addHour();
+    }
+
+    return response()->json([
+        'success' => true,
+        'clinica_id' => $clinicaId,
+        'fecha' => $fechaStr,
+        'slots' => $slots,
+        'horas' => $horas,
+    ]);
+});
 
