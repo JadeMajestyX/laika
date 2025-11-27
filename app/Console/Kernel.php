@@ -17,6 +17,8 @@ class Kernel extends ConsoleKernel
 
         // Para entornos de prueba se puede activar cada minuto (comentar en producción):
         // $schedule->command('citas:cancelar-pasadas')->everyMinute();
+        // Recordatorio diario a las 23:46 para citas del día siguiente
+        $schedule->command('citas:recordatorio-manana')->dailyAt('23:46');
     }
 
     /**
@@ -27,7 +29,5 @@ class Kernel extends ConsoleKernel
         $this->load(__DIR__.'/Commands');
 
         require base_path('routes/console.php');
-        // Existing schedules...
-        // Recordatorio diario a las 23:40 para citas del día siguiente
-        $schedule->command('citas:recordatorio-manana')->dailyAt('23:40');
+        // comando(s) cargados desde App/Console/Commands
 }
