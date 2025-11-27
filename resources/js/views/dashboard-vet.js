@@ -5,6 +5,10 @@ let reportesMascotasChart = null;
 let reportesEspeciesChart = null;
 let reportesEstadosChart = null;
 
+const REPORTES_REFRESH_INTERVAL_MS = 30000;
+let activeSection = 'home';
+let reportesRefreshTimer = null;
+
 function buildChartSeries(citasPorDia) {
   const diasOrdenados = [
     { en: 'Monday', es: 'Lun' },
@@ -110,6 +114,30 @@ function renderActividades(actividades) {
   });
 }
 
+function setActiveSection(section) {
+  activeSection = section;
+  if (section !== 'reportes') {
+    stopReportesAutoRefresh();
+  }
+}
+
+function startReportesAutoRefresh() {
+  if (activeSection !== 'reportes' || reportesRefreshTimer) return;
+
+  reportesRefreshTimer = setInterval(() => {
+    if (document.hidden || activeSection !== 'reportes') {
+      return;
+    }
+    fetchReportesData({ showLoading: false });
+  }, REPORTES_REFRESH_INTERVAL_MS);
+}
+
+function stopReportesAutoRefresh() {
+  if (!reportesRefreshTimer) return;
+  clearInterval(reportesRefreshTimer);
+  reportesRefreshTimer = null;
+}
+
 function setTodayTexts() {
   const today = new Date();
   const pad = (n) => String(n).padStart(2, '0');
@@ -155,7 +183,7 @@ function initReportesSection() {
     window.open(`/vet-reportes/export/pdf?${params.toString()}`, '_blank');
   });
 
-  fetchReportesData();
+  fetchReportesData().finally(() => startReportesAutoRefresh());
 }
 
 function buildReportesQueryParams() {
@@ -172,9 +200,12 @@ function buildReportesQueryParams() {
   return params;
 }
 
-async function fetchReportesData() {
+async function fetchReportesData(options = {}) {
+  const { showLoading = true } = options;
   const params = buildReportesQueryParams();
-  setReportesLoading(true);
+  if (showLoading) {
+    setReportesLoading(true);
+  }
   try {
     const response = await fetch(`/vet-dashboard/data/reportes?${params.toString()}`, {
       headers: { Accept: 'application/json' },
@@ -190,7 +221,9 @@ async function fetchReportesData() {
     console.error('Error al obtener reportes veterinarios:', error);
     showReportesError();
   } finally {
-    setReportesLoading(false);
+    if (showLoading) {
+      setReportesLoading(false);
+    }
   }
 }
 
@@ -476,6 +509,7 @@ function renderResumenCitas(resumen = []) {
 }
 
 function renderSection(section, data) {
+  setActiveSection(section);
   const mainContent = document.getElementById('mainContent');
   if (!mainContent) return;
   mainContent.innerHTML = '';
@@ -895,5 +929,17 @@ function handlePopState() {
 
     initNavHandlers();
     handlePopState();
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        stopReportesAutoRefresh();
+        return;
+      }
+
+      if (activeSection === 'reportes') {
+        fetchReportesData({ showLoading: false });
+        startReportesAutoRefresh();
+      }
+    });
   });
 })();
