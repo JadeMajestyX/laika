@@ -117,6 +117,9 @@ Route::post('/mediciones', function(Request $request){
     $nivel = (int)$request->nivel_comida;
     $alertaEnviada = false;
     $alertaTipo = null;
+    // Detección de cambio rápido (peso o porcentaje) y marcado del anterior hasta 5 consecutivos
+    $marcarAnterior = false;
+    $cambiosConsecutivos = 0;
 
     // Obtener dispensador real para identificar usuario dueño
     $dispensador = Dispensador::where('codigo_dispensador_id', $codigoModel->id)->first();
@@ -129,9 +132,48 @@ Route::post('/mediciones', function(Request $request){
             ->orderByDesc('id')
             ->first();
         $prevNivel = $prev?->nivel_comida;
+        $prevPeso = $prev?->peso_comida;
 
         $debeNotificarVacio = ($nivel <= 0) && ($prevNivel === null || $prevNivel > 0);
         $debeNotificarBajo = ($nivel > 0 && $nivel < 40) && ($prevNivel === null || $prevNivel >= 40);
+
+        // Umbrales para considerar cambio rápido
+        $umbralPeso = 10.0; // gramos
+        $umbralNivel = 10;  // porcentaje
+
+        $deltaPeso = null;
+        $deltaNivel = null;
+        if ($prev) {
+            $deltaPeso = abs(((float)$medicion->peso_comida) - ((float)$prevPeso));
+            $deltaNivel = abs(((int)$nivel) - ((int)$prevNivel));
+        }
+
+        // Gestionar contador de cambios rápidos por dispensador (máximo 5 consecutivos)
+        $cacheKey = 'disp_cambios_rapidos_' . $codigoModel->id;
+        $cambiosConsecutivos = (int) (Cache::get($cacheKey) ?? 0);
+
+        $cambioRapido = false;
+        if ($prev) {
+            $cambioRapido = (
+                ($deltaPeso !== null && $deltaPeso >= $umbralPeso) ||
+                ($deltaNivel !== null && $deltaNivel >= $umbralNivel)
+            );
+        }
+
+        if ($cambioRapido) {
+            // Incrementar contador hasta 5
+            $cambiosConsecutivos = min(5, $cambiosConsecutivos + 1);
+            Cache::put($cacheKey, $cambiosConsecutivos, now()->addMinutes(30));
+            // Marcar el anterior mientras no superemos 5 consecutivos
+            $marcarAnterior = ($cambiosConsecutivos <= 5);
+        } else {
+            // Reiniciar contador si no hay cambio rápido
+            if ($cambiosConsecutivos !== 0) {
+                Cache::forget($cacheKey);
+            }
+            $cambiosConsecutivos = 0;
+            $marcarAnterior = false;
+        }
 
         if ($debeNotificarVacio || $debeNotificarBajo) {
             try {
@@ -145,6 +187,8 @@ Route::post('/mediciones', function(Request $request){
                         'tipo' => 'dispensador_alerta',
                         'codigo' => $request->codigo,
                         'nivel' => (string)$nivel,
+                        'marcar_anterior' => $marcarAnterior ? '1' : '0',
+                        'cambios_consecutivos' => (string)$cambiosConsecutivos,
                     ];
                     $sendSummary = $client->sendToUser($userId, $title, $body, $dataPayload);
                     if ($sendSummary['sent'] > 0) {
@@ -163,6 +207,8 @@ Route::post('/mediciones', function(Request $request){
         'data' => $medicion,
         'alerta_enviada' => $alertaEnviada,
         'alerta_tipo' => $alertaTipo,
+        'marcar_anterior' => $marcarAnterior,
+        'cambios_consecutivos' => $cambiosConsecutivos,
     ]);
 });
 
