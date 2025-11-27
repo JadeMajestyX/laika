@@ -212,57 +212,74 @@
     <div class="row g-4">
       <div class="col-md-4">
         <div class="card text-center border-0 shadow-sm p-4">
-          <img src="https://images.unsplash.com/photo-1607746882042-944635dfe10e?auto=format&fit=crop&q=80&w=400"
+          <img src="{{ asset('images/gomez.jpg') }}"
                class="rounded-circle mx-auto mb-3" width="100" height="100" alt="Dra. Pérez">
-          <h5 class="fw-semibold text-primary">Dra. Ana Pérez</h5>
+          <h5 class="fw-semibold text-primary">Dra. Gómez</h5>
           <p class="text-muted small">Cirujana veterinaria</p>
         </div>
       </div>
       <div class="col-md-4">
         <div class="card text-center border-0 shadow-sm p-4">
-          <img src="{{ asset('images/mancillas.png') }}"
+          <img src="{{ asset('images/martinez.jpg') }}"
                class="rounded-circle mx-auto mb-3" width="100" height="100" alt="Dr. Mancillas">
-          <h5 class="fw-semibold text-primary">Dr. Gabriel Mancillas</h5>
+          <h5 class="fw-semibold text-primary">Dr. Martinez</h5>
           <p class="text-muted small">Especialista en salud animal</p>
         </div>
       </div>
       <div class="col-md-4">
         <div class="card text-center border-0 shadow-sm p-4">
-          <img src="https://images.unsplash.com/photo-1599577183888-5f46d4b2f46b?auto=format&fit=crop&q=80&w=400"
+           <img src="{{ asset('images/hernadez.jpg') }}"
                class="rounded-circle mx-auto mb-3" width="100" height="100" alt="Téc. Gómez">
-          <h5 class="fw-semibold text-primary">Laura Gómez</h5>
+          <h5 class="fw-semibold text-primary">Laura Hernandez</h5>
           <p class="text-muted small">Asistente veterinaria</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Aplicación Móvil -->
+<!-- Aplicación Móvil -->
 <section id="app" class="py-5 bg-light">
-  <div class="container text-center">
-    <h2 class="section-title mb-3">¡Lleva Laika en tu bolsillo!</h2>
-    <p class="mb-4">Con nuestra app móvil, podrás agendar citas, monitorear la alimentación de tu mascota y recibir alertas en tiempo real.</p>
-    <div class="d-flex justify-content-center gap-3 flex-wrap">
-      <a href="#" class="btn btn-primary btn-lg d-flex align-items-center gap-2">
-        {{-- <i class="bi bi-google-play"></i> Google Play --}}
-        Descargar App
-      </a>
-    <div class="hero-content text-white">
-      <h1 class="display-4 fw-bold mb-3">Cuidamos lo que más amas ❤️</h1>
-      <p class="lead mb-4">En Laika, tu mascota recibe atención profesional, cariño y tecnología avanzada para su bienestar.</p>
-      <a href="#servicios" class="btn btn-light btn-lg fw-semibold">Conoce nuestros servicios</a>
-    </div>
-  </section>
+    <div class="container">
 
-      {{-- <a href="#" class="btn btn-dark btn-lg d-flex align-items-center gap-2">
-        <i class="bi bi-apple"></i> App Store
-      </a> --}}
+        <h2 class="section-title text-center mb-3">¡Lleva Laika en tu bolsillo!</h2>
+
+        <div class="row align-items-center text-center">
+
+            <!-- Columna izquierda: Texto + Botón -->
+            <div class="col-md-6 mb-4">
+
+          <p class="mb-4" style="font-size: 1.15rem; font-weight: 500; color: #555;">
+                Con nuestra app móvil, podrás agendar citas, monitorear la alimentación de tu mascota 
+                y recibir alertas en tiempo real.
+            </p>
+
+
+                <a 
+                    href="https://play.google.com/apps/internaltest/4701520737243560292"
+                    target="_blank"
+                >
+                    <img 
+                        src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_ES.svg"
+                        alt="Da clic para descargar la APP"
+                        class="img-fluid d-block mx-auto"
+                        style="max-width: 250px;"
+                    >
+                </a>
+            </div>
+
+            <!-- Columna derecha: Imagen de vista previa -->
+            <div class="col-md-6">
+                <img 
+                    src="{{ asset('images/download_laika.jpg') }}"
+                    alt="Vista previa de la app"
+                    class="img-fluid d-block mx-auto"
+                    style="max-width: 200px;"
+                >
+            </div>
+
+        </div>
+
     </div>
-    <div class="mt-4">
-      <img src="https://images.unsplash.com/photo-1585079549630-5f74a2fa065b?auto=format&fit=crop&q=80&w=600"
-           alt="App móvil Laika" class="img-fluid rounded-4 shadow-sm">
-    </div>
-  </div>
 </section>
 
 
@@ -282,7 +299,7 @@
         <div class="col-md-4">
           <h5 class="fw-bold text-primary">Contacto</h5>
           <ul class="list-unstyled small">
-            <li><i class="bi bi-telephone me-2 text-primary"></i> +52 312 000 0000</li>
+            <li><i class="bi bi-telephone me-2 text-primary"></i> +52 314 160 9870</li>
             <li><i class="bi bi-envelope me-2 text-primary"></i> help.vetpet@jademajesty.com</li>
             <li><i class="bi bi-geo-alt me-2 text-primary"></i> Manzanillo, Colima</li>
           </ul>
@@ -309,26 +326,4 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
