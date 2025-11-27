@@ -22,6 +22,7 @@ use App\Notifications\ResetPasswordCodeNotification;
 use App\Notifications\WelcomeNotification;
 use App\Support\ActivityLogger;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 use App\Http\Controllers\Api\DeviceTokenController;
 use App\Http\Controllers\Api\NotificationsController;
 use Carbon\Carbon;
@@ -476,7 +477,128 @@ Route::match(['get','post'], '/activar-dispensador', function (Request $request)
     // Con objetivo: el objetivo real es peso_actual + cantidad solicitada
     $objetivo = $pesoActual + $cantidad;
 
-    // Verificar si en las últimas 3 lecturas no ha cambiado el peso
+    // Fase de observación de 20s: al recibir una cantidad (p.ej. 200g),
+    // 1) activar dispensado y guardar peso base y timestamp
+    // 2) tras 20s, si el peso aumentó -> continuar; si no -> detener y notificar.
+    $obsKey = 'disp_obs_' . $codigoModel->id;
+    $epsilon20 = 1.0; // umbral mínimo de incremento (1g)
+    $ahora = Carbon::now();
+    $obs = Cache::get($obsKey);
+
+    if (!$obs) {
+        // Primer paso: iniciar dispensado y registrar observación de 20s
+        Cache::put($obsKey, [
+            'peso_base' => (float) $pesoActual,
+            'objetivo' => (float) $objetivo,
+            'inicio' => $ahora->toDateTimeString(),
+        ], now()->addMinutes(10));
+
+        $statuss->status = true; // iniciar dispensado
+        $statuss->save();
+
+        return response()->json([
+            'success' => true,
+            'estado' => 1,
+            'message' => 'Inicio de dispensado; observando 20s para verificar incremento.',
+            'peso_actual' => (float)$pesoActual,
+            'objetivo' => (float)$objetivo,
+            'observacion_20s' => true,
+            'esperar_segundos' => 20,
+        ]);
+    } else {
+        // Observación en curso: verificar si ya pasaron 20s
+        try { $inicioObs = Carbon::parse($obs['inicio']); } catch (\Throwable $e) { $inicioObs = $ahora->copy()->subSeconds(21); }
+        $transcurridos = $inicioObs->diffInSeconds($ahora);
+
+        if ($transcurridos < 20) {
+            // Aún en ventana de 20s: mantener dispensado
+            $statuss->status = true;
+            $statuss->save();
+
+            return response()->json([
+                'success' => true,
+                'estado' => 1,
+                'message' => 'Esperando 20s para evaluar incremento.',
+                'segundos_restantes' => 20 - $transcurridos,
+                'peso_actual' => (float)$pesoActual,
+                'objetivo' => (float)$obs['objetivo'],
+            ]);
+        }
+
+        // Pasados 20s: comprobar incremento respecto al peso base
+        $pesoBase = (float)($obs['peso_base'] ?? 0.0);
+        $objetivoObs = (float)($obs['objetivo'] ?? $objetivo);
+
+        if ((float)$pesoActual > ($pesoBase + $epsilon20)) {
+            // Hubo incremento: evaluar objetivo
+            if ((float)$pesoActual >= $objetivoObs) {
+                // Objetivo alcanzado: detener y limpiar observación
+                $statuss->status = false;
+                $statuss->save();
+                Cache::forget($obsKey);
+
+                return response()->json([
+                    'success' => true,
+                    'estado' => 0,
+                    'message' => 'Objetivo alcanzado tras verificación de 20s. Dispensador detenido.',
+                    'peso_actual' => (float)$pesoActual,
+                    'objetivo' => (float)$objetivoObs,
+                ]);
+            } else {
+                // Aún no alcanza: continuar dispensando y re-armar otra observación de 20s
+                Cache::put($obsKey, [
+                    'peso_base' => (float) $pesoActual,
+                    'objetivo' => (float) $objetivoObs,
+                    'inicio' => $ahora->toDateTimeString(),
+                ], now()->addMinutes(10));
+
+                $statuss->status = true;
+                $statuss->save();
+
+                return response()->json([
+                    'success' => true,
+                    'estado' => 1,
+                    'message' => 'Incremento detectado; continuando dispensado y observando otros 20s.',
+                    'peso_actual' => (float)$pesoActual,
+                    'objetivo' => (float)$objetivoObs,
+                    'restante' => max(0.0, $objetivoObs - (float)$pesoActual),
+                    'observacion_20s' => true,
+                ]);
+            }
+        } else {
+            // No hubo incremento tras 20s: detener, notificar y limpiar observación
+            $statuss->status = false;
+            $statuss->save();
+            Cache::forget($obsKey);
+
+            try {
+                $dispensadorReal = Dispensador::where('codigo_dispensador_id', $codigoModel->id)->first();
+                $userId = $dispensadorReal?->usuario_id;
+                if ($userId && config('fcm.use_v1')) {
+                    $client = new FcmV1Client();
+                    $title = 'Problema con dispensador';
+                    $body = 'No se detectó incremento de peso después de 20s. Revisa el dispensador.';
+                    $dataPayload = [
+                        'tipo' => 'dispensador_problema',
+                        'codigo' => $codigo,
+                    ];
+                    $client->sendToUser($userId, $title, $body, $dataPayload);
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Error notificando problema de dispensador (20s): ' . $e->getMessage());
+            }
+
+            return response()->json([
+                'success' => true,
+                'estado' => 0,
+                'message' => 'Sin incremento tras 20s. Dispensador detenido y problema notificado.',
+                'peso_actual' => (float)$pesoActual,
+                'objetivo' => (float)$objetivo,
+            ]);
+        }
+    }
+
+    // (Fallback previo) Verificar si en las últimas 3 lecturas no ha cambiado el peso
     // y que dicha condición se mantenga durante una ventana de 30s.
     $ultimas = Medicion::where('dispensador_id', $codigoModel->id)
         ->orderByDesc('id')
