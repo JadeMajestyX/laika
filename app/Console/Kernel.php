@@ -27,5 +27,7 @@ class Kernel extends ConsoleKernel
         $this->load(__DIR__.'/Commands');
 
         require base_path('routes/console.php');
-    }
+        // Existing schedules...
+        // Recordatorio diario a las 23:40 para citas del día siguiente
+        $schedule->command('citas:recordatorio-manana')->dailyAt('23:40');
 }
