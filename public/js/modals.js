@@ -6,6 +6,14 @@
     return;
   }
 
+    const CLINICAS = [
+    { id: 1, name: 'Clinica FCAM' },
+    { id: 2, name: 'Clinica FIE' },
+    { id: 3, name: 'Clinica FACIMAR' },
+    { id: 4, name: 'Veterinaria el Caballo' },
+    { id: 5, name: 'Animal Care' }
+  ];
+
   const viewModalEl = document.getElementById('viewModal');
   const editModalEl = document.getElementById('editModal');
   const confirmModalEl = document.getElementById('confirmDeleteModal');
@@ -71,7 +79,10 @@
         'updated_at',
         'deleted_at',
         'imagen',
-        'notas'
+        'imagen_perfil',
+        'notas',
+        'clinica_id',
+        'user_id'
       ];
      const rows = Object.entries(obj)
       .filter(([k, v]) => !skipView.includes(k)) // ← FILTRO
@@ -84,10 +95,62 @@
       return rows.join('');
     }
 
-  function buildEditFormFields(data) {
+    // --- VALIDACIÓN Y MENSAJES  ---
+    function clearFormErrors(container) {
+      // quitar marcas previas
+      container.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+      container.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
+      const existingAlert = container.querySelector('.js-form-alert');
+      if (existingAlert) existingAlert.remove();
+    }
+
+    function showFormErrors(container, errors) {
+      // errors puede ser: { field: ['msg1','msg2'], ... } o array de strings
+      clearFormErrors(container);
+
+      // Si es objeto con campos
+      if (errors && typeof errors === 'object' && !Array.isArray(errors)) {
+        // mostrar mensajes por campo
+        Object.entries(errors).forEach(([field, msgs]) => {
+          const input = container.querySelector(`[name="${field}"]`);
+          if (input) {
+            input.classList.add('is-invalid');
+            const fb = document.createElement('div');
+            fb.className = 'invalid-feedback';
+            fb.innerHTML = escapeHtml((Array.isArray(msgs) ? msgs.join('<br>') : String(msgs)));
+            // si el input está dentro de un .mb-3 lo anexamos después del input
+            input.parentNode.appendChild(fb);
+          }
+        });
+        // además agregamos un alert general arriba
+        const alert = document.createElement('div');
+        alert.className = 'alert alert-danger js-form-alert';
+        alert.innerHTML = '<strong>Errores al validar el formulario. Revisa los campos marcados.</strong>';
+        container.prepend(alert);
+        return;
+      }
+
+      // Si es array o string, mostrarlo en un alert general
+      const alert = document.createElement('div');
+      alert.className = 'alert alert-danger js-form-alert';
+      if (Array.isArray(errors)) alert.innerHTML = '<strong>' + escapeHtml(errors.join('<br>')) + '</strong>';
+      else alert.innerHTML = '<strong>' + escapeHtml(String(errors || 'Error en el formulario')) + '</strong>';
+      container.prepend(alert);
+    }
+
+    function showSuccessMessage(container, msg = 'Datos guardados') {
+      const existingAlert = container.querySelector('.js-form-alert');
+      if (existingAlert) existingAlert.remove();
+      const alert = document.createElement('div');
+      alert.className = 'alert alert-success js-form-alert';
+      alert.innerHTML = '<strong>' + escapeHtml(msg) + '</strong>';
+      container.prepend(alert);
+    }
+
+  function buildEditFormFields(data, section) {
     
     const fields = [];
-    const skip = ['id','created_at','updated_at', 'deleted_at', 'imagen','notas','password'];
+    const skip = ['id','created_at','updated_at', 'deleted_at', 'imagen_perfil','user_id','notas','password','imagen'];
 
     Object.entries(data).forEach(([k,v]) => {
       if (skip.includes(k)) return;
@@ -99,7 +162,7 @@
       // --- SELECTS PERSONALIZADOS ---
       if (k === 'rol') {  //U / A
         inputHtml = `
-          <select name="rol" class="form-select">
+          <select name="rol" class="form-select" required>
             <option value="A" ${v === 'A' ? 'selected' : ''}>Administrador</option>
             <option value="U" ${v === 'U' ? 'selected' : ''}>Usuario</option>
             <option value="V" ${v === 'V' ? 'selected' : ''}>Veterinario</option>
@@ -107,7 +170,7 @@
       }
       else if (k === 'genero') { //U / A
         inputHtml = `
-          <select name="genero" class="form-select">
+          <select name="genero" class="form-select" required>
             <option value="F" ${v === 'F' ? 'selected' : ''}>Femenino</option>
             <option value="M" ${v === 'M' ? 'selected' : ''}>Masculino</option>
             <option value="O" ${v === 'O' ? 'selected' : ''}>Otro</option>
@@ -115,7 +178,7 @@
       }
         else if (k === 'especie') {  //mascotas
               inputHtml = `
-                <select name="especie" id="select-especie" class="form-select">
+                <select name="especie" id="select-especie" class="form-select" required>
                   <option value="">Selecciona especie</option>
                   ${Object.keys(window.RAZAS_POR_ESPECIE).map(especie => `
                     <option value="${especie}" ${v === especie ? 'selected' : ''}>${especie}</option>
@@ -128,7 +191,7 @@
                   const razas = window.RAZAS_POR_ESPECIE[especieActual] || [];
 
                   inputHtml = `
-                    <select name="raza" id="select-raza" class="form-select">
+                    <select name="raza" id="select-raza" class="form-select" required>
                       <option value="">Selecciona raza</option>
                       ${razas.map(raza => `
                         <option value="${raza}" ${v === raza ? 'selected' : ''}>${raza}</option>
@@ -139,7 +202,7 @@
 
           else if (k === 'sexo') {
             inputHtml = `
-              <select name="sexo" class="form-select">
+              <select name="sexo" class="form-select" required>
                 <option value="">Selecciona</option>
                 <option value="M" ${v === 'M' ? 'selected' : ''}>Macho</option>
                 <option value="H" ${v === 'H' ? 'selected' : ''}>Hembra</option>
@@ -161,6 +224,22 @@
                       value="${escapeHtml(String(v ?? ''))}" 
                       class="form-control" />`;
       }
+
+      else if (k === 'clinica_id') {
+          if (section === 'trabajadores') {
+            inputHtml = `
+              <select name="clinica_id" class="form-select" required>
+                <option value="">Selecciona clínica</option>
+                ${CLINICAS.map(c => {
+                  const selected = (String(v) === String(c.id) || String(v) === c.name) ? 'selected' : '';
+                  return `<option value="${c.id}" ${selected}>${c.name}</option>`;
+                }).join('')}
+              </select>
+            `;
+              }else {
+                return;
+              }
+            }
 
       // --- TIPOS AUTOMÁTICOS ---
       else if (typeof v === 'number') {
@@ -195,12 +274,18 @@
               maxAttr = 'maxlength="25"';
           }
 
+          // campos que NO queremos obligatorios (lista de excepciones)
+          const optionalFields = ['imagen_perfil','imagen','notas','password','user_id', 'apellido_materno']; // añade más si hace falta
+
+          const requiredAttr = optionalFields.includes(k) ? '' : 'required';
+
           inputHtml = `
             <input type="text" 
                   name="${k}" 
                   value="${escapeHtml(String(v ?? ''))}" 
                   class="form-control"
                   ${maxAttr}
+                  ${requiredAttr}
             />`;
         }
 
@@ -244,7 +329,7 @@
                         method: 'GET',
                         headers: { Accept: 'application/json' }
                       });
-        const formFields = buildEditFormFields(payload);
+        const formFields = buildEditFormFields(payload, section);
 
         editModalBody.innerHTML = `
           <input type="hidden" name="id" value="${escapeHtml(id)}"/>
@@ -303,29 +388,99 @@
       const section = formData.get('_section');
       const id = formData.get('id');
       if (!section || !id) { alert('Falta sección o id'); return; }
-      const payload = {};
-      formData.forEach((v,k) => {
-        if (k === '_section' || k === 'id') return;
-        if (k === 'is_active') {
-        payload[k] = v === 'on' ? 1 : 0;
-      } else {
-        payload[k] = v;
+
+
+        // VALIDACIÓN CLIENTE: revisar campos required del formulario visible en el modal
+      const container = editModalBody; 
+      clearFormErrors(container);
+
+      // buscar todos los controls que tengan el atributo required
+      const requiredControls = Array.from(container.querySelectorAll('input[required], select[required], textarea[required]'));
+
+      const clientErrors = {};
+      requiredControls.forEach(ctrl => {
+        // si es checkbox tipo switch, manejar diferente
+        if (ctrl.type === 'checkbox') return; // is_active no es obligatorio visualmente
+        const val = ctrl.value;
+        if (val === null || val === undefined || String(val).trim() === '') {
+          clientErrors[ctrl.name || '(campo)'] = ['Este campo es obligatorio.'];
+        }
+      });
+
+      if (Object.keys(clientErrors).length > 0) {
+        showFormErrors(container, clientErrors);
+        return; // detener envío
       }
 
+      // detectar archivos
+      let hasFile = false;
+      for (const pair of formData.entries()) {
+        const value = pair[1];
+        if (value instanceof File && value.size > 0) { hasFile = true; break; }
+      }
+          const payload = {};
+          formData.forEach((v,k) => {
+            if (k === '_section' || k === 'id') return;
+            if (k === 'is_active') {
+            payload[k] = v === 'on' ? 1 : 0;
+          } else {
+            payload[k] = v;
+          }
+
+          });
+          try {
+            const url = getApiUrl(section, id);
+              if (hasFile) {
+          // enviar FormData 
+          formData.set('_method','PUT');
+          clearFormErrors(container);
+          const res = await fetch(url, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'X-CSRF-TOKEN': getCsrfToken(), 'Accept': 'application/json' },
+            body: formData
       });
-      try {
-        const url = getApiUrl(section, id);
-        await fetchJson(url, { 
-                          method: 'PUT',
-                          body: JSON.stringify(payload),
-                          headers: { 
-                            'Accept': 'application/json'
-                          }
-                        });
-        editModal.hide();
+      if (!res.ok) {
+        // intentar parsear JSON con errores
+        const txt = await res.text().catch(()=>'');
+        let json;
+        try { json = JSON.parse(txt); } catch(e){ json = null; }
+        if (res.status === 422 && json && json.errors) {
+          showFormErrors(container, json.errors);
+          throw new Error('Validation error');
+        } else {
+          throw new Error(txt || res.statusText || 'Error en servidor');
+        }
+      }
+    } else {
+      // envío JSON
+          clearFormErrors(container);
+          await fetchJson(url, {
+            method: 'PUT',
+            body: JSON.stringify(payload),
+            headers: { 'Accept': 'application/json' }
+          });
+        }
+
+        // si llegamos aquí es éxito
+        showSuccessMessage(container, 'Datos actualizados');
         document.dispatchEvent(new CustomEvent('entity:updated', { detail: { section, id } }));
+        setTimeout(()=> { editModal.hide(); }, 900);
+
       } catch (err) {
-        console.error(err); alert('Error guardando los cambios: ' + (err.message || err));
+        // muestra errores (Laravel devuelve 422 con errors)
+        if (err && err.status === 422 && err.body) {
+          try {
+            const obj = JSON.parse(err.body);
+            if (obj.errors) {
+              showFormErrors(editModalBody, obj.errors);
+              return;
+            }
+          } catch(e){}
+        }
+        console.error(err);
+        // mostrará mensaje genérico si no hay detalles
+        showFormErrors(editModalBody, ['Error guardando los cambios: ' + (err.message || err)]);
       }
     });
   }
