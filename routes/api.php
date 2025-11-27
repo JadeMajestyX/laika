@@ -472,8 +472,11 @@ Route::match(['get','post'], '/activar-dispensador', function (Request $request)
         ]);
     }
 
-    // Con objetivo: decidir si continuar dispensando o detener
-    if ($pesoActual >= $cantidad) {
+    // Con objetivo: el objetivo real es peso_actual + cantidad solicitada
+    $objetivo = $pesoActual + $cantidad;
+
+    // Decidir si continuar dispensando o detener en función del objetivo
+    if ($pesoActual >= $objetivo) {
         // Objetivo alcanzado: detener
         $statuss->status = false; // 0 = detener
         $statuss->save();
@@ -482,7 +485,7 @@ Route::match(['get','post'], '/activar-dispensador', function (Request $request)
             'estado' => 0,
             'message' => 'Objetivo alcanzado. Dispensador detenido.',
             'peso_actual' => (float)$pesoActual,
-            'objetivo' => $cantidad,
+            'objetivo' => (float)$objetivo,
         ]);
     } else {
         // Aún no alcanza: activar
@@ -493,7 +496,7 @@ Route::match(['get','post'], '/activar-dispensador', function (Request $request)
             'estado' => 1,
             'message' => 'Dispensando hasta alcanzar el objetivo.',
             'peso_actual' => (float)$pesoActual,
-            'objetivo' => $cantidad,
+            'objetivo' => (float)$objetivo,
         ]);
     }
 });
