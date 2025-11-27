@@ -10,7 +10,7 @@ class Kernel extends ConsoleKernel
     /**
      * Define the application's command schedule.
      */
-    protected function schedule(Schedule $schedule): void
+    protected function schedule(Schedule $schedule)
     {
         // Ejecutar diariamente a las 00:10
         $schedule->command('citas:cancelar-pasadas')->dailyAt('00:10');
@@ -24,10 +24,12 @@ class Kernel extends ConsoleKernel
     /**
      * Register the commands for the application.
      */
-    protected function commands(): void
+    protected function commands()
     {
         $this->load(__DIR__.'/Commands');
 
         require base_path('routes/console.php');
-        // comando(s) cargados desde App/Console/Commands
+
+    }
+
 }
