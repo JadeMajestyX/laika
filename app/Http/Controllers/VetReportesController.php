@@ -3,169 +3,207 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cita;
-use App\Models\Mascota;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf;
-use App\Exports\CitasResumenExport;
 
 class VetReportesController extends Controller
 {
     /**
-     * Obtener datos para el reporte según el filtro
+     * Endpoint principal que consume el dashboard del veterinario.
      */
-    public function getData(Request $request)
+    public function getReportesData(Request $request)
     {
-        $desde = $request->input('desde');
-        $hasta = $request->input('hasta');
-        $periodo = $request->input('periodo', 'este-mes');
+        $data = $this->buildReportData($request);
 
-        // Determinar fechas según el periodo
+        return response()->json($data);
+    }
+
+    /**
+     * Construye todas las métricas del módulo de reportes para el veterinario autenticado.
+     */
+    private function buildReportData(Request $request, bool $withCharts = false): array
+    {
+        $veterinarioId = Auth::id();
+
+        if (!$veterinarioId) {
+            abort(401, 'Usuario no autenticado');
+        }
+
+        [$desde, $hasta, $periodo] = $this->resolveRangoFechas($request);
+
+        $data = [
+            'metricas' => $this->getMetricasPrincipales($desde, $hasta, $veterinarioId),
+            'mascotasAtendidas' => $this->getMascotasAtendidas($desde, $hasta, $veterinarioId),
+            'mascotasEspecie' => $this->getMascotasPorEspecie($desde, $hasta, $veterinarioId),
+            'resumenCitas' => $this->getResumenCitas($desde, $hasta, $veterinarioId),
+            'periodo' => [
+                'desde' => $desde->format('Y-m-d'),
+                'hasta' => $hasta->format('Y-m-d'),
+                'filtro' => $periodo,
+            ],
+        ];
+
+        if ($withCharts) {
+            $data['charts'] = $this->buildCharts($data);
+        }
+
+        return $data;
+    }
+
+    /**
+     * Determina el rango de fechas a partir del filtro recibido.
+     */
+    private function resolveRangoFechas(Request $request): array
+    {
+        $periodo = $request->input('periodo', 'este-mes');
+        $desdeInput = $request->input('desde');
+        $hastaInput = $request->input('hasta');
+        $now = Carbon::now();
+
         switch ($periodo) {
-            case 'este-mes':
-                $desde = Carbon::now()->startOfMonth();
-                $hasta = Carbon::now()->endOfMonth();
-                break;
             case 'mes-anterior':
-                $desde = Carbon::now()->subMonth()->startOfMonth();
-                $hasta = Carbon::now()->subMonth()->endOfMonth();
+                $desde = $now->copy()->subMonth()->startOfMonth();
+                $hasta = $now->copy()->subMonth()->endOfMonth();
                 break;
             case 'trimestre-actual':
-                $desde = Carbon::now()->startOfQuarter();
-                $hasta = Carbon::now()->endOfQuarter();
+                $desde = $now->copy()->startOfQuarter();
+                $hasta = $now->copy()->endOfQuarter();
                 break;
             case 'personalizado':
-                $desde = Carbon::parse($desde);
-                $hasta = Carbon::parse($hasta);
+                $desde = $desdeInput ? Carbon::parse($desdeInput) : $now->copy()->startOfMonth();
+                $hasta = $hastaInput ? Carbon::parse($hastaInput) : $desde->copy()->endOfDay();
+                break;
+            case 'este-mes':
+            default:
+                $desde = $now->copy()->startOfMonth();
+                $hasta = $now->copy()->endOfMonth();
                 break;
         }
 
-        // Obtener datos de métricas principales
-        $metricas = $this->getMetricasPrincipales($desde, $hasta);
+        if ($hasta->lt($desde)) {
+            [$desde, $hasta] = [$hasta->copy(), $desde->copy()];
+        }
 
-        // Obtener datos para la gráfica de mascotas atendidas
-        $mascotasAtendidas = $this->getMascotasAtendidas($desde, $hasta);
-
-        // Obtener datos para la gráfica de mascotas por especie
-        $mascotasEspecie = $this->getMascotasPorEspecie($desde, $hasta);
-
-        // Obtener resumen de citas
-        $resumenCitas = $this->getResumenCitas($desde, $hasta);
-
-        return response()->json([
-            'metricas' => $metricas,
-            'mascotasAtendidas' => $mascotasAtendidas,
-            'mascotasEspecie' => $mascotasEspecie,
-            'resumenCitas' => $resumenCitas,
-            'periodo' => [
-                'desde' => $desde->format('Y-m-d'),
-                'hasta' => $hasta->format('Y-m-d')
-            ]
-        ]);
+        return [
+            $desde->copy()->startOfDay(),
+            $hasta->copy()->endOfDay(),
+            $periodo,
+        ];
     }
 
     /**
      * Obtener métricas principales
      */
-    private function getMetricasPrincipales($desde, $hasta)
+    private function getMetricasPrincipales(Carbon $desde, Carbon $hasta, int $veterinarioId)
     {
         return [
-            'citas' => Cita::whereBetween('fecha', [$desde, $hasta])->count(),
-            // Las "consultas" se determinan por el servicio asociado (nombre = 'consulta')
-            'consultas' => Cita::whereBetween('fecha', [$desde, $hasta])
-                ->whereHas('servicio', function ($q) {
-                    $q->where('nombre', 'consulta');
-                })
+            'citas' => Cita::where('veterinario_id', $veterinarioId)
+                ->whereBetween('fecha', [$desde, $hasta])
                 ->count(),
-            'mascotas' => Cita::whereBetween('fecha', [$desde, $hasta])
+            'consultas' => Cita::where('veterinario_id', $veterinarioId)
+                ->whereBetween('fecha', [$desde, $hasta])
+                ->where('tipo', 'consulta')
+                ->count(),
+            'mascotas' => Cita::where('veterinario_id', $veterinarioId)
+                ->whereBetween('fecha', [$desde, $hasta])
                 ->distinct('mascota_id')
-                ->count('mascota_id')
+                ->count('mascota_id'),
         ];
     }
 
     /**
      * Obtener datos para la gráfica de mascotas atendidas
      */
-    private function getMascotasAtendidas($desde, $hasta)
+    private function getMascotasAtendidas(Carbon $desde, Carbon $hasta, int $veterinarioId): array
     {
-        $period = CarbonPeriod::create($desde, '1 day', $hasta);
+        $totalesPorDia = Cita::selectRaw('DATE(fecha) as dia, COUNT(DISTINCT mascota_id) as total')
+            ->where('veterinario_id', $veterinarioId)
+            ->whereBetween('fecha', [$desde, $hasta])
+            ->where('status', 'completada')
+            ->groupBy('dia')
+            ->pluck('total', 'dia');
+
+        $period = CarbonPeriod::create($desde->copy()->startOfDay(), '1 day', $hasta->copy()->startOfDay());
         $fechas = [];
         $atendidas = [];
 
         foreach ($period as $date) {
-            $fechas[] = $date->format('Y-m-d');
-            $count = Cita::whereDate('fecha', $date)
-                ->where('status', 'completada')
-                ->distinct('mascota_id')
-                ->count('mascota_id');
-            $atendidas[] = $count;
+            $clave = $date->format('Y-m-d');
+            $fechas[] = $clave;
+            $atendidas[] = (int) ($totalesPorDia[$clave] ?? 0);
         }
 
         return [
             'fechas' => $fechas,
-            'atendidas' => $atendidas
+            'atendidas' => $atendidas,
         ];
     }
 
     /**
      * Obtener datos para la gráfica de mascotas por especie
      */
-    private function getMascotasPorEspecie($desde, $hasta)
+    private function getMascotasPorEspecie(Carbon $desde, Carbon $hasta, int $veterinarioId)
     {
         return DB::table('citas')
             ->join('mascotas', 'citas.mascota_id', '=', 'mascotas.id')
             ->whereBetween('citas.fecha', [$desde, $hasta])
             ->where('citas.status', 'completada')
+            ->where('citas.veterinario_id', $veterinarioId)
             ->select('mascotas.especie', DB::raw('COUNT(DISTINCT mascotas.id) as total'))
             ->groupBy('mascotas.especie')
-            ->get()
-            ->mapWithKeys(function ($item) {
-                return [$item->especie => $item->total];
-            });
+            ->pluck('total', 'mascotas.especie')
+            ->filter(fn ($total, $especie) => !is_null($especie))
+            ->toArray();
     }
 
     /**
      * Obtener resumen de citas
      */
-    private function getResumenCitas($desde, $hasta)
+    private function getResumenCitas(Carbon $desde, Carbon $hasta, int $veterinarioId)
     {
-        $total = Cita::whereBetween('fecha', [$desde, $hasta])->count();
-        // Calcular periodo anterior con la misma longitud inmediatamente antes de $desde
-        // Usamos diffInDays + 1 para contar inclusive los días
+        $total = Cita::where('veterinario_id', $veterinarioId)
+            ->whereBetween('fecha', [$desde, $hasta])
+            ->count();
+
         $rangoDias = $desde->diffInDays($hasta) + 1;
         $periodoAnterior = [
-            $desde->copy()->subDays($rangoDias),
-            $desde->copy()->subDay()
+            $desde->copy()->subDays($rangoDias)->startOfDay(),
+            $desde->copy()->subDay()->endOfDay(),
         ];
 
-        // Agrupar por la columna real `status`, pero exponerla como `estado` en los resultados
-        $citas = Cita::whereBetween('fecha', [$desde, $hasta])
+        $citas = Cita::where('veterinario_id', $veterinarioId)
+            ->whereBetween('fecha', [$desde, $hasta])
             ->select(DB::raw('status as estado'), DB::raw('COUNT(*) as cantidad'))
             ->groupBy('status')
             ->get();
 
-        $citasAnteriores = Cita::whereBetween('fecha', $periodoAnterior)
+        $citasAnteriores = Cita::where('veterinario_id', $veterinarioId)
+            ->whereBetween('fecha', $periodoAnterior)
             ->select(DB::raw('status as estado'), DB::raw('COUNT(*) as cantidad'))
             ->groupBy('status')
             ->get()
             ->pluck('cantidad', 'estado');
 
         return $citas->map(function ($cita) use ($total, $citasAnteriores) {
-            $porcentaje = ($total > 0) ? round(($cita->cantidad / $total) * 100, 2) : 0;
+            $porcentaje = $total > 0 ? round(($cita->cantidad / $total) * 100, 2) : 0;
             $cantidadAnterior = $citasAnteriores[$cita->estado] ?? 0;
-            $tendencia = $cantidadAnterior > 0 
+            $tendencia = $cantidadAnterior > 0
                 ? round((($cita->cantidad - $cantidadAnterior) / $cantidadAnterior) * 100, 2)
-                : 100;
+                : ($cita->cantidad > 0 ? 100 : 0);
 
             return [
                 'estado' => ucfirst($cita->estado),
                 'cantidad' => $cita->cantidad,
                 'porcentaje' => $porcentaje,
-                'tendencia' => $tendencia
+                'tendencia' => $tendencia,
             ];
-        });
+        })->values();
     }
 
     /**
@@ -173,13 +211,111 @@ class VetReportesController extends Controller
      */
     public function exportarPDF(Request $request)
     {
-        $data = $this->getData($request)->original;
-        
-        $pdf = PDF::loadView('exports.resumen-citas', [
+        $data = $this->buildReportData($request, true);
+
+        $pdf = Pdf::loadView('exports.resumen-citas', [
             'data' => $data,
-            'periodo' => $data['periodo']
+            'periodo' => $data['periodo'],
         ]);
-        
+
         return $pdf->download('resumen-citas.pdf');
+    }
+
+    /**
+     * Genera imágenes base64 para las gráficas incluidas en el PDF.
+     */
+    private function buildCharts(array $data): array
+    {
+        $charts = [];
+
+        if (!empty($data['mascotasAtendidas']['fechas'])) {
+            $charts['mascotasAtendidas'] = $this->generateChartImage([
+                'type' => 'line',
+                'data' => [
+                    'labels' => $data['mascotasAtendidas']['fechas'],
+                    'datasets' => [[
+                        'label' => 'Mascotas atendidas',
+                        'data' => $data['mascotasAtendidas']['atendidas'],
+                        'borderColor' => '#3A7CA5',
+                        'backgroundColor' => 'rgba(58,124,165,0.2)',
+                        'fill' => true,
+                        'tension' => 0.4,
+                    ]],
+                ],
+                'options' => [
+                    'plugins' => ['legend' => ['display' => false]],
+                    'scales' => ['y' => ['beginAtZero' => true]],
+                ],
+            ]);
+        }
+
+        if (!empty($data['mascotasEspecie'])) {
+            $charts['mascotasEspecie'] = $this->generateChartImage([
+                'type' => 'doughnut',
+                'data' => [
+                    'labels' => array_keys($data['mascotasEspecie']),
+                    'datasets' => [[
+                        'data' => array_values($data['mascotasEspecie']),
+                        'backgroundColor' => ['#3A7CA5', '#6CC3D5', '#F4A261', '#2A9D8F', '#E76F51', '#8ECAE6'],
+                    ]],
+                ],
+                'options' => [
+                    'plugins' => ['legend' => ['position' => 'bottom']],
+                ],
+            ]);
+        }
+
+        if (!empty($data['resumenCitas'])) {
+            $resumen = collect($data['resumenCitas'])->map(function ($item) {
+                return is_array($item) ? $item : $item?->toArray();
+            })->filter()->map(function ($item) {
+                return [
+                    'estado' => $item['estado'] ?? 'N/A',
+                    'cantidad' => (int) ($item['cantidad'] ?? 0),
+                ];
+            })->all();
+
+            $charts['resumenEstados'] = $this->generateChartImage([
+                'type' => 'bar',
+                'data' => [
+                    'labels' => array_column($resumen, 'estado'),
+                    'datasets' => [[
+                        'label' => 'Citas',
+                        'data' => array_column($resumen, 'cantidad'),
+                        'backgroundColor' => '#2A9D8F',
+                    ]],
+                ],
+                'options' => [
+                    'plugins' => ['legend' => ['display' => false]],
+                    'scales' => ['y' => ['beginAtZero' => true]],
+                ],
+            ]);
+        }
+
+        return $charts;
+    }
+
+    private function generateChartImage(array $chartConfig, int $width = 700, int $height = 300): ?string
+    {
+        try {
+            $response = Http::timeout(10)
+                ->withOptions(['http_errors' => false])
+                ->get('https://quickchart.io/chart', [
+                    'c' => json_encode($chartConfig),
+                    'width' => $width,
+                    'height' => $height,
+                    'format' => 'png',
+                    'backgroundColor' => 'white',
+                ]);
+
+            if (!$response->successful()) {
+                return null;
+            }
+
+            return 'data:image/png;base64,' . base64_encode($response->body());
+        } catch (\Throwable $th) {
+            Log::warning('No se pudo generar la gráfica para PDF: ' . $th->getMessage());
+            return null;
+        }
     }
 }
