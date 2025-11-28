@@ -70,8 +70,10 @@ class VetDashboardController extends Controller
             $citasPorDia = [];
             for ($i = 6; $i >= 0; $i--) {
                 $fecha = Carbon::today()->subDays($i);
+                // Forzar locale a inglés para el nombre del día
+                $diaIngles = $fecha->locale('en')->isoFormat('dddd'); // Monday, Tuesday, etc.
                 $citasPorDia[] = [
-                    'dia' => $fecha->format('l'), // Monday, Tuesday, etc.
+                    'dia' => $diaIngles,
                     'total' => Cita::where('clinica_id', $clinicaId)
                         ->whereDate('fecha', $fecha)
                         ->where('tipo', 'cita') // ← SOLO CITAS
