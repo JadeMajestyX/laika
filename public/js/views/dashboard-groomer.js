@@ -40,11 +40,16 @@ function buildChartSeriesFromCitas(citas, groomerId, serviciosClinica, clinicaId
     return e;
   })();
   const inCurrentWeek = (dt) => dt && dt >= startOfWeek && dt < endOfWeek;
+  const allowed = new Set(['limpieza dental','corte de pelo','baño']);
+  const isAllowedService = (c) => {
+    const name = c?.servicio?.nombre ? String(c.servicio.nombre).toLowerCase().trim() : '';
+    return allowed.has(name);
+  };
   (citas || [])
     .filter((c) => {
       const d = c.fecha ? new Date(c.fecha) : null;
       // si viene clinicaId en el payload, asumir que citasClinica ya son de esa clínica
-      return inCurrentWeek(d);
+      return inCurrentWeek(d) && isAllowedService(c);
     })
     .forEach((c) => {
       const d = c.fecha ? new Date(c.fecha) : null;
