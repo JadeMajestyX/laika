@@ -6,7 +6,7 @@ function isGroomingServiceName(name) {
   if (!name) return false;
   const n = String(name).toLowerCase();
   return [
-    'corte', 'baño', 'limpieza dental', 'spa', 'uñas', 'desparasitación',
+    'Corte', 'Baño', 'limpieza dental', 'spa', 'uñas', 'desparasitación',
     'peluquer', 'groom', 'aseo'
   ].some((kw) => n.includes(kw));
 }
