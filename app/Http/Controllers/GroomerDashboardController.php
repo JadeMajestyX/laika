@@ -29,34 +29,36 @@ class GroomerDashboardController extends Controller
                 return response()->json(['error' => 'Usuario no asociado a ninguna clínica'], 400);
             }
 
-            // Heurística para detectar servicios de grooming por nombre (tabla `servicios` relacionada por servicio_id)
+            // Buscar primero los servicios relacionados con grooming y guardar sus IDs
             $keywords = ['corte de pelo', 'baño', 'limpieza dental', 'peluque', 'peluquer', 'spa', 'corte de uñas', 'corte uñas', 'pelado'];
-            $servicioFilter = function ($q) use ($keywords, $clinicaId) {
-                $q->where('clinica_id', $clinicaId);
-                $q->where(function ($q2) use ($keywords) {
-                    foreach ($keywords as $kw) {
-                        $q2->orWhereRaw('LOWER(nombre) LIKE ?', ['%' . $kw . '%']);
-                    }
-                });
-            };
+            $serviciosQuery = Servicio::where('clinica_id', $clinicaId)->where(function ($q2) use ($keywords) {
+                foreach ($keywords as $kw) {
+                    $q2->orWhereRaw('LOWER(nombre) LIKE ?', ['%' . $kw . '%']);
+                }
+            });
+            $servicioIds = $serviciosQuery->pluck('id')->toArray();
+            if (empty($servicioIds)) {
+                // ningún servicio de grooming detectado; usar id inválido para que las consultas devuelvan vacío
+                $servicioIds = [-1];
+            }
 
             // Métricas principales
             $citasHoy = Cita::whereDate('fecha', $today)
-                ->whereHas('servicio', $servicioFilter)
                 ->where('clinica_id', $clinicaId)
+                ->whereIn('servicio_id', $servicioIds)
                 ->count();
 
             $citasCompletadas = Cita::whereDate('fecha', $today)
-                ->whereHas('servicio', $servicioFilter)
                 ->where('clinica_id', $clinicaId)
+                ->whereIn('servicio_id', $servicioIds)
                 ->where('status', 'completada')
                 ->count();
 
             $serviciosRealizados = $citasCompletadas; // para groomer, servicios completados == servicios realizados
 
             $mascotasAtendidas = Cita::whereDate('fecha', $today)
-                ->whereHas('servicio', $servicioFilter)
                 ->where('clinica_id', $clinicaId)
+                ->whereIn('servicio_id', $servicioIds)
                 ->whereIn('status', ['completada', 'en_progreso'])
                 ->distinct('mascota_id')
                 ->count('mascota_id');
@@ -67,16 +69,16 @@ class GroomerDashboardController extends Controller
                 $fecha = Carbon::today()->subDays($i);
                 $dia = $fecha->locale('en')->isoFormat('dddd');
                 $total = Cita::whereDate('fecha', $fecha)
-                    ->whereHas('servicio', $servicioFilter)
                     ->where('clinica_id', $clinicaId)
+                    ->whereIn('servicio_id', $servicioIds)
                     ->count();
                 $citasPorDia[] = ['dia' => $dia, 'total' => $total];
             }
 
             // Lista de próximas citas relacionadas con grooming
             $citas = Cita::with(['mascota', 'servicio', 'mascota.user'])
-                ->whereHas('servicio', $servicioFilter)
                 ->where('clinica_id', $clinicaId)
+                ->whereIn('servicio_id', $servicioIds)
                 ->whereDate('fecha', '>=', $today)
                 ->orderBy('fecha')
                 ->get()
