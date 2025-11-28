@@ -212,10 +212,158 @@
       const id = target.getAttribute('data-cita-id');
       if (id) {
         ev.preventDefault();
-        openVetDetailModal(id);
+        // Usar nueva ventana en lugar de modal
+        openVetDetailWindow(id);
       }
     }
   });
+
+  // ================= NUEVA VENTANA A PANTALLA (CON MODO OSCURO) ================
+  // Esta versión crea una "ventana" ocupando gran parte del viewport, tipo panel.
+  // Incluye soporte para modo oscuro vía clase en <body> o toggle propio.
+
+  // Inyectar estilos si no existen
+  const winStyleId = 'vet-detail-window-style';
+  if (!document.getElementById(winStyleId)) {
+    const style = el('style', { id: winStyleId }, `
+    :root { --vet-bg:#ffffff; --vet-bg-alt:#f7f7f9; --vet-border:#e2e2e5; --vet-text:#222; --vet-accent:#2563eb; --vet-accent-rgb:37,99,235; }
+    body.dark { --vet-bg:#1e1f22; --vet-bg-alt:#292b2f; --vet-border:#3a3b40; --vet-text:#e5e7eb; --vet-accent:#3b82f6; --vet-accent-rgb:59,130,246; }
+    .vet-window-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:998;opacity:0;transition:.25s}
+    .vet-window{position:fixed;inset:2% 2% auto 2%;bottom:2%;background:var(--vet-bg);color:var(--vet-text);z-index:999;display:flex;flex-direction:column;border:1px solid var(--vet-border);border-radius:14px;box-shadow:0 20px 40px rgba(0,0,0,.35);opacity:0;transform:translateY(10px);transition:.3s}
+    .vet-window.show{opacity:1;transform:translateY(0)}
+    .vet-window-backdrop.show{opacity:1}
+    .vet-window header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--vet-border);background:var(--vet-bg-alt);border-radius:14px 14px 0 0}
+    .vet-window .vw-body{flex:1;overflow:auto;padding:18px;display:grid;grid-template-columns:300px 1fr;gap:20px}
+    .vet-pane{background:var(--vet-bg-alt);border:1px solid var(--vet-border);border-radius:12px;padding:14px}
+    .vet-photo-large{width:100%;height:240px;object-fit:cover;border-radius:10px;border:1px solid var(--vet-border);background:#ddd}
+    .vet-btn{appearance:none;border:1px solid var(--vet-border);background:var(--vet-bg-alt);padding:8px 14px;border-radius:10px;cursor:pointer;font-size:.9rem;display:inline-flex;align-items:center;gap:6px;color:var(--vet-text);transition:.2s}
+    .vet-btn.primary{background:var(--vet-accent);color:#fff;border-color:var(--vet-accent)}
+    .vet-btn:hover{filter:brightness(1.05)}
+    .vet-actions-fixed{display:flex;justify-content:flex-end;gap:10px;padding:14px 20px;border-top:1px solid var(--vet-border);background:var(--vet-bg-alt);border-radius:0 0 14px 14px}
+    .vet-textarea,.vet-input{width:100%;border:1px solid var(--vet-border);background:var(--vet-bg);color:var(--vet-text);border-radius:10px;padding:10px;font-size:.85rem}
+    body.dark .vet-textarea, body.dark .vet-input{background:#1e1f22}
+    .vet-receta-item{margin-bottom:10px}
+    .vet-tag{display:inline-block;background:rgba(var(--vet-accent-rgb),.15);color:var(--vet-accent);padding:3px 8px;border-radius:999px;font-size:.65rem;margin-left:6px}
+    .vet-hist-list{list-style:none;margin:0;padding:0;font-size:.75rem}
+    .vet-hist-list li{padding:6px 4px;border-bottom:1px dashed var(--vet-border)}
+    .vet-toggle-mode{margin-right:auto}
+    `);
+    document.head.appendChild(style);
+  }
+
+  // Exponer globalmente la función para uso externo si se requiere
+  window.openVetDetailWindow = openVetDetailWindow;
+
+  async function openVetDetailWindow(citaId){
+    // Eliminar cualquier instancia previa
+    document.querySelectorAll('.vet-window, .vet-window-backdrop').forEach(n=>n.remove());
+
+    const backdrop = el('div',{class:'vet-window-backdrop'});
+    const win = el('div',{class:'vet-window', role:'dialog','aria-modal':'true'});
+    const header = el('header');
+    const hTitle = el('h3',{},'Atención de Mascota');
+    const modeBtn = el('button',{class:'vet-btn vet-toggle-mode',type:'button'},'Modo oscuro');
+    const closeBtn = el('button',{class:'vet-btn',type:'button'},'Cerrar');
+    header.appendChild(hTitle);
+    header.appendChild(modeBtn);
+    header.appendChild(closeBtn);
+
+    const body = el('div',{class:'vw-body'});
+    const left = el('div',{class:'vet-pane'});
+    const right = el('div',{class:'vet-pane'});
+    body.appendChild(left); body.appendChild(right);
+
+    const actions = el('div',{class:'vet-actions-fixed'});
+    const saveBtn = el('button',{class:'vet-btn primary',type:'button'},'Guardar diagnóstico');
+    const pdfBtn = el('button',{class:'vet-btn primary',type:'button'},'Exportar PDF');
+    const printBtn = el('button',{class:'vet-btn',type:'button'},'Imprimir');
+    actions.appendChild(printBtn); actions.appendChild(pdfBtn); actions.appendChild(saveBtn);
+
+    win.appendChild(header); win.appendChild(body); win.appendChild(actions);
+    document.body.appendChild(backdrop); document.body.appendChild(win);
+    requestAnimationFrame(()=>{backdrop.classList.add('show'); win.classList.add('show');});
+
+    function close(){backdrop.classList.remove('show');win.classList.remove('show');setTimeout(()=>{backdrop.remove();win.remove();},300);}    
+    closeBtn.addEventListener('click',close); backdrop.addEventListener('click',close);
+    modeBtn.addEventListener('click',()=>{document.body.classList.toggle('dark');});
+
+    // Datos
+    let cita, mascota, citasPasadas=[];
+    try {
+      const citaRes = await fetch(`/api/citas/${citaId}`);
+      cita = await citaRes.json();
+      const mascotaId = cita?.cita?.mascota_id || cita?.mascota_id || cita?.cita?.mascota?.id;
+      if (mascotaId){
+        const mRes = await fetch(`/api/mascotas/${mascotaId}`);
+        mascota = await mRes.json();
+        const cpRes = await fetch(`/api/citas-mascota/${mascotaId}`);
+        const cpJson = await cpRes.json();
+        citasPasadas = (cpJson?.citas||[]).filter(x=>x.status==='completada');
+      }
+    } catch(e){ console.warn('Error datos cita:',e); }
+
+    // Render izquierda
+    const fotoUrl = mascota?.data?.imagen_url || mascota?.mascota?.imagen_url || '/images/pet-placeholder.png';
+    left.appendChild(el('img',{class:'vet-photo-large',src:fotoUrl,alt:'Foto mascota'}));
+    left.appendChild(el('div',{},[
+      el('p',{},`Nombre: ${(mascota?.data?.nombre||mascota?.mascota?.nombre||'-')}`),
+      el('p',{},`Especie: ${(mascota?.data?.especie||mascota?.mascota?.especie||'-')}`),
+      el('p',{},`Raza: ${(mascota?.data?.raza||mascota?.mascota?.raza||'-')}`),
+      el('p',{},`Sexo: ${(mascota?.data?.sexo||mascota?.mascota?.sexo||'-')}`),
+      el('p',{},`Peso: ${(mascota?.data?.peso||mascota?.mascota?.peso||'-')}`),
+    ]));
+    const histHeader = el('h5',{},'Citas atendidas');
+    const histBadge = el('span',{class:'vet-tag'},`${citasPasadas.length}`);
+    left.appendChild(el('div',{},[histHeader,histBadge]));
+    const histList = el('ul',{class:'vet-hist-list'},(citasPasadas.length?citasPasadas.map(c=>el('li',{},`${c.fecha} · ${c.motivo||'-'}`)):[el('li',{},'Sin registros')]))
+    left.appendChild(histList);
+
+    // Render derecha (diagnóstico + receta)
+    const diagTitle = el('h4',{},'Diagnóstico');
+    const diagInput = el('textarea',{class:'vet-textarea',rows:'8',placeholder:'Escriba el diagnóstico clínico...'});
+    right.appendChild(diagTitle); right.appendChild(diagInput);
+    const recetaTitle = el('h4',{style:'margin-top:18px'},'Receta');
+    right.appendChild(recetaTitle);
+    const recetaWrap = el('div'); right.appendChild(recetaWrap);
+    const recetaItems=[];
+    function addReceta(initial={}){
+      const row = el('div',{class:'vet-receta-item vet-pane'},[
+        el('input',{class:'vet-input',placeholder:'Medicamento',value:initial.nombre||''}),
+        el('input',{class:'vet-input',placeholder:'Dosis y frecuencia',value:initial.dosis||''}),
+        el('input',{class:'vet-input',placeholder:'Notas',value:initial.notas||''}),
+        el('button',{class:'vet-btn',type:'button'},'Eliminar')
+      ]);
+      const btn = row.querySelector('button');
+      btn.addEventListener('click',()=>{row.remove();const i=recetaItems.indexOf(row);if(i>=0)recetaItems.splice(i,1);});
+      recetaItems.push(row); recetaWrap.appendChild(row);
+    }
+    const addMedBtn = el('button',{class:'vet-btn',type:'button'},'Agregar medicamento');
+    right.appendChild(el('div',{style:'margin-top:10px'},[addMedBtn]));
+    addMedBtn.addEventListener('click',()=>addReceta());
+
+    // Guardar diagnóstico
+    saveBtn.addEventListener('click', async ()=>{
+      try {
+        const res = await fetch(`/api/citas/${citaId}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({diagnostico:diagInput.value})});
+        if(!res.ok) throw new Error();
+        alert('Diagnóstico guardado');
+      } catch(e){ alert('Error guardando diagnóstico'); }
+    });
+
+    // PDF
+    pdfBtn.addEventListener('click', async ()=>{
+      if(!window.html2pdf){
+        await new Promise(r=>{const s=el('script',{src:'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js'});s.onload=r;document.body.appendChild(s);});
+      }
+      window.html2pdf().set({margin:10,filename:`Ficha-${(mascota?.data?.nombre||'Mascota')}-${Date.now()}.pdf`,image:{type:'jpeg',quality:0.98},html2canvas:{scale:2},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}).from(win).save();
+    });
+
+    // Imprimir
+    printBtn.addEventListener('click',()=>{
+      const w = window.open('', 'PRINT', 'height=800,width=1100');
+      if(!w) return; w.document.write(`<!doctype html><html><head><title>Imprimir ficha</title></head><body>${win.outerHTML}</body></html>`);w.document.close();w.focus();w.print();w.close();
+    });
+  }
 })();
 
 // public/js/views/dashboard-vet.js
