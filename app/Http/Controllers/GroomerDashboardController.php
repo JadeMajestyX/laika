@@ -72,7 +72,7 @@ class GroomerDashboardController extends Controller
         $user = Auth::user();
         if (!$user) return response()->json(['message' => 'Unauthorized'], 401);
 
-        $cita = Cita::with(['servicio:id,nombre,clinica_id', 'mascota:id,nombre,user_id', 'mascota.user:id,name', 'clinica:id,nombre'])
+        $cita = Cita::with(['servicio:id,nombre,clinica_id', 'mascota:id,nombre,user_id', 'mascota.user:id,nombre', 'clinica:id,nombre'])
             ->where('id', $id)
             ->where('clinica_id', $user->clinica_id)
             ->first();

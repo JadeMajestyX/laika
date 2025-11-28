@@ -523,7 +523,7 @@ function populateCitaModal(data) {
   const cita = d.cita || d; // por si el endpoint devuelve {cita: {...}}
   document.getElementById('citaModalServicio')?.replaceChildren(document.createTextNode(cita?.servicio?.nombre || 'Servicio'));
   document.getElementById('citaModalMascota')?.replaceChildren(document.createTextNode(cita?.mascota?.nombre || 'Mascota'));
-  const propietario = cita?.mascota?.propietario?.nombre || cita?.mascota?.user?.name || cita?.creador?.nombre || cita?.veterinario?.nombre || '';
+  const propietario = cita?.mascota?.propietario?.nombre || cita?.mascota?.user?.nombre || cita?.creador?.nombre || cita?.veterinario?.nombre || '';
   document.getElementById('citaModalPropietario')?.replaceChildren(document.createTextNode(propietario));
   const fechaStr = cita?.fecha ? new Date(cita.fecha).toLocaleString('es-MX') : '';
   document.getElementById('citaModalFecha')?.replaceChildren(document.createTextNode(fechaStr));
