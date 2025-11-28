@@ -325,7 +325,9 @@
             el('div', { style: 'font-size:12px;line-height:1.8' }, [
               el('div', {}, [el('strong', {}, 'Nombre: '), mascota?.propietario?.nombre || 'N/A', ' ', mascota?.propietario?.apellido || '']),
               el('div', {}, [el('strong', {}, 'Teléfono: '), mascota?.propietario?.telefono || 'N/A']),
-              el('div', {}, [el('strong', {}, 'Email: '), mascota?.propietario?.email || 'N/A']),
+              (mascota?.propietario?.email && !mascota.propietario.email.endsWith('@consultas.com')) 
+                ? el('div', {}, [el('strong', {}, 'Email: '), mascota.propietario.email]) 
+                : null
             ])
           ])
         ]),
