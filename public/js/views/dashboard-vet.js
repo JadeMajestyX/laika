@@ -177,30 +177,8 @@
     rightCol.appendChild(recetaList);
     rightCol.appendChild(el('div', { class:'vet-actions' }, [addMedBtn]));
 
-    // Guardar diagnóstico
-    saveDiagBtn.addEventListener('click', async () => {
-      const body = { diagnostico: diagInput.value };
-      try {
-        const res = await fetch(API.guardarDiagnostico(citaId), {
-          method: 'PATCH',
-          headers: { 
-            'Content-Type':'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
-          },
-          credentials: 'same-origin',
-          body: JSON.stringify(body)
-        });
-        const json = await res.json();
-        if (!res.ok || !json.success) throw new Error(json.message || 'Error al guardar diagnóstico');
-        alert('Diagnóstico guardado correctamente');
-      } catch(e) {
-        console.error('Error guardando diagnóstico:', e);
-        alert('No se pudo guardar el diagnóstico: ' + e.message);
-      }
-    });
-
-    // Guardar receta
-    saveRecetaBtn.addEventListener('click', async () => {
+    // Guardar todo (diagnóstico y receta en una sola operación)
+    saveBtn.addEventListener('click', async () => {
       // Construir items desde recetaItems
       const items = recetaItems.map(wrapper => {
         const inputs = wrapper.querySelectorAll('input');
@@ -216,6 +194,7 @@
         notas: null,
         items
       };
+      
       try {
         const res = await fetch(API.guardarReceta(citaId), {
           method: 'POST',
@@ -227,11 +206,11 @@
           body: JSON.stringify(payload)
         });
         const json = await res.json();
-        if (!res.ok || !json.success) throw new Error(json.message || 'Error guardando receta');
-        alert('Receta guardada correctamente');
+        if (!res.ok || !json.success) throw new Error(json.message || 'Error al guardar');
+        alert('Consulta guardada correctamente (diagnóstico y receta)');
       } catch(e) {
-        console.error('Error guardando receta:', e);
-        alert('No se pudo guardar la receta: ' + e.message);
+        console.error('Error guardando consulta:', e);
+        alert('No se pudo guardar la consulta: ' + e.message);
       }
     });
 
