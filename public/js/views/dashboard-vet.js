@@ -33,10 +33,10 @@
     const style = el('style', { id: styleId }, `
       .vet-modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9998}
       .vet-modal{position:fixed;inset:auto auto auto 50%;transform:translateX(-50%);
-        top:3%;width:min(1200px,95%);max-height:94%;overflow:auto;background:var(--bs-body-bg,#fff);
-        color:var(--bs-body-color,#222);border-radius:14px;box-shadow:0 14px 40px rgba(0,0,0,.45);z-index:9999}
+        top:2%;width:min(1400px,96%);max-height:96%;overflow:auto;background:var(--bs-body-bg,#fff);
+        color:var(--bs-body-color,#222);border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.55);z-index:9999}
       .vet-modal header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--bs-border-color,#444)}
-      .vet-modal .content{display:grid;grid-template-columns:320px 1fr;gap:20px;padding:20px}
+      .vet-modal .content{display:grid;grid-template-columns:380px 1fr;gap:26px;padding:26px}
       .vet-card{border:1px solid var(--bs-border-color,#444);border-radius:10px;padding:12px;background:var(--bs-tertiary-bg,#f7f7f7)}
       .vet-list{margin:0;padding:0;list-style:none}
       .vet-list li{padding:6px 4px;border-bottom:1px dashed var(--bs-border-color,#555)}
@@ -101,6 +101,18 @@
       citaObj = resp?.cita || {};
       recetaObj = resp?.receta || null;
       mascotaInfo = resp?.mascota || null;
+      // Fallback adicional: si el backend serializa la mascota dentro de cita (cita.mascota)
+      if (!mascotaInfo && citaObj && citaObj.mascota) {
+        mascotaInfo = citaObj.mascota;
+      }
+      // Normalizar posibles claves alternativas (ej. peso_actual)
+      if (mascotaInfo) {
+        if (!mascotaInfo.peso && mascotaInfo.peso_actual) mascotaInfo.peso = mascotaInfo.peso_actual;
+        if (!mascotaInfo.imagen_url && mascotaInfo.imagen) {
+          // construir url si sólo hay nombre de archivo
+          mascotaInfo.imagen_url = mascotaInfo.imagen.startsWith('http') ? mascotaInfo.imagen : ('/uploads/mascotas/' + mascotaInfo.imagen);
+        }
+      }
       const mascotaId = mascotaInfo?.id || citaObj?.mascota_id;
       if (mascotaId && !mascotaInfo) {
         // fallback si el backend no envía 'mascota'
