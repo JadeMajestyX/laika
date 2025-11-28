@@ -8,6 +8,7 @@ use App\Models\Cita;
 use App\Models\Actividad;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class VetDashboardController extends Controller
 {
@@ -22,29 +23,44 @@ class VetDashboardController extends Controller
         try {
             $today = Carbon::today();
             $veterinarioId = Auth::id();
+            $user = Auth::user();
+            $clinicaId = $user?->clinica_id;
 
-            // CITAS DE HOY - solo tipo 'cita' 
-            $citasHoy = Cita::where('veterinario_id', $veterinarioId)
+            if (! $clinicaId) {
+                Log::warning("Usuario {$veterinarioId} no tiene clinica_id asignada para dashboard");
+                return response()->json([
+                    'citasHoy' => 0,
+                    'citasCompletadas' => 0,
+                    'consultasRealizadas' => 0,
+                    'mascotasAtendidas' => 0,
+                    'citasPorDia' => [],
+                    'actividades' => [],
+                    'comparacionporcentaje' => ['citasHoy' => 0, 'citasCompletadas' => 0, 'consultasRealizadas' => 0, 'mascotasAtendidas' => 0]
+                ]);
+            }
+
+            // CITAS DE HOY - nivel CLÍNICA (solo tipo 'cita')
+            $citasHoy = Cita::where('clinica_id', $clinicaId)
                 ->whereDate('fecha', $today)
-                ->where('tipo', 'cita') 
+                ->where('tipo', 'cita')
                 ->count();
                 
             // CITAS COMPLETADAS - solo tipo 'cita'
-            $citasCompletadas = Cita::where('veterinario_id', $veterinarioId)
+            $citasCompletadas = Cita::where('clinica_id', $clinicaId)
                 ->whereDate('fecha', $today)
                 ->where('status', 'completada')
-                ->where('tipo', 'cita') 
+                ->where('tipo', 'cita')
                 ->count();
                 
             // CONSULTAS REALIZADAS - solo tipo 'consulta'
-            $consultasRealizadas = Cita::where('veterinario_id', $veterinarioId)
+            $consultasRealizadas = Cita::where('clinica_id', $clinicaId)
                 ->whereDate('fecha', $today)
                 ->where('tipo', 'consulta')
                 ->where('status', 'completada') // ← SOLO CONSULTAS
                 ->count();
                 
             // MASCOTAS ATENDIDAS - ambos tipos pero solo status completado/en progreso
-            $mascotasAtendidas = Cita::where('veterinario_id', $veterinarioId)
+            $mascotasAtendidas = Cita::where('clinica_id', $clinicaId)
                 ->whereDate('fecha', $today)
                 ->whereIn('status', ['completada', 'en_progreso'])
                 ->distinct('mascota_id')
@@ -55,8 +71,8 @@ class VetDashboardController extends Controller
             for ($i = 6; $i >= 0; $i--) {
                 $fecha = Carbon::today()->subDays($i);
                 $citasPorDia[] = [
-                    'dia' => $fecha->format('l'), // Lunes, Martes, etc.
-                    'total' => Cita::where('veterinario_id', $veterinarioId)
+                    'dia' => $fecha->format('l'), // Monday, Tuesday, etc.
+                    'total' => Cita::where('clinica_id', $clinicaId)
                         ->whereDate('fecha', $fecha)
                         ->where('tipo', 'cita') // ← SOLO CITAS
                         ->count()
@@ -65,6 +81,7 @@ class VetDashboardController extends Controller
 
             // PRÓXIMAS CITAS DISPONIBLES - solo tipo 'cita' y no asignadas
             $actividades = Cita::with(['mascota', 'servicio', 'mascota.user'])
+                ->where('clinica_id', $clinicaId)
                 ->whereNull('veterinario_id')
                 ->whereDate('fecha', '>=', $today)
                 ->whereIn('status', ['pendiente', 'confirmada'])
@@ -87,28 +104,28 @@ class VetDashboardController extends Controller
             // COMPARACIÓN CON EL DÍA ANTERIOR
             $ayer = Carbon::yesterday();
             
-            // CITAS DE AYER - solo tipo 'cita'
-            $citasHoyAyer = Cita::where('veterinario_id', $veterinarioId)
+            // CITAS DE AYER - nivel CLÍNICA - solo tipo 'cita'
+            $citasHoyAyer = Cita::where('clinica_id', $clinicaId)
                 ->whereDate('fecha', $ayer)
                 ->where('tipo', 'cita') 
                 ->count();
                 
             // CITAS COMPLETADAS AYER - solo tipo 'cita'
-            $citasCompletadasAyer = Cita::where('veterinario_id', $veterinarioId)
+            $citasCompletadasAyer = Cita::where('clinica_id', $clinicaId)
                 ->whereDate('fecha', $ayer)
                 ->where('status', 'completada')
                 ->where('tipo', 'cita') 
                 ->count();
                 
             // CONSULTAS REALIZADAS AYER - solo tipo 'consulta_manual'
-           $consultasRealizadasAyer = Cita::where('veterinario_id', $veterinarioId)
-                ->whereDate('fecha', $ayer)
-                ->where('tipo', 'consulta')
-                ->where('status', 'completada')
-                ->count();
+         $consultasRealizadasAyer = Cita::where('clinica_id', $clinicaId)
+             ->whereDate('fecha', $ayer)
+             ->where('tipo', 'consulta')
+             ->where('status', 'completada')
+             ->count();
                 
             // MASCOTAS ATENDIDAS AYER - ambos tipos
-            $mascotasAtendidasAyer = Cita::where('veterinario_id', $veterinarioId)
+            $mascotasAtendidasAyer = Cita::where('clinica_id', $clinicaId)
                 ->whereDate('fecha', $ayer)
                 ->whereIn('status', ['completada', 'en_progreso'])
                 ->distinct('mascota_id')
@@ -133,12 +150,12 @@ class VetDashboardController extends Controller
             ];
 
             // LOG PARA DEBUG
-           \Log::info(" Dashboard - Citas: {$citasHoy}, Citas Completadas: {$citasCompletadas}, Consultas Completadas: {$consultasRealizadas}");
+           Log::info(" Dashboard - Citas: {$citasHoy}, Citas Completadas: {$citasCompletadas}, Consultas Completadas: {$consultasRealizadas}");
 
             return response()->json($data);
 
         } catch (\Exception $e) {
-            \Log::error('Error en getDashboardData: ' . $e->getMessage());
+            Log::error('Error en getDashboardData: ' . $e->getMessage());
             return response()->json([
                 'error' => 'Error al obtener datos del dashboard',
                 'message' => $e->getMessage()
