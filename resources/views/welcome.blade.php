@@ -280,13 +280,13 @@
 
 
   <!-- CTA -->
-  <section class="text-center py-5 text-white" style="background: linear-gradient(90deg,var(--brand),var(--brand-dark));">
+  {{-- <section class="text-center py-5 text-white" style="background: linear-gradient(90deg,var(--brand),var(--brand-dark));">
     <div class="container">
       <h2 class="fw-bold mb-3">¿Listo para agendar una cita?</h2>
       <p class="mb-4">Tu mascota merece lo mejor. Agenda hoy mismo con nuestros expertos veterinarios.</p>
       {{-- <a href="{{ route('agendar.cita') }}" class="btn btn-light fw-semibold">Agendar Cita</a> --}}
     </div>
-  </section>
+  </section> --}}
 
   <!-- Footer -->
   <footer id="contacto" class="pt-5">
