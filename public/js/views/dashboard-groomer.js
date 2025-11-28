@@ -134,12 +134,6 @@ function renderActividadesFromCitas(payload) {
   const isSameDay = (dt) => dt && dt.getFullYear() === today.getFullYear() && dt.getMonth() === today.getMonth() && dt.getDate() === today.getDate();
   const toNum = (v) => v == null ? null : Number(v);
   const gid = toNum(userId);
-  const groomingServiceIds = new Set(
-    (serviciosClinica || [])
-      .filter((s) => (clinicaId == null || toNum(s.clinica_id) === toNum(clinicaId)) && isGroomingServiceName(s.nombre))
-      .map((s) => toNum(s.id))
-      .filter((id) => id != null)
-  );
   const mine = (c) => {
     const vet = toNum(c.veterinario_id);
     const creator = toNum(c.creada_por);
@@ -148,9 +142,7 @@ function renderActividadesFromCitas(payload) {
   const actividades = citasClinica
     .filter((c) => {
       const d = c.fecha ? new Date(c.fecha) : null;
-      const sid = toNum(c.servicio_id);
-      const groomingOk = sid != null && groomingServiceIds.size > 0 ? groomingServiceIds.has(sid) : (c.servicio?.nombre ? isGroomingServiceName(c.servicio.nombre) : true);
-      return mine(c) && groomingOk && isSameDay(d);
+      return mine(c) && isSameDay(d);
     })
     .sort((a,b) => new Date(b.fecha) - new Date(a.fecha))
     .slice(0, 10)
@@ -164,7 +156,7 @@ function renderActividadesFromCitas(payload) {
   if (!actividades || actividades.length === 0) {
     const mensaje = document.createElement('div');
     mensaje.className = 'text-center text-body-secondary py-3';
-    mensaje.textContent = 'No hay actividades de grooming en este momento';
+    mensaje.textContent = 'No hay actividades para hoy';
     container.appendChild(mensaje);
     return;
   }
@@ -262,19 +254,11 @@ function renderSection(section, data) {
         </div>
       </div>
       <div class="row g-3 g-lg-4 mb-4">
-        <div class="col-12 col-lg-8">
+        <div class="col-12">
           <div class="card card-soft p-4 h-100">
             <h3 class="h6 mb-3">Citas Esta Semana</h3>
             <div class="chart-container">
               <canvas id="appointmentsChart"></canvas>
-            </div>
-          </div>
-        </div>
-        <div class="col-12 col-lg-4">
-          <div class="card card-soft p-4 h-100">
-            <h3 class="h6 mb-3">Mi Agenda de Hoy</h3>
-            <div class="vstack gap-3" id="actividadReciente">
-              No hay actividades de grooming en este momento
             </div>
           </div>
         </div>
@@ -315,32 +299,6 @@ function renderSection(section, data) {
     if (data && data.citasClinica) {
       renderAgendaFromCitas(data);
     }
-  } else if (section === 'actividad') {
-    mainContent.innerHTML = `
-      <div class="mb-3">
-        <h1 class="mb-1">Actividad de Hoy</h1>
-        <p class="text-body-secondary small">Servicios y tareas realizadas</p>
-      </div>
-      <div class="card card-soft p-4">
-        <div class="table-responsive">
-          <table class="table align-middle">
-            <thead class="table-light">
-              <tr>
-                <th>HORA</th>
-                <th>MASCOTA</th>
-                <th>SERVICIO</th>
-                <th>ESTADO</th>
-              </tr>
-            </thead>
-            <tbody id="actividadHoyBody">
-              <tr>
-                <td colspan="4" class="text-center text-body-secondary py-5">Sin actividad registrada</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    `;
   } else if (section === 'historial') {
     mainContent.innerHTML = `
       <div class="mb-3">
@@ -367,9 +325,6 @@ function renderSection(section, data) {
         </div>
       </div>
     `;
-    if (data && data.citasClinica) {
-      renderHistorialFromCitas(data);
-    }
   } else if (section === 'configuracion') {
     mainContent.innerHTML = `
       <div class="mb-3">
@@ -383,55 +338,21 @@ function renderSection(section, data) {
   }
 }
 
-function renderHistorialFromCitas(payload) {
-  const { citasClinica = [], userId } = payload || {};
-  const toNum = (v) => v == null ? null : Number(v);
-  const gid = toNum(userId);
-  const mine = (c) => {
-    const vet = toNum(c.veterinario_id);
-    const creator = toNum(c.creada_por);
-    return (vet != null && vet === gid) || (creator != null && creator === gid);
-  };
-  const historialBody = document.getElementById('historialBody');
-  if (!historialBody) return;
-  const citas = (citasClinica || [])
-    .filter((c) => mine(c))
-    .sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
-  if (citas.length === 0) {
-    historialBody.innerHTML = `<tr><td colspan="4" class="text-center text-body-secondary py-4">No hay historial disponible</td></tr>`;
-    return;
-  }
-  historialBody.innerHTML = '';
-  citas.forEach((c) => {
-    const fecha = c.fecha ? new Date(c.fecha).toLocaleString('es-MX') : '';
-    const mascota = c.mascota?.nombre || 'Mascota';
-    const servicio = c.servicio?.nombre || 'Servicio';
-    const estado = c.status || '';
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${fecha}</td>
-      <td>${mascota}</td>
-      <td>${servicio}</td>
-      <td>${estado}</td>
-    `;
-    historialBody.appendChild(tr);
-  });
-}
-
 function renderAgendaFromCitas(payload) {
   const { citasClinica = [], userId, serviciosClinica = [], clinicaId } = payload || {};
   const clinicaNombreGlobal = getClinicName(payload);
   const toNum = (v) => v == null ? null : Number(v);
   const agendaBody = document.getElementById('agendaBody');
   if (!agendaBody) return;
-  const allowed = new Set(['limpieza dental','corte de pelo','baño']);
-  const isAllowedService = (c) => {
-    const name = c?.servicio?.nombre ? String(c.servicio.nombre).toLowerCase().trim() : '';
-    return allowed.has(name);
+  const gid = toNum(userId);
+  const mine = (c) => {
+    const vet = toNum(c.veterinario_id);
+    const creator = toNum(c.creada_por);
+    return (vet != null && vet === gid) || (creator != null && creator === gid);
   };
-  // Listar TODAS las citas de la clínica del usuario, sin filtrar por grooming ni por dueño
+  // Listar todas las citas asignadas al usuario actual (para mí), sin filtrar por tipo de servicio
   const citas = (citasClinica || [])
-    .filter((c) => isAllowedService(c))
+    .filter((c) => mine(c))
     .sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
   if (citas.length === 0) {
     agendaBody.innerHTML = `<tr><td colspan="7" class="text-center text-body-secondary py-4">No hay citas programadas</td></tr>`;
@@ -495,8 +416,6 @@ function initNavHandlers() {
           renderSection(section, data);
           if (section === 'agenda') {
             renderAgendaFromCitas(data);
-          } else if (section === 'actividad') {
-            renderActividadesFromCitas(data);
           }
         });
       history.pushState({ section }, '', `/groomer-dashboard/${section}`);
@@ -527,10 +446,6 @@ function handlePopState() {
           renderSection(section, data);
           if (section === 'agenda') {
             renderAgendaFromCitas(data);
-          } else if (section === 'actividad') {
-            renderActividadesFromCitas(data);
-          } else if (section === 'historial') {
-            renderHistorialFromCitas(data);
           }
         });
     }
@@ -562,10 +477,6 @@ function handlePopState() {
           renderSection(initialSection, data);
           if (initialSection === 'agenda') {
             renderAgendaFromCitas(data);
-          } else if (initialSection === 'actividad') {
-            renderActividadesFromCitas(data);
-          } else if (initialSection === 'historial') {
-            renderHistorialFromCitas(data);
           }
         });
       history.replaceState({ section: initialSection }, '', location.pathname);
