@@ -186,13 +186,14 @@ function crearConsultaManual() {
     const form = document.getElementById('formConsultaManual');
     const formData = new FormData(form);
     
-    // Validar campos requeridos
+    //  VALIDAR CAMPOS REQUERIDOS
     const nombreMascota = formData.get('nombre_mascota');
     const nombreCliente = formData.get('nombre_cliente');
+    const apellidoCliente = formData.get('apellido_cliente');
     const telefonoCliente = formData.get('telefono_cliente');
     const especie = formData.get('especie');
     
-    if (!nombreMascota || !nombreCliente || !telefonoCliente || !especie) {
+    if (!nombreMascota || !nombreCliente || !apellidoCliente || !telefonoCliente || !especie) {
         Swal.fire({
             icon: 'error',
             title: 'Campos requeridos',
@@ -231,6 +232,7 @@ function crearConsultaManual() {
         body: JSON.stringify({
             nombre_mascota: nombreMascota,
             nombre_cliente: nombreCliente,
+            apellido_cliente: apellidoCliente,
             telefono_cliente: telefonoCliente,
             especie: especie,
             raza: formData.get('raza'),
@@ -555,7 +557,7 @@ function actualizarTablaActividades() {
               <td>${actividad.hora || 'N/A'}</td>
               <td>${actividad.paciente || 'N/A'}</td>
               <td>
-                <div class="fw-semibold">${actividad.propietario || 'N/A'}</div>
+                <div class="fw-semibold">${actividad.propietario || 'N/A'} ${actividad.apellido || ''}</div>
                 <small class="text-body-secondary">${actividad.telefono || 'No disponible'}</small>
               </td>
               <td>${actividad.especie || 'N/A'}</td>
@@ -1254,6 +1256,11 @@ function renderSection(section, data) {
                                   </div>
                                   
                                   <div class="mb-3">
+                                      <label for="apellido_cliente" class="form-label">Apellido del Cliente *</label>
+                                      <input type="text" class="form-control" id="apellido_cliente" name="apellido_cliente" required>
+                                  </div>
+                                  
+                                  <div class="mb-3">
                                       <label for="telefono_cliente" class="form-label">Teléfono del Cliente *</label>
                                       <input type="tel" class="form-control" id="telefono_cliente" name="telefono_cliente" required 
                                             pattern="[0-9]{10}" placeholder="Ej: 3141234567">
@@ -1272,7 +1279,7 @@ function renderSection(section, data) {
                                           <option value="Otro">Otro</option>
                                       </select>
                                   </div>
-                              </div>
+                              </div> 
                               
                               <!-- Columna Derecha -->
                               <div class="col-md-6">
@@ -1303,7 +1310,7 @@ function renderSection(section, data) {
                                       <label for="procedimiento" class="form-label">Procedimiento / Notas</label>
                                       <textarea class="form-control" id="procedimiento" name="procedimiento" rows="3" placeholder="Descripción del procedimiento a realizar..."></textarea>
                                   </div>
-                              </div>
+                              </div> 
                           </div>
                       </form>
                   </div>

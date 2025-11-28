@@ -103,6 +103,7 @@ class VetActividadesController extends Controller
                         'hora' => $fecha->format('H:i'),
                         'paciente' => $cita->mascota->nombre ?? 'Mascota no encontrada',
                         'propietario' => $cita->mascota->user->nombre ?? 'Cliente',
+                        'apellido' => $cita->mascota->user->apellido_paterno ?? '',
                         'telefono' => $telefono, // ← NUEVO CAMPO
                         'especie' => $cita->mascota->especie ?? 'N/A',
                         'raza' => $cita->mascota->raza ?? 'N/A',
@@ -209,7 +210,8 @@ class VetActividadesController extends Controller
             $request->validate([
                 'nombre_mascota' => 'required|string|max:100',
                 'nombre_cliente' => 'required|string|max:100',
-                'telefono_cliente' => 'required|string|max:10|min:10', 
+                'apellido_cliente' => 'required|string|max:100',
+                'telefono_cliente' => 'required|string|max:10|min:10',
                 'especie' => 'required|string|max:100',
                 'raza' => 'nullable|string|max:100',
                 'tipo_servicio' => 'required|string|max:150',
@@ -221,6 +223,26 @@ class VetActividadesController extends Controller
             $veterinarioId = Auth::id();
             $clinicaId = 1;
 
+            //  BUSCAR USUARIO EXISTENTE POR TELÉFONO
+            $user = \App\Models\User::where('telefono', $request->telefono_cliente)->first();
+
+            if (!$user) {
+                //  CREAR NUEVO USUARIO CON APELLIDO
+                $emailUnico = strtolower(str_replace(' ', '', $request->nombre_cliente)) . '_' . time() . '@consultas.com';
+                
+                $user = \App\Models\User::create([
+                    'nombre' => $request->nombre_cliente,
+                    'apellido_paterno' => $request->apellido_cliente, 
+                    'apellido_materno' => '', 
+                    'rol' => 'U',
+                    'fecha_nacimiento' => '2000-01-01',
+                    'genero' => 'O',
+                    'email' => $emailUnico,
+                    'telefono' => $request->telefono_cliente,
+                    'password' => bcrypt(uniqid()),
+                ]);
+            }
+
             // Buscar o crear el servicio "Consulta Manual"
             $servicio = \App\Models\Servicio::firstOrCreate(
                 ['nombre' => 'Consulta', 'clinica_id' => $clinicaId],
@@ -231,23 +253,7 @@ class VetActividadesController extends Controller
                 ]
             );
 
-            // CREAR USUARIO ÚNICO con teléfono único
-            // Generar email único basado en el nombre y timestamp
-            $emailUnico = strtolower(str_replace(' ', '', $request->nombre_cliente)) . '_' . time() . '@consultasmanuales.com';
-            
-            $user = \App\Models\User::create([
-                'nombre' => $request->nombre_cliente,
-                'apellido_paterno' => 'Consulta',
-                'apellido_materno' => 'Manual',
-                'rol' => 'U',
-                'fecha_nacimiento' => '1990-01-01',
-                'genero' => 'O',
-                'email' => $emailUnico,
-                'telefono' => $request->telefono_cliente, 
-                'password' => bcrypt(uniqid()),
-            ]);
-
-            // CREAR MASCOTA ÚNICA con el nombre ingresado
+            // CREAR MASCOTA para el usuario
             $mascota = \App\Models\Mascota::create([
                 'user_id' => $user->id,
                 'nombre' => $request->nombre_mascota,
@@ -273,7 +279,7 @@ class VetActividadesController extends Controller
                 'tipo' => 'consulta'
             ]);
 
-            \Log::info(" Consulta manual creada - Cita ID: {$cita->id}, Mascota: {$request->nombre_mascota}, Dueño: {$request->nombre_cliente}, Tel: {$request->telefono_cliente}");
+            \Log::info(" Consulta creada - Cliente: {$request->nombre_cliente} {$request->apellido_cliente}");
 
             return response()->json([
                 'success' => true,
@@ -282,8 +288,7 @@ class VetActividadesController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            \Log::error(' Error al crear consulta manual: ' . $e->getMessage());
-            \Log::error(' Stack trace: ' . $e->getTraceAsString());
+            \Log::error('❌ Error al crear consulta manual: ' . $e->getMessage());
             
             return response()->json([
                 'success' => false,
