@@ -11,7 +11,7 @@ function isGroomingServiceName(name) {
   ].some((kw) => n.includes(kw));
 }
 
-function buildChartSeriesFromCitas(citas, groomerId, serviciosClinica) {
+function buildChartSeriesFromCitas(citas, groomerId, serviciosClinica, clinicaId) {
   const diasOrdenados = [
     { en: 'Monday', es: 'Lun' },
     { en: 'Tuesday', es: 'Mar' },
@@ -26,7 +26,7 @@ function buildChartSeriesFromCitas(citas, groomerId, serviciosClinica) {
   const gid = toNum(groomerId);
   const groomingServiceIds = new Set(
     (serviciosClinica || [])
-      .filter((s) => isGroomingServiceName(s.nombre))
+      .filter((s) => (clinicaId == null || toNum(s.clinica_id) === toNum(clinicaId)) && isGroomingServiceName(s.nombre))
       .map((s) => toNum(s.id))
       .filter((id) => id != null)
   );
@@ -80,7 +80,7 @@ function renderChart(labels, data) {
 
 function updateDashboardMetricsFromCitas(payload) {
   const { citasClinica = [], userId } = payload || {};
-  const { serviciosClinica = [] } = payload || {};
+  const { serviciosClinica = [], clinicaId } = payload || {};
   const today = new Date();
   const pad = (n) => String(n).padStart(2, '0');
   const isSameDay = (dt) => dt && dt.getFullYear() === today.getFullYear() && dt.getMonth() === today.getMonth() && dt.getDate() === today.getDate();
@@ -88,7 +88,7 @@ function updateDashboardMetricsFromCitas(payload) {
   const gid = toNum(userId);
   const groomingServiceIds = new Set(
     (serviciosClinica || [])
-      .filter((s) => isGroomingServiceName(s.nombre))
+      .filter((s) => (clinicaId == null || toNum(s.clinica_id) === toNum(clinicaId)) && isGroomingServiceName(s.nombre))
       .map((s) => toNum(s.id))
       .filter((id) => id != null)
   );
@@ -131,14 +131,14 @@ function updateDashboardMetricsFromCitas(payload) {
 
 function renderActividadesFromCitas(payload) {
   const { citasClinica = [], userId } = payload || {};
-  const { serviciosClinica = [] } = payload || {};
+  const { serviciosClinica = [], clinicaId } = payload || {};
   const today = new Date();
   const isSameDay = (dt) => dt && dt.getFullYear() === today.getFullYear() && dt.getMonth() === today.getMonth() && dt.getDate() === today.getDate();
   const toNum = (v) => v == null ? null : Number(v);
   const gid = toNum(userId);
   const groomingServiceIds = new Set(
     (serviciosClinica || [])
-      .filter((s) => isGroomingServiceName(s.nombre))
+      .filter((s) => (clinicaId == null || toNum(s.clinica_id) === toNum(clinicaId)) && isGroomingServiceName(s.nombre))
       .map((s) => toNum(s.id))
       .filter((id) => id != null)
   );
@@ -386,7 +386,7 @@ function initNavHandlers() {
           .then((res) => res.json())
           .then((data) => {
             renderSection('home', data);
-            const { labels, data: series } = buildChartSeriesFromCitas(data.citasClinica, data.userId, data.serviciosClinica);
+            const { labels, data: series } = buildChartSeriesFromCitas(data.citasClinica, data.userId, data.serviciosClinica, data.clinicaId);
             updateDashboardMetricsFromCitas(data);
             renderChart(labels, series);
             renderActividadesFromCitas(data);
@@ -410,7 +410,7 @@ function handlePopState() {
         .then((res) => res.json())
         .then((data) => {
           renderSection('home', data);
-          const { labels, data: series } = buildChartSeriesFromCitas(data.citasClinica, data.userId, data.serviciosClinica);
+          const { labels, data: series } = buildChartSeriesFromCitas(data.citasClinica, data.userId, data.serviciosClinica, data.clinicaId);
           updateDashboardMetricsFromCitas(data);
           renderChart(labels, series);
           renderActividadesFromCitas(data);
@@ -433,7 +433,7 @@ function handlePopState() {
         .then((r) => r.json())
         .then((data) => {
           renderSection('home', data);
-          const { labels, data: series } = buildChartSeriesFromCitas(data.citasClinica, data.userId, data.serviciosClinica);
+          const { labels, data: series } = buildChartSeriesFromCitas(data.citasClinica, data.userId, data.serviciosClinica, data.clinicaId);
           updateDashboardMetricsFromCitas(data);
           renderChart(labels, series);
           renderActividadesFromCitas(data);
