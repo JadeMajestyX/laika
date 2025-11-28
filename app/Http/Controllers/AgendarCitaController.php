@@ -7,6 +7,9 @@ use App\Models\Cita;
 use App\Models\User;
 use App\Models\Mascota;
 use App\Models\Horario;
+use App\Models\Servicio;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\CitaConfirmacion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -162,12 +165,15 @@ class AgendarCitaController extends Controller
             $user->save();
         }
 
-        // Registrar mascota mínima
+        // Registrar mascota con campos obligatorios
         $mascota = Mascota::create([
             'user_id' => $user->id,
             'nombre' => $request->mascota_nombre,
             'especie' => $request->mascota_especie,
-            'raza' => $request->mascota_raza,
+            'raza' => $request->mascota_raza ?: 'No especificada',
+            'sexo' => 'M',
+            'peso' => 0.00,
+            'notas' => null,
         ]);
 
         // Crear cita
@@ -178,6 +184,21 @@ class AgendarCitaController extends Controller
             'fecha' => $fechaHora,
             'status' => 'pendiente',
         ]);
+
+        // Enviar correo de confirmación (solo email al propietario)
+        try {
+            $clinica = Clinica::find($request->clinica_id);
+            $servicio = Servicio::find($request->servicio_id);
+            Mail::to($user->email)->send(new CitaConfirmacion(
+                user: $user,
+                mascota: $mascota,
+                cita: $cita,
+                clinica: $clinica,
+                servicio: $servicio
+            ));
+        } catch (\Throwable $e) {
+            // No bloquear la reserva si falla el correo
+        }
 
         return response()->json([
             'message' => 'Cita reservada correctamente',
