@@ -4,16 +4,32 @@ let chartInstance = null;
 
 function buildChartSeries(citasPorDia) {
   const diasOrdenados = [
-    { en: 'Monday', es: 'Lun' },
-    { en: 'Tuesday', es: 'Mar' },
-    { en: 'Wednesday', es: 'Mié' },
-    { en: 'Thursday', es: 'Jue' },
-    { en: 'Friday', es: 'Vie' },
-    { en: 'Saturday', es: 'Sáb' },
-    { en: 'Sunday', es: 'Dom' },
+    { en: 'Monday', es: 'Lun', esFull: 'Lunes' },
+    { en: 'Tuesday', es: 'Mar', esFull: 'Martes' },
+    { en: 'Wednesday', es: 'Mié', esFull: 'Miércoles' },
+    { en: 'Thursday', es: 'Jue', esFull: 'Jueves' },
+    { en: 'Friday', es: 'Vie', esFull: 'Viernes' },
+    { en: 'Saturday', es: 'Sáb', esFull: 'Sábado' },
+    { en: 'Sunday', es: 'Dom', esFull: 'Domingo' },
   ];
+
+  // Build a lookup from possible incoming day strings (en, es short, es full) to the English key we use for ordering
+  const enByLabel = {};
+  diasOrdenados.forEach((d) => {
+    enByLabel[d.en.toLowerCase()] = d.en;
+    enByLabel[d.es.toLowerCase()] = d.en;
+    if (d.esFull) enByLabel[d.esFull.toLowerCase()] = d.en;
+  });
+
+  // Aggregate totals mapping to English day names so the ordering below works regardless of backend locale
   const map = {};
-  (citasPorDia || []).forEach((item) => { map[item.dia] = item.total; });
+  (citasPorDia || []).forEach((item) => {
+    const raw = (item && item.dia) ? String(item.dia).trim() : '';
+    const key = raw.toLowerCase();
+    const en = enByLabel[key] || raw; // fallback to raw if unknown
+    map[en] = (map[en] || 0) + (Number(item.total) || 0);
+  });
+
   return {
     labels: diasOrdenados.map((d) => d.es),
     data: diasOrdenados.map((d) => map[d.en] || 0),
