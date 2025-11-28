@@ -453,9 +453,16 @@ function buildChartSeries(citasPorDia) {
     { en: 'Sunday', es: 'Dom' },
   ];
   const map = {};
+  // Aceptar nombres de días tanto en inglés como en español
   (citasPorDia || []).forEach((item) => {
-    map[item.dia] = item.total;
+    if (!item || !item.dia) return;
+    const diaRaw = String(item.dia).trim();
+    // Buscar coincidencia por nombre en la lista de días
+    const found = diasOrdenados.find(d => d.en.toLowerCase() === diaRaw.toLowerCase() || d.es.toLowerCase() === diaRaw.toLowerCase());
+    const key = found ? found.en : diaRaw;
+    map[key] = Number(item.total || 0);
   });
+  console.log('buildChartSeries - input:', citasPorDia, 'mapped:', map);
   return {
     labels: diasOrdenados.map((d) => d.es),
     data: diasOrdenados.map((d) => map[d.en] || 0),
@@ -2037,6 +2044,7 @@ function initNavHandlers() {
           .then((data) => {
             renderSection('home', data);
             const { labels, data: series } = buildChartSeries(data.citasPorDia);
+            console.log('Home dashboard - series labels/data:', labels, series, 'raw:', data.citasPorDia);
             updateDashboardMetrics(data);
             renderChart(labels, series);
             renderActividades();

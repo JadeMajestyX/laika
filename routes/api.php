@@ -1592,3 +1592,4 @@ Route::get('/horarios-disponibles', function(Request $request) {
     ]);
 });
 
+//api para traer citas y recetas de una mascota, citas completadas con receta
