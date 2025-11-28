@@ -21,6 +21,7 @@ use App\Http\Controllers\VetHistorialController;
 use App\Http\Controllers\VetReportesController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\VetCitaFichaController;
+use App\Http\Controllers\ReceptionistDashboardController;
 
 
 
@@ -68,6 +69,17 @@ Route::middleware(EnsureUserHasRole::class.':G')->group(function () {
     Route::get('/groomer-dashboard', [GroomerDashboardController::class, 'index'])->name('groomer.dashboard');
     Route::get('/groomer-dashboard/data', [GroomerDashboardController::class, 'getDashboardData'])->name('groomer.dashboard.data');
     Route::get('/groomer-dashboard/{any}', [GroomerDashboardController::class, 'index'])->where('any', '.*');
+});
+
+// Dashboard Recepcionista (rol R)
+Route::middleware(EnsureUserHasRole::class.':R')->group(function () {
+    Route::get('/recepcion-dashboard', [ReceptionistDashboardController::class, 'index'])->name('recepcion.dashboard');
+    // APIs
+    Route::post('/recepcion/clientes', [ReceptionistDashboardController::class, 'crearCliente'])->name('recepcion.clientes.crear');
+    Route::get('/recepcion/buscar', [ReceptionistDashboardController::class, 'buscarClienteMascota'])->name('recepcion.buscar');
+    Route::post('/recepcion/citas', [ReceptionistDashboardController::class, 'agendarCita'])->name('recepcion.citas.agendar');
+    Route::post('/recepcion/citas/{cita}/completar', [ReceptionistDashboardController::class, 'completarCita'])->name('recepcion.citas.completar');
+    Route::get('/recepcion-dashboard/{any}', [ReceptionistDashboardController::class, 'index'])->where('any', '.*');
 });
 
 Route::middleware(EnsureUserHasRole::class.':A')->group(function () {
