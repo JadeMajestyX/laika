@@ -899,6 +899,115 @@ Route::middleware('auth:sanctum')->post('/agendar-cita', function(Request $reque
     ]);
 });
 
+// Detalle de una cita (incluye mascota y receta)
+Route::middleware('auth:sanctum')->get('/citas/{id}', function(Request $request, $id) {
+    $cita = \App\Models\Cita::with(['mascota','servicio','receta.items'])->find($id);
+    if (!$cita) {
+        return response()->json(['success'=>false,'message'=>'Cita no encontrada'],404);
+    }
+    $mascota = $cita->mascota;
+    $mascotaData = null;
+    if ($mascota) {
+        $mascotaData = [
+            'id' => $mascota->id,
+            'nombre' => $mascota->nombre,
+            'especie' => $mascota->especie,
+            'raza' => $mascota->raza,
+            'sexo' => $mascota->sexo,
+            'peso' => $mascota->peso,
+            'imagen_url' => $mascota->imagen ? asset('uploads/mascotas/' . $mascota->imagen) : null,
+        ];
+    }
+    return response()->json([
+        'success'=>true,
+        'cita'=>$cita,
+        'mascota'=>$mascotaData,
+        'receta'=>$cita->receta ? [
+            'id'=>$cita->receta->id,
+            'notas'=>$cita->receta->notas,
+            'items'=>$cita->receta->items->map(function($it){
+                return [
+                    'id'=>$it->id,
+                    'medicamento'=>$it->medicamento,
+                    'dosis'=>$it->dosis,
+                    'notas'=>$it->notas,
+                ];
+            })
+        ] : null,
+    ]);
+});
+
+// Guardar/actualizar receta y diagnostico de una cita
+Route::middleware('auth:sanctum')->post('/citas/{id}/receta', function(Request $request, $id) {
+    $cita = \App\Models\Cita::with('receta.items')->find($id);
+    if (!$cita) {
+        return response()->json(['success'=>false,'message'=>'Cita no encontrada'],404);
+    }
+
+    $data = $request->validate([
+        'diagnostico' => 'nullable|string',
+        'notas' => 'nullable|string',
+        'items' => 'nullable|array',
+        'items.*.medicamento' => 'required_with:items|string|max:150',
+        'items.*.dosis' => 'required_with:items|string|max:200',
+        'items.*.notas' => 'nullable|string|max:250',
+    ]);
+
+    // Actualizar diagnóstico si viene
+    if (array_key_exists('diagnostico',$data)) {
+        $cita->diagnostico = $data['diagnostico'];
+        $cita->save();
+    }
+
+    // Crear / actualizar receta
+    $receta = $cita->receta;
+    if (!$receta) {
+        $receta = \App\Models\Receta::create([
+            'cita_id' => $cita->id,
+            'notas' => $data['notas'] ?? null,
+        ]);
+    } else {
+        if (array_key_exists('notas',$data)) {
+            $receta->notas = $data['notas'];
+            $receta->save();
+        }
+        // Limpiar items si se envían nuevos
+        if (isset($data['items'])) {
+            $receta->items()->delete();
+        }
+    }
+
+    if (isset($data['items'])) {
+        foreach ($data['items'] as $item) {
+            $receta->items()->create([
+                'medicamento' => $item['medicamento'],
+                'dosis' => $item['dosis'],
+                'notas' => $item['notas'] ?? null,
+            ]);
+        }
+    }
+
+    $receta->load('items');
+
+    return response()->json([
+        'success'=>true,
+        'cita_id'=>$cita->id,
+        'diagnostico'=>$cita->diagnostico,
+        'receta'=>[
+            'id'=>$receta->id,
+            'notas'=>$receta->notas,
+            'items'=>$receta->items->map(function($it){
+                return [
+                    'id'=>$it->id,
+                    'medicamento'=>$it->medicamento,
+                    'dosis'=>$it->dosis,
+                    'notas'=>$it->notas,
+                ];
+            })
+        ]
+    ]);
+});
+
 // Actualizar una cita (PATCH/PUT parcial)
 Route::middleware('auth:sanctum')->match(['put','patch'], '/citas/{id}', function(Request $request, $id) {
     $cita = Cita::find($id);

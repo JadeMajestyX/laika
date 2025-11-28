@@ -68,10 +68,11 @@
     const content = el('div', { class: 'content' }, [leftCol, rightCol]);
 
     // Acciones
-    const printBtn = el('button', { class: 'vet-btn' }, 'Imprimir');
-    const pdfBtn = el('button', { class: 'vet-btn primary' }, 'Exportar PDF');
-    const saveBtn = el('button', { class: 'vet-btn primary' }, 'Guardar diagnóstico');
-    const actions = el('div', { class: 'vet-actions' }, [printBtn, pdfBtn, saveBtn]);
+    const printBtn = el('button', { class: 'vet-btn', title:'Imprimir' }, 'Imprimir');
+    const pdfBtn = el('button', { class: 'vet-btn primary', title:'Exportar PDF' }, 'Exportar PDF');
+    const saveDiagBtn = el('button', { class: 'vet-btn primary', title:'Guardar diagnóstico' }, 'Guardar diagnóstico');
+    const saveRecetaBtn = el('button', { class: 'vet-btn', title:'Guardar receta' }, 'Guardar receta');
+    const actions = el('div', { class: 'vet-actions' }, [printBtn, pdfBtn, saveDiagBtn, saveRecetaBtn]);
 
     modal.appendChild(header);
     modal.appendChild(content);
@@ -156,7 +157,7 @@
     rightCol.appendChild(el('div', { class:'vet-actions' }, [addMedBtn]));
 
     // Guardar diagnóstico
-    saveBtn.addEventListener('click', async () => {
+    saveDiagBtn.addEventListener('click', async () => {
       const body = { diagnostico: diagInput.value };
       try {
         const res = await fetch(API.guardarDiagnostico(citaId), {
@@ -168,6 +169,37 @@
         alert('Diagnóstico guardado');
       } catch(e) {
         alert('No se pudo guardar el diagnóstico');
+      }
+    });
+
+    // Guardar receta
+    saveRecetaBtn.addEventListener('click', async () => {
+      // Construir items desde recetaItems
+      const items = recetaItems.map(wrapper => {
+        const inputs = wrapper.querySelectorAll('input');
+        return {
+          medicamento: inputs[0].value.trim(),
+          dosis: inputs[1].value.trim(),
+          notas: inputs[2].value.trim() || null,
+        };
+      }).filter(it => it.medicamento && it.dosis);
+
+      const payload = {
+        diagnostico: diagInput.value.trim() || null,
+        notas: null,
+        items
+      };
+      try {
+        const res = await fetch(`/api/citas/${citaId}/receta`, {
+          method: 'POST',
+          headers: { 'Content-Type':'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if (!res.ok || !json.success) throw new Error('Error guardando receta');
+        alert('Receta guardada');
+      } catch(e) {
+        alert('No se pudo guardar la receta');
       }
     });
 

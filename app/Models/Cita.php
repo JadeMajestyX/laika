@@ -25,6 +25,7 @@ class Cita extends Model
         'notas',
         'status',
         'tipo',
+        'diagnostico',
     ];
 
     protected $casts = [
@@ -69,6 +70,14 @@ class Cita extends Model
     public function veterinario()
     {
         return $this->belongsTo(User::class, 'veterinario_id');
+    }
+
+    /**
+     * Relación: receta asociada a la cita
+     */
+    public function receta()
+    {
+        return $this->hasOne(Receta::class);
     }
 
 }
