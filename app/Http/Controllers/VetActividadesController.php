@@ -198,15 +198,17 @@ class VetActividadesController extends Controller
                 ], 400);
             }
 
-            // Verificar que el veterinario no se asigne a sí mismo
-            if ($cita->veterinario_id === $veterinarioId) {
+            // Permitir que admin también asigne citas
+            $esAdmin = optional(Auth::user())->rol === 'A';
+            // Verificar que el veterinario no se asigne a sí mismo (no aplica bloqueo adicional para admin)
+            if (!$esAdmin && $cita->veterinario_id === $veterinarioId) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Ya tienes asignada esta cita'
                 ], 400);
             }
 
-            // Asignar la cita al veterinario actual
+            // Asignar la cita al veterinario actual (admin actúa como asignador al usuario actual)
             $cita->veterinario_id = $veterinarioId;
             $cita->save();
 
@@ -266,15 +268,15 @@ class VetActividadesController extends Controller
                 ]);
             }
 
-            // Buscar o crear el servicio "Consulta Manual"
-            // $servicio = \App\Models\Servicio::firstOrCreate(
-            //     ['nombre' => 'Consulta', 'clinica_id' => $clinicaId],
-            //     [
-            //         'descripcion' => 'Consulta manual creada por veterinario',
-            //         'precio' => 0.00,
-            //         'tiempo_estimado' => 30
-            //     ]
-            // );
+            // Buscar o crear el servicio "Consulta"
+            $servicio = \App\Models\Servicio::firstOrCreate(
+                ['nombre' => 'Consulta', 'clinica_id' => $clinicaId],
+                [
+                    'descripcion' => 'Consulta manual creada por veterinario',
+                    'precio' => 0.00,
+                    'tiempo_estimado' => 30
+                ]
+            );
 
             // CREAR MASCOTA para el usuario
             $mascota = \App\Models\Mascota::create([
@@ -342,12 +344,16 @@ class VetActividadesController extends Controller
 
             // Permitir actualizar si:
             // - el veterinario está asignado a la cita, o
-            // - el veterinario pertenece a la misma clínica que la cita (permiso local)
+            // - el usuario pertenece a la misma clínica que la cita (permiso local), o
+            // - el usuario es admin
             $puedeActualizar = false;
+            $esAdmin = $user && $user->rol === 'A';
             if ($cita->veterinario_id !== null && $cita->veterinario_id == $veterinarioId) {
                 $puedeActualizar = true;
             } elseif ($cita->clinica_id && $user && $user->clinica_id && $cita->clinica_id == $user->clinica_id) {
                 // Permitir a cualquier trabajador de la misma clínica actualizar estados (útil para citas no asignadas o pasadas)
+                $puedeActualizar = true;
+            } elseif ($esAdmin) {
                 $puedeActualizar = true;
             }
 
@@ -384,12 +390,17 @@ class VetActividadesController extends Controller
     {
         try {
             $veterinarioId = Auth::id();
+            $user = Auth::user();
+            $esAdmin = $user && $user->rol === 'A';
             
             // Obtener información de la cita actual
-            $cita = Cita::with(['mascota', 'mascota.user', 'servicio'])
-                ->where('id', $citaId)
-                ->where('veterinario_id', $veterinarioId)
-                ->firstOrFail();
+            $citaQuery = Cita::with(['mascota', 'mascota.user', 'servicio'])
+                ->where('id', $citaId);
+            if (!$esAdmin) {
+                // Veterinario: solo si está asignada a él
+                $citaQuery->where('veterinario_id', $veterinarioId);
+            }
+            $cita = $citaQuery->firstOrFail();
             
             // Obtener historial de la mascota (excluyendo la cita actual)
             $historial = Cita::with(['servicio'])
@@ -441,9 +452,13 @@ class VetActividadesController extends Controller
                 'procedimiento' => 'nullable|string'
             ]);
 
-            $cita = Cita::where('id', $request->cita_id)
-                ->where('veterinario_id', Auth::id())
-                ->firstOrFail();
+            $user = Auth::user();
+            $esAdmin = $user && $user->rol === 'A';
+            $citaQuery = Cita::where('id', $request->cita_id);
+            if (!$esAdmin) {
+                $citaQuery->where('veterinario_id', Auth::id());
+            }
+            $cita = $citaQuery->firstOrFail();
 
             $cita->status = 'completada';
             $cita->notas = $request->procedimiento ?? $cita->notas;
