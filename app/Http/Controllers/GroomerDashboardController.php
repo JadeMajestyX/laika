@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Cita;
 use App\Models\Servicio;
 use App\Models\User;
+use Illuminate\Support\Facades\Gate;
 
 class GroomerDashboardController extends Controller
 {
@@ -51,6 +52,7 @@ class GroomerDashboardController extends Controller
             'clinicaId' => $clinicaId,
             'citasClinica' => $citasClinica,
             'serviciosClinica' => $serviciosClinica,
+            'clinicaNombre' => optional($user->clinica)->nombre ?? null,
         ]);
     }
 
@@ -58,5 +60,56 @@ class GroomerDashboardController extends Controller
     {
         if ($prev <= 0) return $curr > 0 ? 100 : 0;
         return (int) round((($curr - $prev) / max(1, $prev)) * 100);
+    }
+
+    /**
+     * GET /groomer-dashboard/citas/{id}
+     * Devuelve detalle de una cita de la misma clínica del usuario.
+     */
+    public function showCita(Request $request, int $id)
+    {
+        /** @var User $user */
+        $user = Auth::user();
+        if (!$user) return response()->json(['message' => 'Unauthorized'], 401);
+
+        $cita = Cita::with(['servicio:id,nombre,clinica_id', 'mascota:id,nombre,user_id', 'mascota.user:id,name', 'clinica:id,nombre'])
+            ->where('id', $id)
+            ->where('clinica_id', $user->clinica_id)
+            ->first();
+        if (!$cita) return response()->json(['message' => 'Not Found'], 404);
+
+        return response()->json($cita);
+    }
+
+    /**
+     * PATCH /groomer-dashboard/citas/{id}/complete
+     * Marca una cita como completada y guarda notas.
+     */
+    public function completeCita(Request $request, int $id)
+    {
+        /** @var User $user */
+        $user = Auth::user();
+        if (!$user) return response()->json(['message' => 'Unauthorized'], 401);
+
+        $cita = Cita::where('id', $id)
+            ->where('clinica_id', $user->clinica_id)
+            ->first();
+        if (!$cita) return response()->json(['message' => 'Not Found'], 404);
+
+        $validated = $request->validate([
+            'notas' => ['nullable', 'string'],
+        ]);
+
+        $cita->status = 'completada';
+        if (array_key_exists('notas', $validated)) {
+            $cita->notas = $validated['notas'];
+        }
+        // si no tiene veterinario asignado, asociarlo al usuario actual
+        if (!$cita->veterinario_id) {
+            $cita->veterinario_id = $user->id;
+        }
+        $cita->save();
+
+        return response()->json(['message' => 'ok']);
     }
 }
