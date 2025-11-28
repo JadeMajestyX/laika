@@ -2,6 +2,15 @@
 
 let chartInstance = null;
 
+function isGroomingServiceName(name) {
+  if (!name) return false;
+  const n = String(name).toLowerCase();
+  return [
+    'corte', 'baño', 'limpieza dental', 'spa', 'uñas', 'desparasitación',
+    'peluquer', 'groom', 'aseo'
+  ].some((kw) => n.includes(kw));
+}
+
 function buildChartSeriesFromCitas(citas, groomerId) {
   const diasOrdenados = [
     { en: 'Monday', es: 'Lun' },
@@ -13,7 +22,13 @@ function buildChartSeriesFromCitas(citas, groomerId) {
     { en: 'Sunday', es: 'Dom' },
   ];
   const map = {};
-  const isMine = (c) => c.veterinario_id === groomerId || c.creada_por === groomerId;
+  const toNum = (v) => v == null ? null : Number(v);
+  const gid = toNum(groomerId);
+  const isMine = (c) => {
+    const vet = toNum(c.veterinario_id);
+    const creator = toNum(c.creada_por);
+    return (vet != null && vet === gid) || (creator != null && creator === gid);
+  };
   (citas || [])
     .filter(isMine)
     .forEach((c) => {
@@ -57,13 +72,22 @@ function updateDashboardMetricsFromCitas(payload) {
   const today = new Date();
   const pad = (n) => String(n).padStart(2, '0');
   const isSameDay = (dt) => dt && dt.getFullYear() === today.getFullYear() && dt.getMonth() === today.getMonth() && dt.getDate() === today.getDate();
-  const mine = (c) => c.veterinario_id === userId || c.creada_por === userId;
+  const toNum = (v) => v == null ? null : Number(v);
+  const gid = toNum(userId);
+  const mine = (c) => {
+    const vet = toNum(c.veterinario_id);
+    const creator = toNum(c.creada_por);
+    return (vet != null && vet === gid) || (creator != null && creator === gid);
+  };
   const citasHoy = citasClinica.filter((c) => {
     const d = c.fecha ? new Date(c.fecha) : null;
     return mine(c) && isSameDay(d);
   });
   const completadas = citasHoy.filter((c) => c.status === 'completada');
-  const serviciosRealizados = citasHoy.filter((c) => c.servicio_id != null);
+  const serviciosRealizados = citasHoy.filter((c) => {
+    if (c.servicio?.nombre) return isGroomingServiceName(c.servicio.nombre);
+    return c.servicio_id != null; // fallback si no viene el nombre
+  });
   const mascotasSet = new Set();
   citasHoy.forEach((c) => { if (c.mascota_id) mascotasSet.add(c.mascota_id); });
   const mascotasAtendidas = mascotasSet.size;
@@ -89,11 +113,18 @@ function renderActividadesFromCitas(payload) {
   const { citasClinica = [], userId } = payload || {};
   const today = new Date();
   const isSameDay = (dt) => dt && dt.getFullYear() === today.getFullYear() && dt.getMonth() === today.getMonth() && dt.getDate() === today.getDate();
-  const mine = (c) => c.veterinario_id === userId || c.creada_por === userId;
+  const toNum = (v) => v == null ? null : Number(v);
+  const gid = toNum(userId);
+  const mine = (c) => {
+    const vet = toNum(c.veterinario_id);
+    const creator = toNum(c.creada_por);
+    return (vet != null && vet === gid) || (creator != null && creator === gid);
+  };
   const actividades = citasClinica
     .filter((c) => {
       const d = c.fecha ? new Date(c.fecha) : null;
-      return mine(c) && isSameDay(d);
+      const groomingOk = c.servicio?.nombre ? isGroomingServiceName(c.servicio.nombre) : true;
+      return mine(c) && groomingOk && isSameDay(d);
     })
     .sort((a,b) => new Date(b.fecha) - new Date(a.fecha))
     .slice(0, 10)
