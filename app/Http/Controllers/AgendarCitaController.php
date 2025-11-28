@@ -21,9 +21,18 @@ class AgendarCitaController extends Controller
 
 
     public function getServices(Request $request){
-        $clinicas = Clinica::where('is_visible', true)->where('id', $request->clinica_id)->with('servicios')->first();
-    
-        return json_encode($clinicas->servicios);}
+        $request->validate([
+            'clinica_id' => 'required|integer|exists:clinicas,id'
+        ]);
+
+        $clinica = Clinica::where('is_visible', true)
+            ->where('id', $request->clinica_id)
+            ->with('servicios')
+            ->first();
+
+        $servicios = $clinica ? $clinica->servicios : collect();
+        return response()->json($servicios);
+    }
 
     /**
      * POST /agendar-cita/disponibilidad

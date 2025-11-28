@@ -42,4 +42,9 @@ class Clinica extends Model
     {
     return $this->hasMany(\App\Models\Horario::class, 'clinica_id');
     }
+
+    public function servicios()
+    {
+        return $this->hasMany(\App\Models\Servicio::class, 'clinica_id');
+    }
 }
