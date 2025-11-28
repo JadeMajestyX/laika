@@ -302,6 +302,10 @@ function renderSection(section, data) {
         </div>
       </div>
     `;
+    // Si ya tenemos data, renderizar agenda
+    if (data && data.citasClinica) {
+      renderAgendaFromCitas(data);
+    }
   } else if (section === 'actividad') {
     mainContent.innerHTML = `
       <div class="mb-3">
@@ -367,6 +371,57 @@ function renderSection(section, data) {
   }
 }
 
+function renderAgendaFromCitas(payload) {
+  const { citasClinica = [], userId, serviciosClinica = [], clinicaId } = payload || {};
+  const toNum = (v) => v == null ? null : Number(v);
+  const gid = toNum(userId);
+  const groomingServiceIds = new Set(
+    (serviciosClinica || [])
+      .filter((s) => (clinicaId == null || toNum(s.clinica_id) === toNum(clinicaId)) && isGroomingServiceName(s.nombre))
+      .map((s) => toNum(s.id))
+      .filter((id) => id != null)
+  );
+  const mine = (c) => {
+    const vet = toNum(c.veterinario_id);
+    const creator = toNum(c.creada_por);
+    return (vet != null && vet === gid) || (creator != null && creator === gid);
+  };
+  const isGroomingByService = (c) => {
+    const sid = toNum(c.servicio_id);
+    if (sid != null && groomingServiceIds.size > 0) return groomingServiceIds.has(sid);
+    return c.servicio?.nombre ? isGroomingServiceName(c.servicio.nombre) : true;
+  };
+  const agendaBody = document.getElementById('agendaBody');
+  if (!agendaBody) return;
+  const citas = (citasClinica || [])
+    .filter((c) => mine(c) && isGroomingByService(c))
+    .sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
+  if (citas.length === 0) {
+    agendaBody.innerHTML = `<tr><td colspan="6" class="text-center text-body-secondary py-4">No hay citas programadas</td></tr>`;
+    return;
+  }
+  agendaBody.innerHTML = '';
+  citas.forEach((c) => {
+    const hora = c.fecha ? new Date(c.fecha).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }) : '';
+    const mascota = c.mascota?.nombre || 'Mascota';
+    const propietario = c.creador?.nombre || c.veterinario?.nombre || '';
+    const servicio = c.servicio?.nombre || 'Servicio';
+    const estado = c.status || '';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${hora}</td>
+      <td>${mascota}</td>
+      <td>${propietario}</td>
+      <td>${servicio}</td>
+      <td>${estado}</td>
+      <td>
+        <button class="btn btn-sm btn-outline-primary" data-action="ver" data-id="${c.id}">Ver</button>
+      </td>
+    `;
+    agendaBody.appendChild(tr);
+  });
+}
+
 function markActive(section) {
   document.querySelectorAll('.nav-btn').forEach((b) => b.classList.remove('active'));
   const btn = document.querySelector(`.nav-btn [data-section="${section}"]`)?.closest('.nav-btn') ||
@@ -394,7 +449,17 @@ function initNavHandlers() {
           });
         return;
       }
-      renderSection(section);
+      // Para otras secciones, también obtener datos y renderizar lista si aplica
+      fetch('/groomer-dashboard/data')
+        .then((res) => res.json())
+        .then((data) => {
+          renderSection(section, data);
+          if (section === 'agenda') {
+            renderAgendaFromCitas(data);
+          } else if (section === 'actividad') {
+            renderActividadesFromCitas(data);
+          }
+        });
       history.pushState({ section }, '', `/groomer-dashboard/${section}`);
     });
   });
@@ -417,7 +482,16 @@ function handlePopState() {
           setTodayTexts();
         });
     } else {
-      renderSection(section);
+      fetch('/groomer-dashboard/data')
+        .then((res) => res.json())
+        .then((data) => {
+          renderSection(section, data);
+          if (section === 'agenda') {
+            renderAgendaFromCitas(data);
+          } else if (section === 'actividad') {
+            renderActividadesFromCitas(data);
+          }
+        });
     }
   });
 }
@@ -441,7 +515,16 @@ function handlePopState() {
         })
         .catch((err) => console.error('Error al obtener los datos del dashboard groomer:', err));
     } else {
-      renderSection(initialSection);
+      fetch('/groomer-dashboard/data')
+        .then((r) => r.json())
+        .then((data) => {
+          renderSection(initialSection, data);
+          if (initialSection === 'agenda') {
+            renderAgendaFromCitas(data);
+          } else if (initialSection === 'actividad') {
+            renderActividadesFromCitas(data);
+          }
+        });
       history.replaceState({ section: initialSection }, '', location.pathname);
     }
 
