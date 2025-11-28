@@ -29,39 +29,34 @@ class GroomerDashboardController extends Controller
                 return response()->json(['error' => 'Usuario no asociado a ninguna clínica'], 400);
             }
 
-            // Buscar servicios relacionados con grooming por nombre (heurística)
-            $keywords = ['Corte de pelo', 'Baño', 'Limpieza dental', 'peluque', 'peluquer', 'spa', 'corte de uñas', 'corte uñas', 'pelado'];
-            $serviciosQuery = Servicio::where('clinica_id', $clinicaId);
-            $serviciosQuery->where(function($q) use ($keywords) {
-                foreach ($keywords as $kw) {
-                    $q->orWhereRaw('LOWER(nombre) LIKE ?', ['%' . strtolower($kw) . '%']);
-                }
-            });
-            $servicios = $serviciosQuery->get();
-            $servicioIds = $servicios->pluck('id')->toArray();
-
-            if (empty($servicioIds)) {
-                // Si no hay servicios identificados como grooming, devolver vacío pero sin error
-                $servicioIds = [-1];
-            }
+            // Heurística para detectar servicios de grooming por nombre (tabla `servicios` relacionada por servicio_id)
+            $keywords = ['corte de pelo', 'baño', 'limpieza dental', 'peluque', 'peluquer', 'spa', 'corte de uñas', 'corte uñas', 'pelado'];
+            $servicioFilter = function ($q) use ($keywords, $clinicaId) {
+                $q->where('clinica_id', $clinicaId);
+                $q->where(function ($q2) use ($keywords) {
+                    foreach ($keywords as $kw) {
+                        $q2->orWhereRaw('LOWER(nombre) LIKE ?', ['%' . $kw . '%']);
+                    }
+                });
+            };
 
             // Métricas principales
-            $citasHoy = Cita::where('clinica_id', $clinicaId)
-                ->whereDate('fecha', $today)
-                ->whereIn('servicio_id', $servicioIds)
+            $citasHoy = Cita::whereDate('fecha', $today)
+                ->whereHas('servicio', $servicioFilter)
+                ->where('clinica_id', $clinicaId)
                 ->count();
 
-            $citasCompletadas = Cita::where('clinica_id', $clinicaId)
-                ->whereDate('fecha', $today)
-                ->whereIn('servicio_id', $servicioIds)
+            $citasCompletadas = Cita::whereDate('fecha', $today)
+                ->whereHas('servicio', $servicioFilter)
+                ->where('clinica_id', $clinicaId)
                 ->where('status', 'completada')
                 ->count();
 
             $serviciosRealizados = $citasCompletadas; // para groomer, servicios completados == servicios realizados
 
-            $mascotasAtendidas = Cita::where('clinica_id', $clinicaId)
-                ->whereDate('fecha', $today)
-                ->whereIn('servicio_id', $servicioIds)
+            $mascotasAtendidas = Cita::whereDate('fecha', $today)
+                ->whereHas('servicio', $servicioFilter)
+                ->where('clinica_id', $clinicaId)
                 ->whereIn('status', ['completada', 'en_progreso'])
                 ->distinct('mascota_id')
                 ->count('mascota_id');
@@ -71,17 +66,17 @@ class GroomerDashboardController extends Controller
             for ($i = 6; $i >= 0; $i--) {
                 $fecha = Carbon::today()->subDays($i);
                 $dia = $fecha->locale('en')->isoFormat('dddd');
-                $total = Cita::where('clinica_id', $clinicaId)
-                    ->whereDate('fecha', $fecha)
-                    ->whereIn('servicio_id', $servicioIds)
+                $total = Cita::whereDate('fecha', $fecha)
+                    ->whereHas('servicio', $servicioFilter)
+                    ->where('clinica_id', $clinicaId)
                     ->count();
                 $citasPorDia[] = ['dia' => $dia, 'total' => $total];
             }
 
             // Lista de próximas citas relacionadas con grooming
             $citas = Cita::with(['mascota', 'servicio', 'mascota.user'])
+                ->whereHas('servicio', $servicioFilter)
                 ->where('clinica_id', $clinicaId)
-                ->whereIn('servicio_id', $servicioIds)
                 ->whereDate('fecha', '>=', $today)
                 ->orderBy('fecha')
                 ->get()
