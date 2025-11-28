@@ -67,7 +67,7 @@ Route::middleware(EnsureUserHasRole::class.':V')->group(function () {
 // Dashboard Groomer (rol G)
 Route::middleware(EnsureUserHasRole::class.':G')->group(function () {
     Route::get('/groomer-dashboard', [GroomerDashboardController::class, 'index'])->name('groomer.dashboard');
-    Route::get('/groomer-dashboard/data', [GroomerDashboardController::class, 'getDashboardData'])->name('groomer.dashboard.data');
+    Route::get('/groomer-dashboard/data', [GroomerDashboardController::class, 'data'])->name('groomer.dashboard.data');
     Route::get('/groomer-dashboard/{any}', [GroomerDashboardController::class, 'index'])->where('any', '.*');
 });
 

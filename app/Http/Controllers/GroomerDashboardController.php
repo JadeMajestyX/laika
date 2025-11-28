@@ -3,123 +3,115 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Cita;
-use App\Models\Servicio;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
+use App\Models\Cita;
+use App\Models\User;
 
 class GroomerDashboardController extends Controller
 {
-    public function index(Request $request, $any = null)
+    /**
+     * GET /groomer-dashboard/data
+     * Resumen para el groomer autenticado, filtrando por su clínica y grooming.
+     */
+    public function data(Request $request)
     {
-        $usuario = auth()->user();
-        return view('dashboard-groomer', compact('usuario'));
-    }
-
-    public function getDashboardData()
-    {
-        try {
-            $user = Auth::user();
-            $clinicaId = $user?->clinica_id;
-            $today = Carbon::today();
-
-            if (! $clinicaId) {
-                Log::warning('Groomer sin clinica_id: ' . ($user->id ?? 'n/a'));
-                return response()->json(['error' => 'Usuario no asociado a ninguna clínica'], 400);
-            }
-
-            // Buscar primero los servicios relacionados con grooming y guardar sus IDs
-            $keywords = ['corte de pelo', 'baño', 'limpieza dental', 'peluque', 'peluquer', 'spa', 'corte de uñas', 'corte uñas', 'pelado'];
-            $serviciosQuery = Servicio::where('clinica_id', $clinicaId)->where(function ($q2) use ($keywords) {
-                foreach ($keywords as $kw) {
-                    $q2->orWhereRaw('LOWER(nombre) LIKE ?', ['%' . $kw . '%']);
-                }
-            });
-            $servicioIds = $serviciosQuery->pluck('id')->toArray();
-            if (empty($servicioIds)) {
-                // ningún servicio de grooming detectado; usar id inválido para que las consultas devuelvan vacío
-                $servicioIds = [-1];
-            }
-
-            // Métricas principales
-            $citasHoy = Cita::whereDate('fecha', $today)
-                ->where('clinica_id', $clinicaId)
-                ->whereIn('servicio_id', $servicioIds)
-                ->count();
-
-            $citasCompletadas = Cita::whereDate('fecha', $today)
-                ->where('clinica_id', $clinicaId)
-                ->whereIn('servicio_id', $servicioIds)
-                ->where('status', 'completada')
-                ->count();
-
-            $serviciosRealizados = $citasCompletadas; // para groomer, servicios completados == servicios realizados
-
-            $mascotasAtendidas = Cita::whereDate('fecha', $today)
-                ->where('clinica_id', $clinicaId)
-                ->whereIn('servicio_id', $servicioIds)
-                ->whereIn('status', ['completada', 'en_progreso'])
-                ->distinct('mascota_id')
-                ->count('mascota_id');
-
-            // Citas por día (última semana)
-            $citasPorDia = [];
-            for ($i = 6; $i >= 0; $i--) {
-                $fecha = Carbon::today()->subDays($i);
-                $dia = $fecha->locale('en')->isoFormat('dddd');
-                $total = Cita::whereDate('fecha', $fecha)
-                    ->where('clinica_id', $clinicaId)
-                    ->whereIn('servicio_id', $servicioIds)
-                    ->count();
-                $citasPorDia[] = ['dia' => $dia, 'total' => $total];
-            }
-
-            // Lista de próximas citas relacionadas con grooming
-            $citas = Cita::with(['mascota', 'servicio', 'mascota.user'])
-                ->where('clinica_id', $clinicaId)
-                ->whereIn('servicio_id', $servicioIds)
-                ->whereDate('fecha', '>=', $today)
-                ->orderBy('fecha')
-                ->get()
-                ->map(function($c) {
-                    return [
-                        'id' => $c->id,
-                        'fecha' => $c->fecha?->toDateString(),
-                        'hora' => $c->hora ?? ($c->fecha?->format('H:i') ?? null),
-                        'mascota' => ['nombre' => $c->mascota->nombre ?? null, 'raza' => $c->mascota->raza ?? null],
-                        'propietario' => $c->mascota->user->nombre ?? ($c->creador?->nombre ?? null),
-                        'servicio' => ['nombre' => $c->servicio->nombre ?? null],
-                        'status' => $c->status,
-                    ];
-                })->toArray();
-
-            $comparacionporcentaje = [
-                'citasHoy' => 0,
-                'citasCompletadas' => 0,
-                'serviciosRealizados' => 0,
-                'mascotasAtendidas' => 0,
-            ];
-
-            $data = [
-                'citasHoy' => $citasHoy,
-                'citasCompletadas' => $citasCompletadas,
-                'serviciosRealizados' => $serviciosRealizados,
-                'mascotasAtendidas' => $mascotasAtendidas,
-                'citasPorDia' => $citasPorDia,
-                'actividades' => [],
-                'citas' => $citas,
-                'comparacionporcentaje' => $comparacionporcentaje,
-            ];
-
-            return response()->json($data);
-        } catch (\Exception $e) {
-            Log::error('Error en GroomerDashboardController::getDashboardData - ' . $e->getMessage());
-            return response()->json(['error' => 'Error al obtener datos del dashboard'], 500);
+        /** @var User $user */
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
         }
+
+        $clinicaId = $user->clinica_id;
+
+        $today = now()->startOfDay();
+        $endToday = now()->endOfDay();
+
+        $baseQuery = Cita::query()
+            ->where('clinica_id', $clinicaId)
+            ->where(function ($q) use ($user) {
+                $q->where('veterinario_id', $user->id)
+                  ->orWhere('creada_por', $user->id);
+            })
+            ->where(function ($q) {
+                $q->where('tipo', 'grooming')
+                  ->orWhereNull('tipo');
+            });
+
+        $citasHoy = (clone $baseQuery)
+            ->whereBetween('fecha', [$today, $endToday])
+            ->count();
+
+        $citasCompletadasHoy = (clone $baseQuery)
+            ->whereBetween('fecha', [$today, $endToday])
+            ->where('status', 'completada')
+            ->count();
+
+        $serviciosRealizadosHoy = (clone $baseQuery)
+            ->whereBetween('fecha', [$today, $endToday])
+            ->whereNotNull('servicio_id')
+            ->count();
+
+        $mascotasAtendidasHoy = (clone $baseQuery)
+            ->whereBetween('fecha', [$today, $endToday])
+            ->whereNotNull('mascota_id')
+            ->distinct('mascota_id')
+            ->count('mascota_id');
+
+        $yesterdayStart = now()->subDay()->startOfDay();
+        $yesterdayEnd = now()->subDay()->endOfDay();
+
+        $citasAyer = (clone $baseQuery)->whereBetween('fecha', [$yesterdayStart, $yesterdayEnd])->count();
+        $citasCompletadasAyer = (clone $baseQuery)->whereBetween('fecha', [$yesterdayStart, $yesterdayEnd])->where('status', 'completada')->count();
+        $serviciosAyer = (clone $baseQuery)->whereBetween('fecha', [$yesterdayStart, $yesterdayEnd])->whereNotNull('servicio_id')->count();
+        $mascotasAyer = (clone $baseQuery)->whereBetween('fecha', [$yesterdayStart, $yesterdayEnd])->whereNotNull('mascota_id')->distinct('mascota_id')->count('mascota_id');
+
+        $comparacion = [
+            'citasHoy' => self::pctChange($citasAyer, $citasHoy),
+            'citasCompletadas' => self::pctChange($citasCompletadasAyer, $citasCompletadasHoy),
+            'serviciosRealizados' => self::pctChange($serviciosAyer, $serviciosRealizadosHoy),
+            'mascotasAtendidas' => self::pctChange($mascotasAyer, $mascotasAtendidasHoy),
+        ];
+
+        $weekStart = now()->startOfWeek();
+        $weekEnd = now()->endOfWeek();
+        $citasSemana = (clone $baseQuery)
+            ->whereBetween('fecha', [$weekStart, $weekEnd])
+            ->get(['id', 'fecha']);
+
+        $citasPorDia = $citasSemana
+            ->groupBy(fn($c) => $c->fecha?->format('l'))
+            ->map(fn($grp) => ['dia' => optional($grp->first()->fecha)->format('l'), 'total' => $grp->count()])
+            ->values();
+
+        $actividades = (clone $baseQuery)
+            ->whereBetween('fecha', [$today, $endToday])
+            ->latest('fecha')
+            ->with(['servicio:id,nombre', 'mascota:id,nombre'])
+            ->take(10)
+            ->get()
+            ->map(function ($cita) {
+                $serv = $cita->servicio?->nombre ?? 'Servicio';
+                $masc = $cita->mascota?->nombre ?? 'Mascota';
+                return [
+                    'descripcion' => $serv.' - '.$masc,
+                    'created_at' => optional($cita->fecha)->format('Y-m-d H:i'),
+                ];
+            });
+
+        return response()->json([
+            'citasHoy' => $citasHoy,
+            'citasCompletadas' => $citasCompletadasHoy,
+            'serviciosRealizados' => $serviciosRealizadosHoy,
+            'mascotasAtendidas' => $mascotasAtendidasHoy,
+            'comparacionporcentaje' => $comparacion,
+            'citasPorDia' => $citasPorDia,
+            'actividades' => $actividades,
+        ]);
     }
 
-
-    //citas para el groomer
-
+    private static function pctChange(int $prev, int $curr): int
+    {
+        if ($prev <= 0) return $curr > 0 ? 100 : 0;
+        return (int) round((($curr - $prev) / max(1, $prev)) * 100);
+    }
 }
