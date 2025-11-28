@@ -6,10 +6,8 @@
   const API = {
     // Nueva ruta vía web (session auth) para ficha completa
     citaDetalle: (id) => `/vet/citas/${id}/ficha`,
-    mascotaById: (id) => `/api/mascotas/${id}`,
-    citasMascota: (id) => `/api/citas-mascota/${id}`,
-    guardarDiagnostico: (id) => `/api/citas/${id}`, // PUT/PATCH {diagnostico}
-    guardarReceta: (id) => `/api/citas/${id}/receta`, // POST {items:[]}
+    guardarDiagnostico: (id) => `/vet/citas/${id}/diagnostico`,
+    guardarReceta: (id) => `/vet/citas/${id}/receta`,
   };
 
   // Utilidad para crear elementos
@@ -186,13 +184,19 @@
       try {
         const res = await fetch(API.guardarDiagnostico(citaId), {
           method: 'PATCH',
-          headers: { 'Content-Type':'application/json' },
+          headers: { 
+            'Content-Type':'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+          },
+          credentials: 'same-origin',
           body: JSON.stringify(body)
         });
-        if (!res.ok) throw new Error('Error al guardar diagnóstico');
-        alert('Diagnóstico guardado');
+        const json = await res.json();
+        if (!res.ok || !json.success) throw new Error(json.message || 'Error al guardar diagnóstico');
+        alert('Diagnóstico guardado correctamente');
       } catch(e) {
-        alert('No se pudo guardar el diagnóstico');
+        console.error('Error guardando diagnóstico:', e);
+        alert('No se pudo guardar el diagnóstico: ' + e.message);
       }
     });
 
@@ -214,16 +218,21 @@
         items
       };
       try {
-        const res = await fetch(`/api/citas/${citaId}/receta`, {
+        const res = await fetch(API.guardarReceta(citaId), {
           method: 'POST',
-          headers: { 'Content-Type':'application/json' },
+          headers: { 
+            'Content-Type':'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+          },
+          credentials: 'same-origin',
           body: JSON.stringify(payload)
         });
         const json = await res.json();
-        if (!res.ok || !json.success) throw new Error('Error guardando receta');
-        alert('Receta guardada');
+        if (!res.ok || !json.success) throw new Error(json.message || 'Error guardando receta');
+        alert('Receta guardada correctamente');
       } catch(e) {
-        alert('No se pudo guardar la receta');
+        console.error('Error guardando receta:', e);
+        alert('No se pudo guardar la receta: ' + e.message);
       }
     });
 

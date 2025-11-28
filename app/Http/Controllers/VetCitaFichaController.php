@@ -154,4 +154,140 @@ class VetCitaFichaController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Actualiza el diagnóstico de una cita
+     */
+    public function updateDiagnostico(Request $request, $id)
+    {
+        try {
+            $user = Auth::user();
+            if (!$user) {
+                return response()->json(['success' => false, 'message' => 'No autenticado'], 401);
+            }
+
+            $cita = Cita::find($id);
+            if (!$cita) {
+                return response()->json(['success' => false, 'message' => 'Cita no encontrada'], 404);
+            }
+
+            // Validar que pertenece a la clínica del veterinario
+            if ($user->clinica_id && $cita->clinica_id && $user->clinica_id !== $cita->clinica_id) {
+                return response()->json(['success' => false, 'message' => 'Sin permiso para modificar esta cita'], 403);
+            }
+
+            $validated = $request->validate([
+                'diagnostico' => 'nullable|string|max:5000',
+            ]);
+
+            $cita->diagnostico = $validated['diagnostico'];
+            $cita->save();
+
+            Log::info("Diagnóstico actualizado en cita {$id} por veterinario {$user->id}");
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Diagnóstico guardado correctamente',
+                'diagnostico' => $cita->diagnostico,
+            ]);
+
+        } catch (\Throwable $e) {
+            Log::error('Error en VetCitaFichaController@updateDiagnostico: ' . $e->getMessage(), [
+                'cita_id' => $id,
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al guardar diagnóstico',
+                'error' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
+    }
+
+    /**
+     * Guarda o actualiza la receta de una cita
+     */
+    public function storeReceta(Request $request, $id)
+    {
+        try {
+            $user = Auth::user();
+            if (!$user) {
+                return response()->json(['success' => false, 'message' => 'No autenticado'], 401);
+            }
+
+            $cita = Cita::with('receta.items')->find($id);
+            if (!$cita) {
+                return response()->json(['success' => false, 'message' => 'Cita no encontrada'], 404);
+            }
+
+            // Validar que pertenece a la clínica del veterinario
+            if ($user->clinica_id && $cita->clinica_id && $user->clinica_id !== $cita->clinica_id) {
+                return response()->json(['success' => false, 'message' => 'Sin permiso para modificar esta cita'], 403);
+            }
+
+            $validated = $request->validate([
+                'diagnostico' => 'nullable|string|max:5000',
+                'notas' => 'nullable|string|max:1000',
+                'items' => 'nullable|array',
+                'items.*.medicamento' => 'required_with:items|string|max:200',
+                'items.*.dosis' => 'required_with:items|string|max:300',
+                'items.*.notas' => 'nullable|string|max:300',
+            ]);
+
+            // Actualizar diagnóstico si viene
+            if (array_key_exists('diagnostico', $validated)) {
+                $cita->diagnostico = $validated['diagnostico'];
+                $cita->save();
+            }
+
+            // Crear o actualizar receta
+            $receta = $cita->receta;
+            if (!$receta) {
+                $receta = \App\Models\Receta::create([
+                    'cita_id' => $cita->id,
+                    'notas' => $validated['notas'] ?? null,
+                ]);
+            } else {
+                if (array_key_exists('notas', $validated)) {
+                    $receta->notas = $validated['notas'];
+                    $receta->save();
+                }
+                // Limpiar items anteriores
+                $receta->items()->delete();
+            }
+
+            // Crear nuevos items
+            if (isset($validated['items']) && count($validated['items']) > 0) {
+                foreach ($validated['items'] as $item) {
+                    \App\Models\RecetaItem::create([
+                        'receta_id' => $receta->id,
+                        'medicamento' => $item['medicamento'],
+                        'dosis' => $item['dosis'],
+                        'notas' => $item['notas'] ?? null,
+                    ]);
+                }
+            }
+
+            Log::info("Receta actualizada en cita {$id} por veterinario {$user->id}, items: " . count($validated['items'] ?? []));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Receta guardada correctamente',
+                'receta_id' => $receta->id,
+            ]);
+
+        } catch (\Throwable $e) {
+            Log::error('Error en VetCitaFichaController@storeReceta: ' . $e->getMessage(), [
+                'cita_id' => $id,
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al guardar receta',
+                'error' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
+    }
 }

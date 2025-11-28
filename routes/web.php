@@ -46,6 +46,8 @@ Route::middleware(EnsureUserHasRole::class.':V')->group(function () {
     Route::post('/vet-dashboard/cancelar-cita', [VetActividadesController::class, 'cancelarCita']);
     // Ficha completa de cita/consulta (JSON para modal)
     Route::get('/vet/citas/{id}/ficha', [VetCitaFichaController::class, 'show'])->name('vet.citas.ficha');
+    Route::patch('/vet/citas/{id}/diagnostico', [VetCitaFichaController::class, 'updateDiagnostico'])->name('vet.citas.diagnostico');
+    Route::post('/vet/citas/{id}/receta', [VetCitaFichaController::class, 'storeReceta'])->name('vet.citas.receta');
     
     //Crear consulta manual
     Route::post('/vet-dashboard/crear-consulta-manual', [VetActividadesController::class, 'crearConsultaManual'])->name('vet.crear-consulta-manual');
