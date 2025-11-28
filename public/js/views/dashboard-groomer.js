@@ -94,29 +94,18 @@ function updateDashboardMetricsFromCitas(payload) {
   const pad = (n) => String(n).padStart(2, '0');
   const isSameDay = (dt) => dt && dt.getFullYear() === today.getFullYear() && dt.getMonth() === today.getMonth() && dt.getDate() === today.getDate();
   const toNum = (v) => v == null ? null : Number(v);
-  const gid = toNum(userId);
-  const groomingServiceIds = new Set(
-    (serviciosClinica || [])
-      .filter((s) => (clinicaId == null || toNum(s.clinica_id) === toNum(clinicaId)) && isGroomingServiceName(s.nombre))
-      .map((s) => toNum(s.id))
-      .filter((id) => id != null)
-  );
-  const mine = (c) => {
-    const vet = toNum(c.veterinario_id);
-    const creator = toNum(c.creada_por);
-    return (vet != null && vet === gid) || (creator != null && creator === gid);
-  };
-  const isGroomingByService = (c) => {
-    const sid = toNum(c.servicio_id);
-    if (sid != null && groomingServiceIds.size > 0) return groomingServiceIds.has(sid);
-    return c.servicio?.nombre ? isGroomingServiceName(c.servicio.nombre) : true;
+  // Aplicar filtros de servicios permitidos: limpieza dental, corte de pelo, baño
+  const allowed = new Set(['limpieza dental','corte de pelo','baño']);
+  const isAllowedService = (c) => {
+    const name = c?.servicio?.nombre ? String(c.servicio.nombre).toLowerCase().trim() : '';
+    return allowed.has(name);
   };
   const citasHoy = citasClinica.filter((c) => {
     const d = c.fecha ? new Date(c.fecha) : null;
-    return mine(c) && isGroomingByService(c) && isSameDay(d);
+    return isSameDay(d) && isAllowedService(c);
   });
   const completadas = citasHoy.filter((c) => c.status === 'completada');
-  const serviciosRealizados = citasHoy.filter((c) => isGroomingByService(c));
+  const serviciosRealizados = citasHoy.filter((c) => isAllowedService(c));
   const mascotasSet = new Set();
   citasHoy.forEach((c) => { if (c.mascota_id) mascotasSet.add(c.mascota_id); });
   const mascotasAtendidas = mascotasSet.size;
