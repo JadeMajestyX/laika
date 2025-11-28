@@ -78,9 +78,8 @@
     // Acciones
     const printBtn = el('button', { class: 'vet-btn', title:'Imprimir' }, 'Imprimir');
     const pdfBtn = el('button', { class: 'vet-btn primary', title:'Exportar PDF' }, 'Exportar PDF');
-    const saveDiagBtn = el('button', { class: 'vet-btn primary', title:'Guardar diagnóstico' }, 'Guardar diagnóstico');
-    const saveRecetaBtn = el('button', { class: 'vet-btn', title:'Guardar receta' }, 'Guardar receta');
-    const actions = el('div', { class: 'vet-actions' }, [printBtn, pdfBtn, saveDiagBtn, saveRecetaBtn]);
+    const saveBtn = el('button', { class: 'vet-btn primary', title:'Guardar consulta completa' }, 'Guardar');
+    const actions = el('div', { class: 'vet-actions' }, [printBtn, pdfBtn, saveBtn]);
 
     modal.appendChild(header);
     modal.appendChild(content);
