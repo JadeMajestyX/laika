@@ -1,3 +1,223 @@
+// Módulo: Vista detallada de cita para veterinarios
+// Abre un modal con información de la mascota, citas pasadas atendidas,
+// permite escribir diagnóstico, recetar medicamentos y exportar a PDF.
+
+(function(){
+  const API = {
+    citaDetalle: (id) => `/api/citas/${id}`, // asume endpoint existente o ajustar
+    mascotaById: (id) => `/api/mascotas/${id}`,
+    citasMascota: (id) => `/api/citas-mascota/${id}`,
+    guardarDiagnostico: (id) => `/api/citas/${id}`, // PUT/PATCH {diagnostico}
+    guardarReceta: (id) => `/api/citas/${id}/receta`, // POST {items:[]}
+  };
+
+  // Utilidad para crear elementos
+  function el(tag, attrs={}, children=[]) {
+    const node = document.createElement(tag);
+    Object.entries(attrs||{}).forEach(([k,v]) => {
+      if (k === 'class') node.className = v;
+      else if (k === 'style') node.style.cssText = v;
+      else node.setAttribute(k, v);
+    });
+    (Array.isArray(children) ? children : [children]).forEach(c => {
+      if (c == null) return;
+      if (typeof c === 'string') node.appendChild(document.createTextNode(c));
+      else node.appendChild(c);
+    });
+    return node;
+  }
+
+  // Inyección ligera de estilos del modal
+  const styleId = 'vet-detail-modal-style';
+  if (!document.getElementById(styleId)) {
+    const style = el('style', { id: styleId }, `
+      .vet-modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:9998}
+      .vet-modal{position:fixed;inset:auto auto auto 50%;transform:translateX(-50%);
+        top:5%;width:min(1000px,92%);max-height:90%;overflow:auto;background:#fff;
+        border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.25);z-index:9999}
+      .vet-modal header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #eee}
+      .vet-modal .content{display:grid;grid-template-columns:260px 1fr;gap:16px;padding:16px}
+      .vet-card{border:1px solid #e9e9e9;border-radius:10px;padding:12px;background:#fafafa}
+      .vet-list{margin:0;padding:0;list-style:none}
+      .vet-list li{padding:6px 4px;border-bottom:1px dashed #e5e5e5}
+      .vet-actions{display:flex;gap:8px;justify-content:flex-end;padding:12px 16px;border-top:1px solid #eee}
+      .vet-btn{appearance:none;border:1px solid #ddd;background:#fff;border-radius:8px;padding:8px 12px;cursor:pointer}
+      .vet-btn.primary{background:#2563eb;color:#fff;border-color:#2563eb}
+      .vet-input, .vet-textarea{width:100%;border:1px solid #ddd;border-radius:8px;padding:8px}
+      .vet-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+      .vet-photo{width:100%;height:200px;object-fit:cover;border-radius:10px;border:1px solid #eee;background:#f6f6f6}
+      .pill{display:inline-block;padding:4px 8px;border-radius:999px;background:#eef; color:#245}
+    `);
+    document.head.appendChild(style);
+  }
+
+  // Render del modal
+  async function openVetDetailModal(citaId) {
+    // Backdrop + contenedor
+    const backdrop = el('div', { class: 'vet-modal-backdrop' });
+    const modal = el('div', { class: 'vet-modal', role: 'dialog', 'aria-modal': 'true' });
+
+    // Header
+    const title = el('h3', {}, 'Ficha de consulta');
+    const closeBtn = el('button', { class: 'vet-btn', 'aria-label': 'Cerrar' }, 'Cerrar');
+    const header = el('header', {}, [title, closeBtn]);
+
+    // Columnas
+    const leftCol = el('div', { class: 'vet-card' });
+    const rightCol = el('div', {});
+    const content = el('div', { class: 'content' }, [leftCol, rightCol]);
+
+    // Acciones
+    const printBtn = el('button', { class: 'vet-btn' }, 'Imprimir');
+    const pdfBtn = el('button', { class: 'vet-btn primary' }, 'Exportar PDF');
+    const saveBtn = el('button', { class: 'vet-btn primary' }, 'Guardar diagnóstico');
+    const actions = el('div', { class: 'vet-actions' }, [printBtn, pdfBtn, saveBtn]);
+
+    modal.appendChild(header);
+    modal.appendChild(content);
+    modal.appendChild(actions);
+    document.body.appendChild(backdrop);
+    document.body.appendChild(modal);
+
+    function close() { backdrop.remove(); modal.remove(); }
+    closeBtn.addEventListener('click', close);
+    backdrop.addEventListener('click', close);
+
+    // Cargar datos
+    let cita, mascota, citasPasadas = [];
+    try {
+      const citaRes = await fetch(API.citaDetalle(citaId));
+      cita = await citaRes.json();
+      const mascotaId = cita?.cita?.mascota_id || cita?.mascota_id || cita?.cita?.mascota?.id;
+      if (mascotaId) {
+        const mRes = await fetch(API.mascotaById(mascotaId));
+        mascota = await mRes.json();
+        const cpRes = await fetch(API.citasMascota(mascotaId));
+        const cpJson = await cpRes.json();
+        citasPasadas = (cpJson?.citas || []).filter(x => (x.status === 'completada'));
+      }
+    } catch (e) {
+      console.warn('Error cargando datos de ficha:', e);
+    }
+
+    // Izquierda: perfil mascota
+    const fotoUrl = mascota?.data?.imagen_url || mascota?.mascota?.imagen_url || null;
+    leftCol.appendChild(el('img', { class: 'vet-photo', src: fotoUrl || '/images/pet-placeholder.png', alt: 'Foto de la mascota' }));
+
+    leftCol.appendChild(el('div', { style: 'margin-top:10px' }, [
+      el('div', {}, [el('strong', {}, 'Mascota: '), (mascota?.data?.nombre || mascota?.mascota?.nombre || 'Desconocida')]),
+      el('div', {}, [el('strong', {}, 'Especie: '), (mascota?.data?.especie || mascota?.mascota?.especie || '-')]),
+      el('div', {}, [el('strong', {}, 'Raza: '), (mascota?.data?.raza || mascota?.mascota?.raza || '-')]),
+      el('div', {}, [el('strong', {}, 'Sexo: '), (mascota?.data?.sexo || mascota?.mascota?.sexo || '-')]),
+      el('div', {}, [el('strong', {}, 'Peso: '), (mascota?.data?.peso || mascota?.mascota?.peso || '-')]),
+    ]));
+
+    // Historial: citas atendidas
+    const histCard = el('div', { class: 'vet-card', style: 'margin-top:12px' }, [
+      el('div', { style: 'display:flex;justify-content:space-between;align-items:center' }, [
+        el('strong', {}, 'Citas atendidas'),
+        el('span', { class: 'pill' }, `${citasPasadas.length}`)
+      ]),
+      el('ul', { class: 'vet-list' }, (citasPasadas.length ? citasPasadas.map(c => el('li', {}, `${c.fecha} · ${c.motivo || '-'} `)) : [el('li', {}, 'Sin antecedentes registrados')]))
+    ]);
+    leftCol.appendChild(histCard);
+
+    // Derecha: diagnóstico y receta
+    const diagTitle = el('h4', {}, 'Diagnóstico');
+    const diagInput = el('textarea', { class: 'vet-textarea', rows: '6', placeholder: 'Escriba el diagnóstico clínico, hallazgos y recomendaciones...' });
+    const recetaTitle = el('h4', { style: 'margin-top:16px' }, 'Receta');
+    const recetaList = el('div', { class: 'vet-card' });
+    const recetaItems = [];
+
+    function addRecetaItem(initial={}){
+      const row = el('div', { class: 'vet-grid-2', style: 'margin-bottom:8px' }, [
+        el('input', { class: 'vet-input', placeholder: 'Medicamento (ej. Amoxicilina 250mg)', value: initial.nombre||'' }),
+        el('input', { class: 'vet-input', placeholder: 'Dosis y frecuencia (ej. 1 tableta cada 12h por 7 días)', value: initial.dosis||'' }),
+      ]);
+      const notes = el('input', { class: 'vet-input', placeholder: 'Notas (vía de administración, advertencias, etc.)', value: initial.notas||'' });
+      const wrapper = el('div', { class: 'vet-card' }, [row, notes, el('div', { style:'display:flex;gap:8px;justify-content:flex-end;margin-top:6px' }, [
+        el('button', { class:'vet-btn' }, 'Eliminar')
+      ])]);
+      wrapper.querySelector('button').addEventListener('click', () => {
+        recetaList.removeChild(wrapper);
+        const idx = recetaItems.indexOf(wrapper);
+        if (idx >= 0) recetaItems.splice(idx,1);
+      });
+      recetaItems.push(wrapper);
+      recetaList.appendChild(wrapper);
+    }
+
+    const addMedBtn = el('button', { class:'vet-btn' }, 'Agregar medicamento');
+    addMedBtn.addEventListener('click', () => addRecetaItem());
+
+    rightCol.appendChild(el('div', { class:'vet-card' }, [diagTitle, diagInput]));
+    rightCol.appendChild(recetaTitle);
+    rightCol.appendChild(recetaList);
+    rightCol.appendChild(el('div', { class:'vet-actions' }, [addMedBtn]));
+
+    // Guardar diagnóstico
+    saveBtn.addEventListener('click', async () => {
+      const body = { diagnostico: diagInput.value };
+      try {
+        const res = await fetch(API.guardarDiagnostico(citaId), {
+          method: 'PATCH',
+          headers: { 'Content-Type':'application/json' },
+          body: JSON.stringify(body)
+        });
+        if (!res.ok) throw new Error('Error al guardar diagnóstico');
+        alert('Diagnóstico guardado');
+      } catch(e) {
+        alert('No se pudo guardar el diagnóstico');
+      }
+    });
+
+    // Exportar PDF
+    pdfBtn.addEventListener('click', async () => {
+      // Cargar librería html2pdf si no está
+      if (!window.html2pdf) {
+        await new Promise((resolve) => {
+          const s = el('script', { src:'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js' });
+          s.onload = resolve;
+          document.body.appendChild(s);
+        });
+      }
+      const opt = {
+        margin:       10,
+        filename:     `Ficha-${(mascota?.data?.nombre||mascota?.mascota?.nombre||'Mascota')}-${Date.now()}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2 },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+      window.html2pdf().set(opt).from(modal).save();
+    });
+
+    // Imprimir
+    printBtn.addEventListener('click', () => {
+      const w = window.open('', 'PRINT', 'height=800,width=1100');
+      if (!w) return;
+      const html = `<!doctype html><html><head><title>Imprimir ficha</title></head><body>${modal.outerHTML}</body></html>`;
+      w.document.write(html);
+      w.document.close();
+      w.focus();
+      w.print();
+      w.close();
+    });
+  }
+
+  // Delegar clicks en tarjetas/lista de citas para abrir el modal
+  // Ajusta el selector según tu DOM real (ej. .cita-item[data-id])
+  document.addEventListener('click', (ev) => {
+    const target = ev.target.closest('[data-cita-id]');
+    if (target) {
+      const id = target.getAttribute('data-cita-id');
+      if (id) {
+        ev.preventDefault();
+        openVetDetailModal(id);
+      }
+    }
+  });
+})();
+
 // public/js/views/dashboard-vet.js
 // Prevenir duplicación
 if (window.dashboardVetLoaded) {
