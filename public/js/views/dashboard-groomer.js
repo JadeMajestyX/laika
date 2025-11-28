@@ -134,12 +134,6 @@ function renderActividadesFromCitas(payload) {
   const isSameDay = (dt) => dt && dt.getFullYear() === today.getFullYear() && dt.getMonth() === today.getMonth() && dt.getDate() === today.getDate();
   const toNum = (v) => v == null ? null : Number(v);
   const gid = toNum(userId);
-  const groomingServiceIds = new Set(
-    (serviciosClinica || [])
-      .filter((s) => (clinicaId == null || toNum(s.clinica_id) === toNum(clinicaId)) && isGroomingServiceName(s.nombre))
-      .map((s) => toNum(s.id))
-      .filter((id) => id != null)
-  );
   const mine = (c) => {
     const vet = toNum(c.veterinario_id);
     const creator = toNum(c.creada_por);
@@ -148,9 +142,7 @@ function renderActividadesFromCitas(payload) {
   const actividades = citasClinica
     .filter((c) => {
       const d = c.fecha ? new Date(c.fecha) : null;
-      const sid = toNum(c.servicio_id);
-      const groomingOk = sid != null && groomingServiceIds.size > 0 ? groomingServiceIds.has(sid) : (c.servicio?.nombre ? isGroomingServiceName(c.servicio.nombre) : true);
-      return mine(c) && groomingOk && isSameDay(d);
+      return mine(c) && isSameDay(d);
     })
     .sort((a,b) => new Date(b.fecha) - new Date(a.fecha))
     .slice(0, 10)
@@ -164,7 +156,7 @@ function renderActividadesFromCitas(payload) {
   if (!actividades || actividades.length === 0) {
     const mensaje = document.createElement('div');
     mensaje.className = 'text-center text-body-secondary py-3';
-    mensaje.textContent = 'No hay actividades de grooming en este momento';
+    mensaje.textContent = 'No hay actividades para hoy';
     container.appendChild(mensaje);
     return;
   }
@@ -386,14 +378,15 @@ function renderAgendaFromCitas(payload) {
   const toNum = (v) => v == null ? null : Number(v);
   const agendaBody = document.getElementById('agendaBody');
   if (!agendaBody) return;
-  const allowed = new Set(['limpieza dental','corte de pelo','baño']);
-  const isAllowedService = (c) => {
-    const name = c?.servicio?.nombre ? String(c.servicio.nombre).toLowerCase().trim() : '';
-    return allowed.has(name);
+  const gid = toNum(userId);
+  const mine = (c) => {
+    const vet = toNum(c.veterinario_id);
+    const creator = toNum(c.creada_por);
+    return (vet != null && vet === gid) || (creator != null && creator === gid);
   };
-  // Listar TODAS las citas de la clínica del usuario, sin filtrar por grooming ni por dueño
+  // Listar todas las citas asignadas al usuario actual (para mí), sin filtrar por tipo de servicio
   const citas = (citasClinica || [])
-    .filter((c) => isAllowedService(c))
+    .filter((c) => mine(c))
     .sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
   if (citas.length === 0) {
     agendaBody.innerHTML = `<tr><td colspan="7" class="text-center text-body-secondary py-4">No hay citas programadas</td></tr>`;
