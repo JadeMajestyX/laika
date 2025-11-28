@@ -1609,3 +1609,23 @@ Route::middleware('auth:sanctum')->get('/citas-recetas-mascota/{id}', function(R
         'citas' => $citas
     ]);
 });
+
+
+//añadir dispensador
+Route::middleware('auth:sanctum')->post('/dispensadores', function(Request $request, $id){
+    $request->validate([
+        'nombre' => 'required|string|max:100',
+        'ubicacion' => 'nullable|string|max:255',
+    ]);
+
+    $dispensador = Dispensador::create([
+        'nombre' => $request->nombre,
+        'ubicacion' => $request->ubicacion,
+        'creado_por' => $request->user()->id,
+    ]);
+
+    return response()->json([
+        'success' => true,
+        'dispensador' => $dispensador
+    ]);
+});
