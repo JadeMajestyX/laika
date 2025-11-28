@@ -736,52 +736,45 @@ function limpiarFormularioConsulta() {
 }
 // Función para asignar una cita al veterinario actual
 function asignarCita(citaId) {
-  fetch('/vet-dashboard/asignar-cita', {
+  return fetch('/vet-dashboard/asignar-cita', {
     method: 'POST',
+    credentials: 'same-origin',
     headers: {
       'Content-Type': 'application/json',
-      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
     },
     body: JSON.stringify({ cita_id: citaId })
   })
-  .then(res => res.json())
-  .then(data => {
-    if (data.success) {
-      // Mostrar mensaje de éxito
-      const Toast = Swal.mixin({
-        toast: true,
-        position: 'top-end',
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true
-      });
-      
-      Toast.fire({
-        icon: 'success',
-        title: 'Cita asignada correctamente'
-      });
-
-      // Recargar las citas disponibles
-      renderActividades();
-      
-      // Si estamos en la sección de actividades, actualizarla
-      const currentSection = location.pathname.split('/').pop();
-      if (currentSection === 'actividad') {
-        actualizarTablaActividades();
-      }
-    } else {
-      throw new Error(data.message || 'Error al asignar la cita');
+  .then(async (res) => {
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); } catch(e) { data = { success: false, _raw: text }; }
+    if (!res.ok || !data.success) {
+      console.error('Error asignarCita response:', res.status, data);
+      throw new Error(data.message || `Error asignando cita (${res.status})`);
     }
+
+    // Mostrar toast de éxito
+    const Toast = Swal.mixin({
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true
+    });
+    Toast.fire({ icon: 'success', title: 'Cita asignada correctamente' });
+
+    // Recargar vistas
+    renderActividades();
+    const currentSection = location.pathname.split('/').pop();
+    if (currentSection === 'actividad') actualizarTablaActividades();
+
+    return data;
   })
   .catch(error => {
-    console.error('Error:', error);
-    Swal.fire({
-      icon: 'error',
-      title: 'Error',
-      text: error.message || 'No se pudo asignar la cita',
-      timer: 3000,
-      showConfirmButton: false
-    });
+    console.error('Error asignarCita:', error);
+    Swal.fire({ icon: 'error', title: 'Error', text: error.message || 'No se pudo asignar la cita', timer: 3000, showConfirmButton: false });
+    throw error;
   });
 }
 
@@ -811,58 +804,48 @@ function cambiarEstadoActividadSimple(citaId, nuevoEstado, linkElement) {
 
   const payload = { cita_id: Number(citaId), estado: nuevoEstado };
   console.log('Enviando /vet-dashboard/actualizar-estado-actividad', payload);
-
-  // Hacer la petición al servidor incluyendo cookies de sesión y CSRF
-  fetch('/vet-dashboard/actualizar-estado-actividad', {
-    method: 'POST',
-    credentials: 'same-origin',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
-    },
-    body: JSON.stringify(payload)
-  })
-  .then(async (res) => {
-    const text = await res.text();
-    let data;
-    try { data = JSON.parse(text); } catch (e) { data = { success: false, _raw: text }; }
-    if (!res.ok || !data.success) {
-      console.error('Respuesta error:', res.status, data);
-      throw new Error(data.message || `Error del servidor (${res.status})`);
-    }
-    return data;
-  })
-  .then(data => {
-    // Éxito - mostrar notificación
-    Swal.fire({
-      icon: 'success',
-      title: '✅ Estado actualizado',
-      text: 'El estado se ha cambiado correctamente',
-      timer: 2000,
-      showConfirmButton: false,
-      toast: true,
-      position: 'top-end'
+  // Función que realiza la petición de actualización de estado
+  function doUpdate() {
+    return fetch('/vet-dashboard/actualizar-estado-actividad', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+      },
+      body: JSON.stringify(payload)
+    })
+    .then(async (res) => {
+      const text = await res.text();
+      let data;
+      try { data = JSON.parse(text); } catch (e) { data = { success: false, _raw: text }; }
+      if (!res.ok || !data.success) {
+        console.error('Respuesta error:', res.status, data);
+        throw new Error(data.message || `Error del servidor (${res.status})`);
+      }
+      return data;
     });
+  }
 
-    // Actualizar estadísticas
-    actualizarEstadisticasActividades();
-  })
-  .catch(error => {
-    console.error('❌ Error cambiando estado:', error);
+  // Si la cita no está asignada al veterinario actual, asignarla antes de actualizar
+  const row = button.closest('tr[data-cita-id]');
+  const esMia = row ? row.getAttribute('data-es-mia') === '1' : false;
 
-    // Revertir cambios visuales
-    button.textContent = estadoAnterior;
-    button.className = `btn btn-sm ${getEstadoClase(estadoAnterior)} dropdown-toggle position-relative`;
+  const proceed = esMia ? Promise.resolve() : asignarCita(citaId);
 
-    // Mostrar error con más contexto
-    Swal.fire({
-      icon: 'error',
-      title: 'Error',
-      text: error.message || 'No se pudo actualizar el estado',
-      timer: 3000,
-      showConfirmButton: false
+  proceed
+    .then(() => doUpdate())
+    .then(data => {
+      Swal.fire({ icon: 'success', title: '✅ Estado actualizado', text: 'El estado se ha cambiado correctamente', timer: 2000, showConfirmButton: false, toast: true, position: 'top-end' });
+      actualizarEstadisticasActividades();
+    })
+    .catch(error => {
+      console.error('❌ Error cambiando estado:', error);
+      // Revertir cambios visuales
+      button.textContent = estadoAnterior;
+      button.className = `btn btn-sm ${getEstadoClase(estadoAnterior)} dropdown-toggle position-relative`;
+      Swal.fire({ icon: 'error', title: 'Error', text: error.message || 'No se pudo actualizar el estado', timer: 3000, showConfirmButton: false });
     });
-  });
 }
 
 // Función para obtener la clase CSS según el estado
@@ -1002,7 +985,7 @@ function actualizarTablaActividades() {
           // Mostrar botón si es atendible y estado es confirmada o pendiente (amplía según necesidad)
           const mostrarBotonAtender = atendible && ['confirmada','pendiente','en_progreso'].includes(actividad.estado);
           return `
-            <tr ${atendible ? `data-cita-id="${citaId}"` : ''}>
+            <tr ${atendible ? `data-cita-id="${citaId}" data-es-mia="${actividad.es_mia ? 1 : 0}"` : ''}>
               <td>${actividad.hora || 'N/A'}</td>
               <td>${actividad.paciente || 'N/A'}</td>
               <td>
@@ -1017,7 +1000,6 @@ function actualizarTablaActividades() {
               </td>
               <td>${actividad.procedimiento || 'N/A'}</td>
               <td>
-                ${actividad.es_mia ? `
                 <div class="dropdown">
                   <button class="btn btn-sm ${estadoClase} dropdown-toggle position-relative" 
                           type="button" data-bs-toggle="dropdown" 
@@ -1053,11 +1035,6 @@ function actualizarTablaActividades() {
                     </li>
                   </ul>
                 </div>
-                ` : `
-                <button class="btn btn-sm ${estadoClase} position-relative" style="min-width:120px;" disabled title="No puedes cambiar el estado de esta cita">
-                  ${actividad.estado || 'N/A'}
-                </button>
-                `}
               </td>
               <td>
                 ${mostrarBotonAtender ? `
