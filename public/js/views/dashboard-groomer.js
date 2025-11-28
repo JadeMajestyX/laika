@@ -374,22 +374,10 @@ function renderSection(section, data) {
 function renderAgendaFromCitas(payload) {
   const { citasClinica = [], userId, serviciosClinica = [], clinicaId } = payload || {};
   const toNum = (v) => v == null ? null : Number(v);
-  const groomingServiceIds = new Set(
-    (serviciosClinica || [])
-      .filter((s) => (clinicaId == null || toNum(s.clinica_id) === toNum(clinicaId)) && isGroomingServiceName(s.nombre))
-      .map((s) => toNum(s.id))
-      .filter((id) => id != null)
-  );
-  const isGroomingByService = (c) => {
-    const sid = toNum(c.servicio_id);
-    if (sid != null && groomingServiceIds.size > 0) return groomingServiceIds.has(sid);
-    return c.servicio?.nombre ? isGroomingServiceName(c.servicio.nombre) : true;
-  };
   const agendaBody = document.getElementById('agendaBody');
   if (!agendaBody) return;
+  // Listar TODAS las citas de la clínica del usuario, sin filtrar por grooming ni por dueño
   const citas = (citasClinica || [])
-    // Listar todas las citas de grooming de la clínica del usuario
-    .filter((c) => isGroomingByService(c))
     .sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
   if (citas.length === 0) {
     agendaBody.innerHTML = `<tr><td colspan="6" class="text-center text-body-secondary py-4">No hay citas programadas</td></tr>`;
