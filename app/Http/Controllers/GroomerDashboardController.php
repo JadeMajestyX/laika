@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Cita;
+use App\Models\Servicio;
 use App\Models\User;
 
 class GroomerDashboardController extends Controller
@@ -35,15 +36,29 @@ class GroomerDashboardController extends Controller
         $today = now()->startOfDay();
         $endToday = now()->endOfDay();
 
+        // Detectar servicios de grooming por nombre
+        $keywords = [
+            'corte de pelo', 'baño', 'limpieza dental', 'spa', 'corte de uñas', 'desparasitación',
+            'peluquer', 'peluque', 'baño y corte', 'limpieza', 'groom', 'aseo'
+        ];
+        $servicioIds = Servicio::where('clinica_id', $clinicaId)
+            ->where(function ($q) use ($keywords) {
+                foreach ($keywords as $kw) {
+                    $q->orWhereRaw('LOWER(nombre) LIKE ?', ['%' . strtolower($kw) . '%']);
+                }
+            })
+            ->pluck('id')
+            ->all();
+
+        // Query base: clínica + citas del groomer + servicio de grooming
         $baseQuery = Cita::query()
             ->where('clinica_id', $clinicaId)
             ->where(function ($q) use ($user) {
                 $q->where('veterinario_id', $user->id)
                   ->orWhere('creada_por', $user->id);
             })
-            ->where(function ($q) {
-                $q->where('tipo', 'grooming')
-                  ->orWhereNull('tipo');
+            ->when(!empty($servicioIds), function ($q) use ($servicioIds) {
+                $q->whereIn('servicio_id', $servicioIds);
             });
 
         $citasHoy = (clone $baseQuery)
