@@ -6,6 +6,7 @@ use App\Models\Clinica;
 use App\Models\Cita;
 use App\Models\User;
 use App\Models\Mascota;
+use App\Models\Horario;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -54,24 +55,41 @@ class AgendarCitaController extends Controller
             return response()->json(['availableTimes' => []]);
         }
 
-        // Base de horarios (cada 30 min) 09:00 - 18:00
-        $baseTimes = [];
-        $start = Carbon::createFromFormat('H:i', '09:00');
-        $end = Carbon::createFromFormat('H:i', '18:00');
-        for ($t = $start->copy(); $t <= $end; $t->addMinutes(30)) {
-            $baseTimes[] = $t->format('H:i');
-        }
+        // Determinar día de la semana (0=domingo..6=sábado) y obtener horarios activos de la clínica
+        $dow = Carbon::parse($request->fecha)->dayOfWeek; // 0..6
+        $horarios = Horario::where('clinica_id', $request->clinica_id)
+            ->where('dia_semana', $dow)
+            ->where('activo', true)
+            ->get(['hora_inicio','hora_fin']);
 
-        // Obtener horas ocupadas en esa fecha para la clínica
-        $ocupadas = Cita::where('clinica_id', $request->clinica_id)
+        // Generar slots por horas enteras usando horarios de apertura/cierre
+        $slots = [];
+        foreach ($horarios as $h) {
+            $inicio = Carbon::parse($h->hora_inicio);
+            $fin = Carbon::parse($h->hora_fin);
+            // Alinear al inicio de la hora
+            $inicio->minute(0)->second(0);
+            // Generar hasta la hora anterior al cierre (start < fin)
+            for ($t = $inicio->copy(); $t->lt($fin); $t->addHour()) {
+                $slots[] = $t->format('H:i');
+            }
+        }
+        $slots = array_values(array_unique($slots));
+
+        // Obtener horas ocupadas en esa fecha para la clínica (cualquier minuto dentro de la hora bloquea el slot)
+        $ocupadasHoras = Cita::where('clinica_id', $request->clinica_id)
             ->whereDate('fecha', $request->fecha)
             ->pluck('fecha')
-            ->map(function($dt){ return Carbon::parse($dt)->format('H:i'); })
+            ->map(function($dt){ return Carbon::parse($dt)->format('H'); }) // '09','10',...
             ->unique()
             ->values()
             ->all();
 
-        $available = array_values(array_diff($baseTimes, $ocupadas));
+        // Filtrar por ocupación
+        $available = array_values(array_filter($slots, function($hhmm) use ($ocupadasHoras){
+            $h = substr($hhmm, 0, 2);
+            return !in_array($h, $ocupadasHoras);
+        }));
 
         // Si la fecha seleccionada es hoy, filtrar horas pasadas
         if ($fechaSel->equalTo($hoy)) {
@@ -116,9 +134,11 @@ class AgendarCitaController extends Controller
             return response()->json(['message' => 'La fecha seleccionada excede el máximo de 1 año'], 422);
         }
 
-        // Verificar disponibilidad (no exista otra cita a esa misma hora en la clínica)
+        // Verificar disponibilidad (no exista otra cita en esa misma hora en la clínica)
+        $horaInicio = $fechaHora->copy()->minute(0)->second(0);
+        $horaFin = $horaInicio->copy()->addHour();
         $yaOcupada = Cita::where('clinica_id', $request->clinica_id)
-            ->where('fecha', $fechaHora)
+            ->whereBetween('fecha', [$horaInicio, $horaFin])
             ->exists();
         if ($yaOcupada) {
             return response()->json(['message' => 'El horario seleccionado ya no está disponible'], 422);
