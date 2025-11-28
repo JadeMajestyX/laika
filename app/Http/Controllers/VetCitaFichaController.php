@@ -19,108 +19,138 @@ class VetCitaFichaController extends Controller
     public function show(Request $request, $id)
     {
         try {
-        $user = Auth::user();
-        if (!$user) {
-            return response()->json(['success' => false, 'message' => 'No autenticado'], 401);
-        }
+            $user = Auth::user();
+            if (!$user) {
+                return response()->json(['success' => false, 'message' => 'No autenticado'], 401);
+            }
 
-        $cita = Cita::with(['mascota.user', 'servicio', 'receta.items'])->find($id);
-        if (!$cita) {
-            return response()->json(['success' => false, 'message' => 'Cita no encontrada'], 404);
-        }
+            Log::info("VetCitaFichaController: Buscando cita {$id}");
 
-        // Opcional: validar que la cita pertenece a la misma clínica del veterinario
-        if ($user->clinica_id && $cita->clinica_id && $user->clinica_id !== $cita->clinica_id) {
-            return response()->json(['success' => false, 'message' => 'Cita fuera de su clínica'], 403);
-        }
+            // Cargar cita con relaciones
+            $cita = Cita::with(['mascota.user', 'servicio', 'receta.items'])->find($id);
+            
+            if (!$cita) {
+                Log::warning("VetCitaFichaController: Cita {$id} no encontrada");
+                return response()->json(['success' => false, 'message' => 'Cita no encontrada'], 404);
+            }
 
-        $mascota = $cita->mascota;
-        $mascotaData = null;
-        if ($mascota) {
-            $prop = $mascota->user;
-            $mascotaData = [
-                'id' => $mascota->id,
-                'nombre' => $mascota->nombre,
-                'especie' => $mascota->especie,
-                'raza' => $mascota->raza,
-                'sexo' => $mascota->sexo,
-                'peso' => $mascota->peso,
-                'imagen_url' => $mascota->imagen ? asset('uploads/mascotas/' . $mascota->imagen) : null,
-                'propietario' => $prop ? [
-                    'id' => $prop->id,
-                    'nombre' => $prop->nombre,
-                    'apellido' => $prop->apellido_paterno,
-                    'telefono' => $prop->telefono,
-                    'email' => $prop->email,
-                ] : null,
-            ];
-        }
+            Log::info("VetCitaFichaController: Cita {$id} encontrada, mascota_id: {$cita->mascota_id}");
 
-        // Historial: citas completadas anteriores de la misma mascota (excluyendo la actual)
-        $historial = [];
-        if ($mascota) {
-            $historial = Cita::where('mascota_id', $mascota->id)
-                ->where('id', '!=', $cita->id)
-                ->where(function ($q) {
-                    $q->where('status', 'completada')->orWhere('estado', 'completada');
-                })
-                ->orderBy('fecha', 'desc')
-                ->take(25)
-                ->get()
-                ->map(function ($row) {
-                    return [
-                        'id' => $row->id,
-                        'fecha' => Carbon::parse($row->fecha)->format('Y-m-d H:i'),
-                        'servicio' => $row->servicio?->nombre,
-                        'motivo' => $row->notas ?? $row->motivo ?? null,
-                        'diagnostico' => $row->diagnostico,
+            // Opcional: validar que la cita pertenece a la misma clínica del veterinario
+            if ($user->clinica_id && $cita->clinica_id && $user->clinica_id !== $cita->clinica_id) {
+                return response()->json(['success' => false, 'message' => 'Cita fuera de su clínica'], 403);
+            }
+
+            // Construir datos de mascota
+            $mascotaData = null;
+            $mascota = null;
+            
+            if ($cita->mascota_id) {
+                // Buscar mascota directamente en la tabla mascotas
+                $mascota = \App\Models\Mascota::with('user')->find($cita->mascota_id);
+                
+                if ($mascota) {
+                    Log::info("VetCitaFichaController: Mascota {$mascota->id} cargada: {$mascota->nombre}");
+                    
+                    $mascotaData = [
+                        'id' => $mascota->id,
+                        'nombre' => $mascota->nombre ?? 'Sin nombre',
+                        'especie' => $mascota->especie ?? 'No especificada',
+                        'raza' => $mascota->raza ?? 'No especificada',
+                        'sexo' => $mascota->sexo ?? 'No especificado',
+                        'peso' => $mascota->peso ?? null,
+                        'fecha_nacimiento' => $mascota->fecha_nacimiento ? Carbon::parse($mascota->fecha_nacimiento)->format('Y-m-d') : null,
+                        'imagen_url' => $mascota->imagen ? asset('uploads/mascotas/' . $mascota->imagen) : null,
+                        'notas' => $mascota->notas ?? null,
                     ];
-                });
-        }
 
-        $recetaData = null;
-        if ($cita->receta) {
-            $recetaData = [
-                'id' => $cita->receta->id,
-                'notas' => $cita->receta->notas,
-                'items' => $cita->receta->items->map(function ($it) {
-                    return [
-                        'id' => $it->id,
-                        'medicamento' => $it->medicamento,
-                        'dosis' => $it->dosis,
-                        'notas' => $it->notas,
-                    ];
-                }),
-            ];
-        }
+                    // Agregar datos del propietario si existe
+                    if ($mascota->user) {
+                        $mascotaData['propietario'] = [
+                            'id' => $mascota->user->id,
+                            'nombre' => $mascota->user->nombre ?? '',
+                            'apellido' => $mascota->user->apellido_paterno ?? '',
+                            'telefono' => $mascota->user->telefono ?? '',
+                            'email' => $mascota->user->email ?? '',
+                        ];
+                    }
+                } else {
+                    Log::warning("VetCitaFichaController: Mascota {$cita->mascota_id} no encontrada en BD");
+                }
+            }
 
-        return response()->json([
-            'success' => true,
-            'cita' => [
-                'id' => $cita->id,
-                'fecha' => Carbon::parse($cita->fecha)->format('Y-m-d H:i'),
-                'tipo' => $cita->tipo,
-                'status' => $cita->status,
-                'notas' => $cita->notas,
-                'diagnostico' => $cita->diagnostico,
-                'servicio' => $cita->servicio?->nombre,
-                'veterinario_id' => $cita->veterinario_id,
-                'clinica_id' => $cita->clinica_id,
-                'mascota_id' => $cita->mascota_id,
-            ],
-            'mascota' => $mascotaData,
-            'historial' => $historial,
-            'receta' => $recetaData,
-        ]);
+            // Historial: citas completadas anteriores de la misma mascota (excluyendo la actual)
+            $historial = [];
+            if ($mascota) {
+                $historial = Cita::with('servicio')
+                    ->where('mascota_id', $mascota->id)
+                    ->where('id', '!=', $cita->id)
+                    ->where('status', 'completada')
+                    ->orderBy('fecha', 'desc')
+                    ->take(25)
+                    ->get()
+                    ->map(function ($row) {
+                        return [
+                            'id' => $row->id,
+                            'fecha' => Carbon::parse($row->fecha)->format('Y-m-d H:i'),
+                            'servicio' => $row->servicio?->nombre ?? 'Consulta',
+                            'motivo' => $row->notas ?? null,
+                            'diagnostico' => $row->diagnostico ?? null,
+                        ];
+                    });
+                
+                Log::info("VetCitaFichaController: Historial de mascota {$mascota->id}: " . $historial->count() . " citas");
+            }
+
+            // Construir datos de receta
+            $recetaData = null;
+            if ($cita->receta) {
+                $recetaData = [
+                    'id' => $cita->receta->id,
+                    'notas' => $cita->receta->notas,
+                    'items' => $cita->receta->items->map(function ($it) {
+                        return [
+                            'id' => $it->id,
+                            'medicamento' => $it->medicamento,
+                            'dosis' => $it->dosis,
+                            'notas' => $it->notas,
+                        ];
+                    }),
+                ];
+            }
+
+            return response()->json([
+                'success' => true,
+                'cita' => [
+                    'id' => $cita->id,
+                    'fecha' => Carbon::parse($cita->fecha)->format('Y-m-d H:i'),
+                    'tipo' => $cita->tipo ?? 'cita',
+                    'status' => $cita->status,
+                    'notas' => $cita->notas,
+                    'diagnostico' => $cita->diagnostico,
+                    'servicio' => $cita->servicio?->nombre ?? 'Sin servicio',
+                    'veterinario_id' => $cita->veterinario_id,
+                    'clinica_id' => $cita->clinica_id,
+                    'mascota_id' => $cita->mascota_id,
+                ],
+                'mascota' => $mascotaData,
+                'historial' => $historial,
+                'receta' => $recetaData,
+            ]);
+            
         } catch (\Throwable $e) {
-            Log::error('Error en VetCitaFichaController@show: '.$e->getMessage(), [
+            Log::error('Error en VetCitaFichaController@show: ' . $e->getMessage(), [
                 'cita_id' => $id,
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
                 'trace' => $e->getTraceAsString()
             ]);
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Error interno obteniendo ficha',
                 'error' => config('app.debug') ? $e->getMessage() : null,
+                'line' => config('app.debug') ? $e->getLine() : null,
             ], 500);
         }
     }
