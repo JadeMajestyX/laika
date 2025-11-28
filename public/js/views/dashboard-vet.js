@@ -94,40 +94,30 @@
     closeBtn.addEventListener('click', close);
     backdrop.addEventListener('click', close);
 
-    // Cargar datos (optimización: usar mascota del endpoint sin segunda llamada si existe)
+    // Cargar datos del nuevo endpoint que devuelve todo en una sola llamada
     let resp, citaObj, mascotaInfo, citasPasadas = [], recetaObj;
     try {
       const citaRes = await fetch(API.citaDetalle(citaId), { credentials: 'same-origin' });
       resp = await citaRes.json();
+      
+      if (!resp.success) {
+        console.error('Error obteniendo ficha:', resp.message);
+        alert('Error al cargar la ficha: ' + (resp.message || 'Error desconocido'));
+        close();
+        return;
+      }
+      
       citaObj = resp?.cita || {};
       recetaObj = resp?.receta || null;
       mascotaInfo = resp?.mascota || null;
-      // Fallback adicional: si el backend serializa la mascota dentro de cita (cita.mascota)
-      if (!mascotaInfo && citaObj && citaObj.mascota) {
-        mascotaInfo = citaObj.mascota;
-      }
-      // Normalizar posibles claves alternativas (ej. peso_actual)
-      if (mascotaInfo) {
-        if (!mascotaInfo.peso && mascotaInfo.peso_actual) mascotaInfo.peso = mascotaInfo.peso_actual;
-        if (!mascotaInfo.imagen_url && mascotaInfo.imagen) {
-          // construir url si sólo hay nombre de archivo
-          mascotaInfo.imagen_url = mascotaInfo.imagen.startsWith('http') ? mascotaInfo.imagen : ('/uploads/mascotas/' + mascotaInfo.imagen);
-        }
-      }
-      const mascotaId = mascotaInfo?.id || citaObj?.mascota_id;
-      if (mascotaId && !mascotaInfo) {
-        // fallback si el backend no envía 'mascota'
-        const mRes = await fetch(API.mascotaById(mascotaId));
-        const mJson = await mRes.json();
-        mascotaInfo = mJson?.data || mJson?.mascota || mJson;
-      }
-      if (mascotaId) {
-        const cpRes = await fetch(API.citasMascota(mascotaId));
-        const cpJson = await cpRes.json();
-        citasPasadas = (cpJson?.citas || []).filter(x => (x.status === 'completada' || x.estado === 'completada'));
-      }
+      citasPasadas = resp?.historial || [];
+      
+      console.log('Datos cargados:', { mascotaInfo, citasPasadas, recetaObj });
     } catch (e) {
-      console.warn('Error cargando datos de ficha:', e);
+      console.error('Error cargando datos de ficha:', e);
+      alert('Error al cargar la ficha de la cita');
+      close();
+      return;
     }
 
     // Izquierda: perfil mascota
@@ -148,7 +138,7 @@
         el('strong', {}, 'Citas atendidas'),
         el('span', { class: 'pill' }, `${citasPasadas.length}`)
       ]),
-      el('ul', { class: 'vet-list' }, (citasPasadas.length ? citasPasadas.map(c => el('li', {}, `${c.fecha} · ${c.motivo || '-'} `)) : [el('li', {}, 'Sin antecedentes registrados')]))
+      el('ul', { class: 'vet-list' }, (citasPasadas.length ? citasPasadas.map(c => el('li', {}, `${c.fecha} · ${c.servicio || 'Consulta'} ${c.diagnostico ? '· ' + c.diagnostico.substring(0, 50) + '...' : ''}`)) : [el('li', {}, 'Sin antecedentes registrados')]))
     ]);
     leftCol.appendChild(histCard);
 
