@@ -707,9 +707,6 @@ function renderSection(section, data) {
     <div class="card shadow-sm mt-4">
       <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">Listado de Clientes</h5>
-        <a href="/clientes/crear" class="btn btn-success">
-          <i class="bi bi-plus-lg me-1"></i> Agregar Cliente
-        </a>
       </div>
 
       <div class="card-body">
@@ -774,9 +771,6 @@ function renderSection(section, data) {
     <div class="card shadow-sm mt-4">
       <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">Listado de Mascotas</h5>
-        <a href="/mascotas/crear" class="btn btn-success">
-          <i class="bi bi-plus-lg me-1"></i> Agregar Mascota
-        </a>
       </div>
 
       <div class="card-body">
@@ -932,9 +926,6 @@ function renderSection(section, data) {
     <div class="card shadow-sm mt-4">
       <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">Listado de Trabajadores</h5>
-        <a href="/trabajadores/crear" class="btn btn-success">
-          <i class="bi bi-plus-lg me-1"></i> Agregar Trabajador
-        </a>
       </div>
 
       <div class="card-body">
