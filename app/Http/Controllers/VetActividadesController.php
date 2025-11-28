@@ -332,9 +332,31 @@ class VetActividadesController extends Controller
 
             Log::info(" Actualizando estado de cita {$request->cita_id} a {$request->estado}");
 
-            $cita = Cita::where('id', $request->cita_id)
-                ->where('veterinario_id', Auth::id()) // Solo el veterinario asignado puede cambiar el estado
-                ->firstOrFail();
+            // Buscar la cita por id
+            $cita = Cita::find($request->cita_id);
+            if (!$cita) {
+                Log::warning("Cita {$request->cita_id} no encontrada al intentar actualizar estado");
+                return response()->json(['success' => false, 'message' => 'Cita no encontrada'], 404);
+            }
+
+            $user = Auth::user();
+            $veterinarioId = Auth::id();
+
+            // Permitir actualizar si:
+            // - el veterinario está asignado a la cita, o
+            // - el veterinario pertenece a la misma clínica que la cita (permiso local)
+            $puedeActualizar = false;
+            if ($cita->veterinario_id !== null && $cita->veterinario_id == $veterinarioId) {
+                $puedeActualizar = true;
+            } elseif ($cita->clinica_id && $user && $user->clinica_id && $cita->clinica_id == $user->clinica_id) {
+                // Permitir a cualquier trabajador de la misma clínica actualizar estados (útil para citas no asignadas o pasadas)
+                $puedeActualizar = true;
+            }
+
+            if (! $puedeActualizar) {
+                Log::warning("Usuario {$veterinarioId} no autorizado para actualizar la cita {$cita->id}");
+                return response()->json(['success' => false, 'message' => 'No autorizado para actualizar esta cita'], 403);
+            }
 
             $estadoAnterior = $cita->status;
             $cita->status = $request->estado;
