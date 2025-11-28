@@ -540,6 +540,14 @@ function populateCitaModal(data) {
 function openCitaModal(id) {
   showAlertInModal('');
   window.__currentCitaId = Number(id);
+  // Mostrar el modal inmediatamente para feedback visual
+  const modalEl = document.getElementById('citaModal');
+  if (modalEl && typeof bootstrap !== 'undefined') {
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modal.show();
+  }
+  // Limpiar contenido mientras carga
+  populateCitaModal({ cita: { servicio: { nombre: 'Cargando...' }, mascota: { nombre: '' }, status: '', fecha: null, notas: '' } });
   fetch(`/groomer-dashboard/citas/${id}`)
     .then((r) => {
       if (!r.ok) throw new Error('No se pudo cargar la cita');
@@ -547,10 +555,6 @@ function openCitaModal(id) {
     })
     .then((data) => {
       populateCitaModal(data);
-      const modalEl = document.getElementById('citaModal');
-      if (!modalEl || typeof bootstrap === 'undefined') return;
-      const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-      modal.show();
     })
     .catch((err) => {
       console.error(err);
