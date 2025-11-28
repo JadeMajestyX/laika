@@ -21,7 +21,6 @@ use App\Http\Controllers\VetHistorialController;
 use App\Http\Controllers\VetReportesController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\VetCitaFichaController;
-use App\Http\Controllers\RecepcionistaDashboardController;
 
 
 
@@ -69,16 +68,6 @@ Route::middleware(EnsureUserHasRole::class.':G')->group(function () {
     Route::get('/groomer-dashboard', [GroomerDashboardController::class, 'index'])->name('groomer.dashboard');
     Route::get('/groomer-dashboard/data', [GroomerDashboardController::class, 'getDashboardData'])->name('groomer.dashboard.data');
     Route::get('/groomer-dashboard/{any}', [GroomerDashboardController::class, 'index'])->where('any', '.*');
-});
-
-// Dashboard Recepcionista (autenticado)
-Route::middleware('auth')->group(function () {
-    Route::get('/recepcion-dashboard', [RecepcionistaDashboardController::class, 'index'])->name('recepcion.dashboard');
-    Route::post('/recepcion-dashboard/cliente', [RecepcionistaDashboardController::class, 'storeCliente'])->name('recepcion.cliente.store');
-    Route::post('/recepcion-dashboard/mascota', [RecepcionistaDashboardController::class, 'storeMascota'])->name('recepcion.mascota.store');
-    Route::post('/recepcion-dashboard/agendar', [RecepcionistaDashboardController::class, 'agendarCita'])->name('recepcion.cita.agendar');
-    Route::post('/recepcion-dashboard/marcar-completada', [RecepcionistaDashboardController::class, 'marcarCompletada'])->name('recepcion.cita.marcar-completada');
-    Route::get('/recepcion-dashboard/{any}', [RecepcionistaDashboardController::class, 'index'])->where('any', '.*');
 });
 
 Route::middleware(EnsureUserHasRole::class.':A')->group(function () {
