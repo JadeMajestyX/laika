@@ -23,7 +23,7 @@ function buildChartSeriesFromCitas(citas, groomerId, serviciosClinica, clinicaId
   ];
   const map = {};
   const toNum = (v) => v == null ? null : Number(v);
-  // Limitar solo a la semana actual y filtrar por servicios de grooming de la clínica
+  // Limitar solo a la semana actual y a la clínica del usuario, sin filtrar por dueño ni por grooming
   const startOfWeek = (() => {
     const d = new Date();
     const day = d.getDay(); // 0=Dom,1=Lun
@@ -40,22 +40,11 @@ function buildChartSeriesFromCitas(citas, groomerId, serviciosClinica, clinicaId
     return e;
   })();
   const inCurrentWeek = (dt) => dt && dt >= startOfWeek && dt < endOfWeek;
-  const toClinicNum = (v) => v == null ? null : Number(v);
-  const groomingServiceIds = new Set(
-    (serviciosClinica || [])
-      .filter((s) => (clinicaId == null || toClinicNum(s.clinica_id) === toClinicNum(clinicaId)) && isGroomingServiceName(s.nombre))
-      .map((s) => toClinicNum(s.id))
-      .filter((id) => id != null)
-  );
-  const isGroomingByService = (c) => {
-    const sid = toClinicNum(c.servicio_id);
-    if (sid != null && groomingServiceIds.size > 0) return groomingServiceIds.has(sid);
-    return c.servicio?.nombre ? isGroomingServiceName(c.servicio.nombre) : false;
-  };
   (citas || [])
     .filter((c) => {
       const d = c.fecha ? new Date(c.fecha) : null;
-      return inCurrentWeek(d) && isGroomingByService(c);
+      // si viene clinicaId en el payload, asumir que citasClinica ya son de esa clínica
+      return inCurrentWeek(d);
     })
     .forEach((c) => {
       const d = c.fecha ? new Date(c.fecha) : null;
@@ -403,20 +392,14 @@ function renderAgendaFromCitas(payload) {
   const toNum = (v) => v == null ? null : Number(v);
   const agendaBody = document.getElementById('agendaBody');
   if (!agendaBody) return;
-  // Listar solo servicios de grooming de la clínica del usuario
-  const groomingServiceIds = new Set(
-    (serviciosClinica || [])
-      .filter((s) => (clinicaId == null || toNum(s.clinica_id) === toNum(clinicaId)) && isGroomingServiceName(s.nombre))
-      .map((s) => toNum(s.id))
-      .filter((id) => id != null)
-  );
-  const isGroomingByService = (c) => {
-    const sid = toNum(c.servicio_id);
-    if (sid != null && groomingServiceIds.size > 0) return groomingServiceIds.has(sid);
-    return c.servicio?.nombre ? isGroomingServiceName(c.servicio.nombre) : false;
+  const allowed = new Set(['limpieza dental','corte de pelo','baño']);
+  const isAllowedService = (c) => {
+    const name = c?.servicio?.nombre ? String(c.servicio.nombre).toLowerCase().trim() : '';
+    return allowed.has(name);
   };
+  // Listar TODAS las citas de la clínica del usuario, sin filtrar por grooming ni por dueño
   const citas = (citasClinica || [])
-    .filter((c) => isGroomingByService(c))
+    .filter((c) => isAllowedService(c))
     .sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
   if (citas.length === 0) {
     agendaBody.innerHTML = `<tr><td colspan="7" class="text-center text-body-secondary py-4">No hay citas programadas</td></tr>`;
