@@ -114,7 +114,7 @@
           <li class="nav-item"><a class="nav-link" href="#equipo">Equipo</a></li>
           <li class="nav-item"><a class="nav-link" href="#contacto">Contacto</a></li>
         </ul>
-        <a href="{{ route('agendar.cita') }}" class="btn btn-light ms-lg-3 fw-semibold">Agendar cita</a>
+        {{-- <a href="{{ route('agendar.cita') }}" class="btn btn-light ms-lg-3 fw-semibold">Agendar cita</a> --}}
       </div>
     </div>
   </nav>
@@ -284,7 +284,7 @@
     <div class="container">
       <h2 class="fw-bold mb-3">¿Listo para agendar una cita?</h2>
       <p class="mb-4">Tu mascota merece lo mejor. Agenda hoy mismo con nuestros expertos veterinarios.</p>
-      <a href="{{ route('agendar.cita') }}" class="btn btn-light fw-semibold">Agendar Cita</a>
+      {{-- <a href="{{ route('agendar.cita') }}" class="btn btn-light fw-semibold">Agendar Cita</a> --}}
     </div>
   </section>
 
