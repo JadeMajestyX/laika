@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Cita;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class VetCitaFichaController extends Controller
 {
@@ -17,6 +18,7 @@ class VetCitaFichaController extends Controller
      */
     public function show(Request $request, $id)
     {
+        try {
         $user = Auth::user();
         if (!$user) {
             return response()->json(['success' => false, 'message' => 'No autenticado'], 401);
@@ -110,5 +112,16 @@ class VetCitaFichaController extends Controller
             'historial' => $historial,
             'receta' => $recetaData,
         ]);
+        } catch (\Throwable $e) {
+            Log::error('Error en VetCitaFichaController@show: '.$e->getMessage(), [
+                'cita_id' => $id,
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Error interno obteniendo ficha',
+                'error' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
     }
 }
