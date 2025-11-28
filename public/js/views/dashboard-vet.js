@@ -224,27 +224,180 @@
           document.body.appendChild(s);
         });
       }
+
+      // Crear documento para imprimir con diseño profesional
+      const recetaDoc = crearDocumentoReceta(mascotaInfo, citaObj, diagInput.value, recetaItems);
+      
       const opt = {
         margin:       10,
-        filename:     `Ficha-${(mascota?.data?.nombre||mascota?.mascota?.nombre||'Mascota')}-${Date.now()}.pdf`,
+        filename:     `Receta-${mascotaInfo?.nombre || 'Mascota'}-${new Date().toISOString().split('T')[0]}.pdf`,
         image:        { type: 'jpeg', quality: 0.98 },
         html2canvas:  { scale: 2 },
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
       };
-      window.html2pdf().set(opt).from(modal).save();
+      window.html2pdf().set(opt).from(recetaDoc).save();
     });
 
     // Imprimir
     printBtn.addEventListener('click', () => {
+      const recetaDoc = crearDocumentoReceta(mascotaInfo, citaObj, diagInput.value, recetaItems);
       const w = window.open('', 'PRINT', 'height=800,width=1100');
       if (!w) return;
-      const html = `<!doctype html><html><head><title>Imprimir ficha</title></head><body>${modal.outerHTML}</body></html>`;
+      const html = `<!doctype html>
+      <html>
+      <head>
+        <title>Receta Médica Veterinaria</title>
+        <style>
+          body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+          @media print {
+            body { margin: 0; }
+            @page { margin: 15mm; }
+          }
+        </style>
+      </head>
+      <body>${recetaDoc.outerHTML}</body>
+      </html>`;
       w.document.write(html);
       w.document.close();
       w.focus();
-      w.print();
-      w.close();
+      setTimeout(() => {
+        w.print();
+        w.close();
+      }, 250);
     });
+
+    // Función para crear documento de receta profesional
+    function crearDocumentoReceta(mascota, cita, diagnostico, itemsReceta) {
+      const fecha = new Date();
+      const fechaStr = fecha.toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' });
+      
+      // Obtener datos del veterinario y clínica del DOM o contexto global
+      const vetNombre = window.vetData?.nombre || 'Dr./Dra. Veterinario';
+      const clinicaNombre = window.clinicaData?.nombre || 'VetCare - Clínica Veterinaria';
+      const clinicaDireccion = window.clinicaData?.direccion || 'Dirección de la clínica';
+      const clinicaTelefono = window.clinicaData?.telefono || 'Tel: (555) 123-4567';
+      
+      const doc = el('div', { 
+        style: 'width:210mm;min-height:297mm;background:white;padding:20mm;box-sizing:border-box;font-family:Arial,sans-serif;color:#333;position:relative'
+      }, [
+        // Encabezado con logo y datos de clínica
+        el('div', { style: 'border-bottom:3px solid #2563eb;padding-bottom:15px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between' }, [
+          el('div', { style: 'flex:1' }, [
+            el('div', { style: 'display:flex;align-items:center;gap:15px' }, [
+              el('div', { style: 'width:60px;height:60px;background:#2563eb;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:24px;font-weight:bold' }, '🐾'),
+              el('div', {}, [
+                el('h1', { style: 'margin:0;font-size:24px;color:#2563eb;font-weight:bold' }, clinicaNombre),
+                el('p', { style: 'margin:2px 0 0 0;font-size:12px;color:#666' }, clinicaDireccion),
+                el('p', { style: 'margin:2px 0 0 0;font-size:12px;color:#666' }, clinicaTelefono),
+              ])
+            ])
+          ]),
+          el('div', { style: 'text-align:right' }, [
+            el('div', { style: 'font-size:20px;font-weight:bold;color:#2563eb;margin-bottom:5px' }, 'RECETA MÉDICA'),
+            el('div', { style: 'font-size:12px;color:#666' }, `Fecha: ${fechaStr}`),
+            el('div', { style: 'font-size:12px;color:#666' }, `Folio: ${cita?.id || '---'}`)
+          ])
+        ]),
+
+        // Información del veterinario
+        el('div', { style: 'background:#f8fafc;border-left:4px solid #2563eb;padding:12px;margin-bottom:20px' }, [
+          el('div', { style: 'font-size:14px;font-weight:bold;color:#1e40af;margin-bottom:5px' }, 'Médico Veterinario'),
+          el('div', { style: 'font-size:13px;color:#475569' }, vetNombre),
+          el('div', { style: 'font-size:11px;color:#64748b;margin-top:2px' }, 'Cédula Profesional: [Número de cédula]')
+        ]),
+
+        // Datos del paciente y propietario
+        el('div', { style: 'display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:25px' }, [
+          // Datos del paciente
+          el('div', { style: 'border:1px solid #e2e8f0;border-radius:8px;padding:15px;background:#fefefe' }, [
+            el('h3', { style: 'margin:0 0 12px 0;font-size:14px;color:#1e40af;border-bottom:2px solid #dbeafe;padding-bottom:8px' }, '👤 DATOS DEL PACIENTE'),
+            el('div', { style: 'font-size:12px;line-height:1.8' }, [
+              el('div', {}, [el('strong', {}, 'Nombre: '), mascota?.nombre || 'N/A']),
+              el('div', {}, [el('strong', {}, 'Especie: '), mascota?.especie || 'N/A']),
+              el('div', {}, [el('strong', {}, 'Raza: '), mascota?.raza || 'N/A']),
+              el('div', {}, [el('strong', {}, 'Sexo: '), mascota?.sexo || 'N/A']),
+              el('div', {}, [el('strong', {}, 'Peso: '), mascota?.peso ? `${mascota.peso} kg` : 'N/A']),
+            ])
+          ]),
+          // Datos del propietario
+          el('div', { style: 'border:1px solid #e2e8f0;border-radius:8px;padding:15px;background:#fefefe' }, [
+            el('h3', { style: 'margin:0 0 12px 0;font-size:14px;color:#1e40af;border-bottom:2px solid #dbeafe;padding-bottom:8px' }, '👨‍👩‍👧 PROPIETARIO'),
+            el('div', { style: 'font-size:12px;line-height:1.8' }, [
+              el('div', {}, [el('strong', {}, 'Nombre: '), mascota?.propietario?.nombre || 'N/A', ' ', mascota?.propietario?.apellido || '']),
+              el('div', {}, [el('strong', {}, 'Teléfono: '), mascota?.propietario?.telefono || 'N/A']),
+              el('div', {}, [el('strong', {}, 'Email: '), mascota?.propietario?.email || 'N/A']),
+            ])
+          ])
+        ]),
+
+        // Diagnóstico
+        el('div', { style: 'margin-bottom:25px' }, [
+          el('h3', { style: 'margin:0 0 10px 0;font-size:14px;color:#1e40af;border-bottom:2px solid #dbeafe;padding-bottom:8px;display:flex;align-items:center;gap:8px' }, [
+            el('span', {}, '🔍'),
+            el('span', {}, 'DIAGNÓSTICO')
+          ]),
+          el('div', { style: 'border:1px solid #e2e8f0;border-radius:8px;padding:15px;background:#f8fafc;font-size:13px;line-height:1.6;min-height:60px' }, 
+            diagnostico || 'Sin diagnóstico registrado'
+          )
+        ]),
+
+        // Prescripción (Receta)
+        el('div', { style: 'margin-bottom:30px' }, [
+          el('h3', { style: 'margin:0 0 15px 0;font-size:14px;color:#1e40af;border-bottom:2px solid #dbeafe;padding-bottom:8px;display:flex;align-items:center;gap:8px' }, [
+            el('span', {}, '💊'),
+            el('span', {}, 'PRESCRIPCIÓN MÉDICA')
+          ]),
+          el('div', { style: 'border:1px solid #e2e8f0;border-radius:8px;padding:15px;background:#fefefe' }, 
+            itemsReceta.length > 0 
+              ? itemsReceta.map((wrapper, idx) => {
+                  const inputs = wrapper.querySelectorAll('input');
+                  const medicamento = inputs[0]?.value || '';
+                  const dosis = inputs[1]?.value || '';
+                  const notas = inputs[2]?.value || '';
+                  
+                  return el('div', { style: 'margin-bottom:15px;padding-bottom:15px;border-bottom:1px dashed #cbd5e1' }, [
+                    el('div', { style: 'font-size:13px;font-weight:bold;color:#1e40af;margin-bottom:5px' }, `${idx + 1}. ${medicamento}`),
+                    el('div', { style: 'font-size:12px;color:#475569;margin-left:18px;line-height:1.6' }, [
+                      el('div', {}, [el('strong', {}, 'Dosis: '), dosis]),
+                      notas ? el('div', { style: 'margin-top:3px' }, [el('strong', {}, 'Indicaciones: '), notas]) : null
+                    ])
+                  ]);
+                })
+              : el('div', { style: 'font-size:12px;color:#94a3b8;text-align:center;padding:20px' }, 'Sin medicamentos prescritos')
+          )
+        ]),
+
+        // Indicaciones generales
+        el('div', { style: 'background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;padding:12px;margin-bottom:30px' }, [
+          el('div', { style: 'font-size:12px;font-weight:bold;color:#92400e;margin-bottom:5px' }, '⚠️ INDICACIONES GENERALES:'),
+          el('ul', { style: 'margin:5px 0 0 0;padding-left:20px;font-size:11px;color:#92400e;line-height:1.6' }, [
+            el('li', {}, 'Administrar medicamentos según las dosis indicadas'),
+            el('li', {}, 'Completar el tratamiento aunque mejoren los síntomas'),
+            el('li', {}, 'En caso de reacción adversa, suspender y contactar a la clínica'),
+            el('li', {}, 'Mantener los medicamentos fuera del alcance de niños y mascotas')
+          ])
+        ]),
+
+        // Firma y pie de página
+        el('div', { style: 'position:absolute;bottom:20mm;left:20mm;right:20mm' }, [
+          el('div', { style: 'display:flex;justify-content:space-between;align-items:flex-end;margin-top:40px' }, [
+            el('div', { style: 'text-align:center;flex:1' }, [
+              el('div', { style: 'border-top:1px solid #334155;width:200px;margin:0 auto 8px;padding-top:8px;font-size:12px;font-weight:500' }, vetNombre),
+              el('div', { style: 'font-size:10px;color:#64748b' }, 'Médico Veterinario')
+            ]),
+            el('div', { style: 'text-align:center;flex:1' }, [
+              el('div', { style: 'border-top:1px solid #334155;width:200px;margin:0 auto 8px;padding-top:8px;font-size:12px' }, '_________________'),
+              el('div', { style: 'font-size:10px;color:#64748b' }, 'Firma y Sello')
+            ])
+          ]),
+          el('div', { style: 'text-align:center;margin-top:20px;font-size:10px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:10px' }, 
+            `Este documento es una prescripción médica veterinaria. Conservar para seguimiento del tratamiento.`
+          )
+        ])
+      ]);
+
+      return doc;
+    }
   }
 
   // Delegar clicks en tarjetas/lista de citas para abrir el modal
