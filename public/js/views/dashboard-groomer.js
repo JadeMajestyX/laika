@@ -384,6 +384,7 @@ function renderSection(section, data) {
 
 function renderAgendaFromCitas(payload) {
   const { citasClinica = [], userId, serviciosClinica = [], clinicaId } = payload || {};
+  const clinicaNombreGlobal = getClinicName(payload);
   const toNum = (v) => v == null ? null : Number(v);
   const agendaBody = document.getElementById('agendaBody');
   if (!agendaBody) return;
@@ -399,7 +400,7 @@ function renderAgendaFromCitas(payload) {
     const hora = c.fecha ? new Date(c.fecha).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }) : '';
     const mascota = c.mascota?.nombre || 'Mascota';
     const propietario = c.mascota?.propietario?.nombre || c.creador?.nombre || c.veterinario?.nombre || '';
-    const clinicaNombre = c.clinica?.nombre || 'Clínica';
+    const clinicaNombre = c.clinica?.nombre || clinicaNombreGlobal || 'Clínica';
     const servicio = c.servicio?.nombre || 'Servicio';
     const estado = c.status || '';
     const tr = document.createElement('tr');
