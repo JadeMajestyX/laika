@@ -405,14 +405,24 @@
   }
 
   // Delegar clicks en tarjetas/lista de citas para abrir el modal
-  // Ajusta el selector según tu DOM real (ej. .cita-item[data-id])
+  // Nota: ignorar clicks en elementos interactivos (botones, enlaces, inputs, dropdowns)
+  // para no interferir con acciones como cambiar el estado desde el dropdown.
   document.addEventListener('click', (ev) => {
+    // Priorizar botón explícito para atender la cita
     const btn = ev.target.closest('button.atender-cita-btn[data-cita-id]');
     if (btn) {
       const id = btn.getAttribute('data-cita-id');
       if (id) { ev.preventDefault(); openVetDetailModal(id); return; }
     }
-    const row = ev.target.closest('tr[data-cita-id]');
+
+    // Si el click se originó dentro de algún control interactivo, NO abrir modal.
+    // Esto evita que clicks en dropdowns (para cambiar estado) abran el modal.
+    if (ev.target.closest('a, button, input, select, textarea, .dropdown, .dropdown-menu, .btn, .badge')) {
+      return;
+    }
+
+    // Soportar filas de tabla y tarjetas (.cita-item)
+    const row = ev.target.closest('tr[data-cita-id], .cita-item[data-cita-id]');
     if (row && row.getAttribute('data-cita-id')) {
       ev.preventDefault();
       openVetDetailModal(row.getAttribute('data-cita-id'));
