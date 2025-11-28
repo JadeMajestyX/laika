@@ -79,7 +79,7 @@
       <nav class="d-grid gap-2">
         <button class="nav-btn"><i class="bi bi-house" data-section="home"></i><span>Home</span></button>
         <button class="nav-btn"><i class="bi bi-calendar2-week" data-section="agenda"></i><span>Mi Agenda</span></button>
-        <button class="nav-btn"><i class="bi bi-clock" data-section="actividad"></i><span>Actividad de Hoy</span></button>
+        {{-- <button class="nav-btn"><i class="bi bi-clock" data-section="actividad"></i><span>Actividad de Hoy</span></button> --}}
         <button class="nav-btn"><i class="bi bi-clock-history" data-section="historial"></i><span>Historial</span></button>
         <button class="nav-btn"><i class="bi bi-gear" data-section="configuracion"></i><span>Configuración</span></button>
       </nav>
