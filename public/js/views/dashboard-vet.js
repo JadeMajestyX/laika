@@ -772,8 +772,10 @@ function actualizarTablaActividades() {
           // Mostrar botón "Atender Cita" solo para citas confirmadas
           const mostrarBotonAtender = actividad.tipo === 'cita' && actividad.estado === 'confirmada';
           
+          const isCita = actividad.tipo === 'cita';
+          const citaId = actividad.id;
           return `
-            <tr>
+            <tr ${isCita ? `data-cita-id="${citaId}"` : ''}>
               <td>${actividad.hora || 'N/A'}</td>
               <td>${actividad.paciente || 'N/A'}</td>
               <td>
@@ -826,7 +828,7 @@ function actualizarTablaActividades() {
               </td>
               <td>
                 ${mostrarBotonAtender ? `
-                  <button class="btn btn-primary btn-sm" onclick="abrirModalAtenderCita(${actividad.id})">
+                  <button class="btn btn-primary btn-sm atender-cita-btn" type="button" data-cita-id="${citaId}">
                     <i class="bi bi-clipboard-plus me-1"></i>Atender Cita
                   </button>
                 ` : ''}
