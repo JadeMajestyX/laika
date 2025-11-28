@@ -288,6 +288,7 @@ function renderSection(section, data) {
                 <th>HORA</th>
                 <th>MASCOTA</th>
                 <th>PROPIETARIO</th>
+                <th>CLÍNICA</th>
                 <th>SERVICIO</th>
                 <th>ESTADO</th>
                 <th>ACCIONES</th>
@@ -295,7 +296,7 @@ function renderSection(section, data) {
             </thead>
             <tbody id="agendaBody">
               <tr>
-                <td colspan="6" class="text-center text-body-secondary py-4">No hay citas programadas</td>
+                <td colspan="7" class="text-center text-body-secondary py-4">No hay citas programadas</td>
               </tr>
             </tbody>
           </table>
@@ -380,7 +381,7 @@ function renderAgendaFromCitas(payload) {
   const citas = (citasClinica || [])
     .sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
   if (citas.length === 0) {
-    agendaBody.innerHTML = `<tr><td colspan="6" class="text-center text-body-secondary py-4">No hay citas programadas</td></tr>`;
+    agendaBody.innerHTML = `<tr><td colspan="7" class="text-center text-body-secondary py-4">No hay citas programadas</td></tr>`;
     return;
   }
   agendaBody.innerHTML = '';
@@ -388,6 +389,7 @@ function renderAgendaFromCitas(payload) {
     const hora = c.fecha ? new Date(c.fecha).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }) : '';
     const mascota = c.mascota?.nombre || 'Mascota';
     const propietario = c.mascota?.propietario?.nombre || c.creador?.nombre || c.veterinario?.nombre || '';
+    const clinicaNombre = c.clinica?.nombre || 'Clínica';
     const servicio = c.servicio?.nombre || 'Servicio';
     const estado = c.status || '';
     const tr = document.createElement('tr');
@@ -395,6 +397,7 @@ function renderAgendaFromCitas(payload) {
       <td>${hora}</td>
       <td>${mascota}</td>
       <td>${propietario}</td>
+      <td>${clinicaNombre}</td>
       <td>${servicio}</td>
       <td>${estado}</td>
       <td>
