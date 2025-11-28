@@ -181,15 +181,13 @@ class VetActividadesController extends Controller
             $cita = Cita::findOrFail($request->cita_id);
             $veterinarioId = Auth::id();
             
-            // Verificar que la cita no esté vencida
+            // Nota: Permitimos asignar citas aunque la fecha ya haya pasado.
+            // Antes se bloqueaba here, pero se requiere permitir marcar
+            // como atendida o completar citas históricas desde el panel.
             $now = Carbon::now();
             $fechaCita = Carbon::parse($cita->fecha);
-            
             if ($fechaCita->lt($now)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Esta cita ya ha pasado y no puede ser asignada'
-                ], 400);
+                Log::info("Asignando cita pasada (fecha: {$fechaCita->format('Y-m-d H:i:s')}) al veterinario {$veterinarioId}");
             }
 
             // Verificar que la cita no esté ya asignada
