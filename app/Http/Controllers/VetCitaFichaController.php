@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Cita;
+use App\Models\Receta;
+use App\Models\RecetaItem;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
@@ -244,37 +246,43 @@ class VetCitaFichaController extends Controller
             // Crear o actualizar receta
             $receta = $cita->receta;
             if (!$receta) {
-                $receta = \App\Models\Receta::create([
+                $receta = Receta::create([
                     'cita_id' => $cita->id,
                     'notas' => $validated['notas'] ?? null,
                 ]);
+                Log::info("Nueva receta creada con ID {$receta->id} para cita {$id}");
             } else {
                 if (array_key_exists('notas', $validated)) {
                     $receta->notas = $validated['notas'];
                     $receta->save();
                 }
                 // Limpiar items anteriores
+                $itemsEliminados = $receta->items()->count();
                 $receta->items()->delete();
+                Log::info("Receta {$receta->id} actualizada, {$itemsEliminados} items anteriores eliminados");
             }
 
             // Crear nuevos items
+            $itemsCreados = 0;
             if (isset($validated['items']) && count($validated['items']) > 0) {
                 foreach ($validated['items'] as $item) {
-                    \App\Models\RecetaItem::create([
+                    RecetaItem::create([
                         'receta_id' => $receta->id,
                         'medicamento' => $item['medicamento'],
                         'dosis' => $item['dosis'],
                         'notas' => $item['notas'] ?? null,
                     ]);
+                    $itemsCreados++;
                 }
             }
 
-            Log::info("Receta actualizada en cita {$id} por veterinario {$user->id}, items: " . count($validated['items'] ?? []));
+            Log::info("Receta {$receta->id} guardada en cita {$id} por veterinario {$user->id}, {$itemsCreados} items creados");
 
             return response()->json([
                 'success' => true,
                 'message' => 'Receta guardada correctamente',
                 'receta_id' => $receta->id,
+                'items_guardados' => $itemsCreados,
             ]);
 
         } catch (\Throwable $e) {
