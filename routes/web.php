@@ -20,6 +20,7 @@ use App\Http\Controllers\VetActividadesController;
 use App\Http\Controllers\VetHistorialController;
 use App\Http\Controllers\VetReportesController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\VetCitaFichaController;
 
 
 
@@ -43,6 +44,8 @@ Route::middleware(EnsureUserHasRole::class.':V')->group(function () {
     Route::get('/vet-dashboard/get-cita-detalle/{citaId}', [VetActividadesController::class, 'getCitaDetalle']);
     Route::post('/vet-dashboard/finalizar-cita', [VetActividadesController::class, 'finalizarCita']);
     Route::post('/vet-dashboard/cancelar-cita', [VetActividadesController::class, 'cancelarCita']);
+    // Ficha completa de cita/consulta (JSON para modal)
+    Route::get('/vet/citas/{id}/ficha', [VetCitaFichaController::class, 'show'])->name('vet.citas.ficha');
     
     //Crear consulta manual
     Route::post('/vet-dashboard/crear-consulta-manual', [VetActividadesController::class, 'crearConsultaManual'])->name('vet.crear-consulta-manual');

@@ -4,7 +4,8 @@
 
 (function(){
   const API = {
-    citaDetalle: (id) => `/api/citas/${id}`, // asume endpoint existente o ajustar
+    // Nueva ruta vía web (session auth) para ficha completa
+    citaDetalle: (id) => `/vet/citas/${id}/ficha`,
     mascotaById: (id) => `/api/mascotas/${id}`,
     citasMascota: (id) => `/api/citas-mascota/${id}`,
     guardarDiagnostico: (id) => `/api/citas/${id}`, // PUT/PATCH {diagnostico}
