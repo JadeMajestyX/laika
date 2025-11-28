@@ -94,58 +94,71 @@ class VetActividadesController extends Controller
     {
         try {
             $veterinarioId = Auth::id();
+            $user = Auth::user();
+            $clinicaId = $user?->clinica_id;
             $today = Carbon::today();
 
-            Log::info(" Buscando actividades para veterinario: {$veterinarioId}");
+            if (!$clinicaId) {
+                Log::warning("Veterinario {$veterinarioId} sin clinica_id en getActividadesHoy");
+                return response()->json([
+                    'actividades' => collect([]),
+                    'estadisticas' => [
+                        'total' => 0,
+                        'citas' => 0,
+                        'consultas_manuales' => 0,
+                        'canceladas' => 0,
+                        'completadas' => 0
+                    ],
+                    'message' => 'Sin clínica asignada'
+                ]);
+            }
 
-            // Obtener TODAS las actividades de hoy (tanto citas como consultas manuales)
-            $actividades = Cita::with(['mascota', 'servicio', 'mascota.user'])
-                ->where('veterinario_id', $veterinarioId)
+            Log::info("Buscando actividades de hoy para clínica {$clinicaId} (vet {$veterinarioId})");
+
+            // Traer TODAS las citas/consultas de la clínica en el día, no sólo las asignadas al veterinario actual
+            $queryBase = Cita::with(['mascota', 'servicio', 'mascota.user'])
+                ->where('clinica_id', $clinicaId)
                 ->whereDate('fecha', $today)
-                ->orderBy('fecha')
-                ->get()
-                ->map(function ($cita) {
-                    $fecha = Carbon::parse($cita->fecha);
-                    
-                    // Obtener teléfono del propietario
-                    $telefono = $cita->mascota->user->telefono ?? 'No disponible';
-                    
-                    return [
-                        'id' => $cita->id,
-                        'hora' => $fecha->format('H:i'),
-                        'paciente' => $cita->mascota->nombre ?? 'Mascota no encontrada',
-                        'propietario' => $cita->mascota->user->nombre ?? 'Cliente',
-                        'apellido' => $cita->mascota->user->apellido_paterno ?? '',
-                        'telefono' => $telefono, // ← NUEVO CAMPO
-                        'especie' => $cita->mascota->especie ?? 'N/A',
-                        'raza' => $cita->mascota->raza ?? 'N/A',
-                        'tipo_actividad' => $cita->servicio->nombre ?? 'Servicio no especificado',
-                        'procedimiento' => $cita->notas ?? 'Consulta general',
-                        'estado' => $cita->status,
-                        'tipo' => $cita->tipo ?? 'cita'
-                    ];
-                });
+                ->orderBy('fecha');
 
-            // Calcular estadísticas separadas por tipo
-            $citasHoy = Cita::where('veterinario_id', $veterinarioId)
-                ->whereDate('fecha', $today)
-                ->where('tipo', 'cita')
-                ->count();
+            $citasCollection = $queryBase->get();
 
-            $consultasHoy = Cita::where('veterinario_id', $veterinarioId)
-                ->whereDate('fecha', $today)
-                ->where('tipo', 'consulta')
-                ->count();
+            $actividades = $citasCollection->map(function ($cita) use ($veterinarioId) {
+                $fecha = Carbon::parse($cita->fecha);
+                $telefono = $cita->mascota->user->telefono ?? 'No disponible';
+                return [
+                    'id' => $cita->id,
+                    'hora' => $fecha->format('H:i'),
+                    'paciente' => $cita->mascota->nombre ?? 'Mascota no encontrada',
+                    'propietario' => $cita->mascota->user->nombre ?? 'Cliente',
+                    'apellido' => $cita->mascota->user->apellido_paterno ?? '',
+                    'telefono' => $telefono,
+                    'especie' => $cita->mascota->especie ?? 'N/A',
+                    'raza' => $cita->mascota->raza ?? 'N/A',
+                    'tipo_actividad' => $cita->servicio->nombre ?? 'Servicio no especificado',
+                    'procedimiento' => $cita->notas ?? 'Consulta general',
+                    'estado' => $cita->status,
+                    'tipo' => $cita->tipo ?? 'cita',
+                    'asignada_a' => $cita->veterinario_id, // id del veterinario asignado (o null)
+                    'es_mia' => $cita->veterinario_id === $veterinarioId, // para resaltar en frontend
+                ];
+            });
 
+            // Estadísticas a nivel clínica
+            $citasHoy = $citasCollection->where('tipo', 'cita')->count();
+            $consultasHoy = $citasCollection->where('tipo', 'consulta')->count();
             $estadisticas = [
-                'total' => $actividades->count(),
+                'total' => $citasCollection->count(),
                 'citas' => $citasHoy,
                 'consultas_manuales' => $consultasHoy,
-                'canceladas' => $actividades->where('status', 'cancelada')->count(),
-                'completadas' => $actividades->where('status', 'completada')->count()
+                'canceladas' => $citasCollection->where('status', 'cancelada')->count(),
+                'completadas' => $citasCollection->where('status', 'completada')->count(),
+                'asignadas' => $citasCollection->whereNotNull('veterinario_id')->count(),
+                'libres' => $citasCollection->whereNull('veterinario_id')->count(),
+                'mias' => $citasCollection->where('veterinario_id', $veterinarioId)->count(),
             ];
 
-            Log::info(" Actividades encontradas: " . $actividades->count());
+            Log::info(" Actividades clínica {$clinicaId} encontradas: " . $actividades->count());
 
             return response()->json([
                 'actividades' => $actividades,
