@@ -248,6 +248,7 @@ class VetCitaFichaController extends Controller
             if (!$receta) {
                 $receta = Receta::create([
                     'cita_id' => $cita->id,
+                    'veterinario_id' => $user->id,
                     'notas' => $validated['notas'] ?? null,
                 ]);
                 Log::info("Nueva receta creada con ID {$receta->id} para cita {$id}");
