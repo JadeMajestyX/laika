@@ -539,9 +539,28 @@ function renderActividades() {
         return;
       }
 
+      // Contar cuántas citas son del día de hoy
+      const todayIso = new Date().toISOString().split('T')[0];
+      const citasHoyCount = (data.citas || []).filter(c => {
+        // `fecha_completa` viene como 'YYYY-MM-DD HH:mm:ss'
+        if (!c.fecha_completa) return false;
+        return c.fecha_completa.substring(0,10) === todayIso;
+      }).length;
+
+      // Cabecera con contador
+      const header = document.createElement('div');
+      header.className = 'd-flex justify-content-between align-items-center mb-2';
+      header.innerHTML = `
+        <div>
+          <strong>Citas disponibles</strong>
+          <div class="small text-body-secondary">Citas del día: <span class="badge bg-primary">${citasHoyCount}</span></div>
+        </div>
+      `;
+      container.appendChild(header);
+
       // Limitar el número de citas visibles sin scroll excesivo
       const citasToShow = data.citas.slice(0, 5); // Máximo 5 citas para evitar overflow
-      
+
       citasToShow.forEach((cita) => {
         const row = document.createElement('div');
         row.className = 'cita-item border rounded p-3 bg-light';
