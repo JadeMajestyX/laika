@@ -23,25 +23,29 @@ function buildChartSeriesFromCitas(citas, groomerId, serviciosClinica, clinicaId
   ];
   const map = {};
   const toNum = (v) => v == null ? null : Number(v);
-  const gid = toNum(groomerId);
-  const groomingServiceIds = new Set(
-    (serviciosClinica || [])
-      .filter((s) => (clinicaId == null || toNum(s.clinica_id) === toNum(clinicaId)) && isGroomingServiceName(s.nombre))
-      .map((s) => toNum(s.id))
-      .filter((id) => id != null)
-  );
-  const isMine = (c) => {
-    const vet = toNum(c.veterinario_id);
-    const creator = toNum(c.creada_por);
-    return (vet != null && vet === gid) || (creator != null && creator === gid);
-  };
-  const isGroomingByService = (c) => {
-    const sid = toNum(c.servicio_id);
-    if (sid != null && groomingServiceIds.size > 0) return groomingServiceIds.has(sid);
-    return c.servicio?.nombre ? isGroomingServiceName(c.servicio.nombre) : true;
-  };
+  // Limitar solo a la semana actual y a la clínica del usuario, sin filtrar por dueño ni por grooming
+  const startOfWeek = (() => {
+    const d = new Date();
+    const day = d.getDay(); // 0=Dom,1=Lun
+    const diffToMonday = (day === 0 ? -6 : 1 - day); // mover al lunes
+    const monday = new Date(d);
+    monday.setDate(d.getDate() + diffToMonday);
+    monday.setHours(0,0,0,0);
+    return monday;
+  })();
+  const endOfWeek = (() => {
+    const e = new Date(startOfWeek);
+    e.setDate(startOfWeek.getDate() + 7);
+    e.setHours(0,0,0,0);
+    return e;
+  })();
+  const inCurrentWeek = (dt) => dt && dt >= startOfWeek && dt < endOfWeek;
   (citas || [])
-    .filter((c) => isMine(c) && isGroomingByService(c))
+    .filter((c) => {
+      const d = c.fecha ? new Date(c.fecha) : null;
+      // si viene clinicaId en el payload, asumir que citasClinica ya son de esa clínica
+      return inCurrentWeek(d);
+    })
     .forEach((c) => {
       const d = c.fecha ? new Date(c.fecha) : null;
       if (!d) return;
