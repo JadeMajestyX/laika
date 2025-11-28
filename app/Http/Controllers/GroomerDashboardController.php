@@ -30,7 +30,7 @@ class GroomerDashboardController extends Controller
             }
 
             // Buscar servicios relacionados con grooming por nombre (heurística)
-            $keywords = ['groom', 'baño', 'bano', 'peluque', 'peluquer', 'spa', 'corte de uñas', 'corte uñas', 'pelado'];
+            $keywords = ['Corte de pelo', 'Baño', 'Limpieza dental', 'peluque', 'peluquer', 'spa', 'corte de uñas', 'corte uñas', 'pelado'];
             $serviciosQuery = Servicio::where('clinica_id', $clinicaId);
             $serviciosQuery->where(function($q) use ($keywords) {
                 foreach ($keywords as $kw) {
