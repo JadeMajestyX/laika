@@ -10,6 +10,15 @@ use App\Models\User;
 class GroomerDashboardController extends Controller
 {
     /**
+     * Renderiza la vista principal del dashboard del groomer (SPA).
+     */
+    public function index(Request $request)
+    {
+        $usuario = Auth::user();
+        return view('dashboard-groomer', compact('usuario'));
+    }
+
+    /**
      * GET /groomer-dashboard/data
      * Resumen para el groomer autenticado, filtrando por su clínica y grooming.
      */
