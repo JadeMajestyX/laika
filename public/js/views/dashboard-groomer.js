@@ -103,6 +103,48 @@ function renderActividades(actividades) {
   });
 }
 
+function renderActividadHoy(citas) {
+  const tbody = document.getElementById('actividadHoyBody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  const rows = (citas || []).filter(Boolean);
+  if (rows.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="4" class="text-center text-body-secondary py-5">Sin actividad registrada</td>
+      </tr>
+    `;
+    return;
+  }
+
+  rows.forEach((c) => {
+    const hora = c.hora || c.start_time || c.time || (c.fecha ? new Date(c.fecha).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '');
+    const mascota = (c.mascota && (c.mascota.nombre || c.mascota.nombre_completo)) || c.mascota || (c.mascota_nombre) || '—';
+    const servicio = (c.servicio && (c.servicio.nombre || c.servicio.title)) || c.servicio || c.servicio_nombre || '—';
+    const estado = c.estado || c.status || (c.estado_cita) || '—';
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="width:110px">${hora}</td>
+      <td>${mascota}</td>
+      <td>${servicio}</td>
+      <td>${estado}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function extractActividadHoyFromData(data) {
+  // Try multiple possible keys that backend might return
+  if (!data) return [];
+  if (Array.isArray(data.actividadHoy)) return data.actividadHoy;
+  if (Array.isArray(data.actividadesHoy)) return data.actividadesHoy;
+  if (Array.isArray(data.actividades)) return data.actividades;
+  if (Array.isArray(data.citasHoy)) return data.citasHoy;
+  if (Array.isArray(data.citas)) return data.citas;
+  return [];
+}
+
 function setTodayTexts() {
   const today = new Date();
   const pad = (n) => String(n).padStart(2, '0');
@@ -313,6 +355,21 @@ function initNavHandlers() {
           });
         return;
       }
+      if (section === 'actividad') {
+        // Fetch data and populate the actividad table
+        fetch('/groomer-dashboard/data')
+          .then((res) => res.json())
+          .then((data) => {
+            renderSection('actividad');
+            const actividadesHoy = extractActividadHoyFromData(data);
+            renderActividadHoy(actividadesHoy);
+          })
+          .catch(() => {
+            renderSection('actividad');
+          });
+        history.pushState({ section }, '', `/groomer-dashboard/${section}`);
+        return;
+      }
       renderSection(section);
       history.pushState({ section }, '', `/groomer-dashboard/${section}`);
     });
@@ -335,6 +392,15 @@ function handlePopState() {
           renderActividades(data.actividades);
           setTodayTexts();
         });
+    } else if (section === 'actividad') {
+      fetch('/groomer-dashboard/data')
+        .then((res) => res.json())
+        .then((data) => {
+          renderSection('actividad');
+          const actividadesHoy = extractActividadHoyFromData(data);
+          renderActividadHoy(actividadesHoy);
+        })
+        .catch(() => renderSection('actividad'));
     } else {
       renderSection(section);
     }
@@ -360,7 +426,18 @@ function handlePopState() {
         })
         .catch((err) => console.error('Error al obtener los datos del dashboard groomer:', err));
     } else {
-      renderSection(initialSection);
+      if (initialSection === 'actividad') {
+        fetch('/groomer-dashboard/data')
+          .then((r) => r.json())
+          .then((data) => {
+            renderSection('actividad');
+            const actividadesHoy = extractActividadHoyFromData(data);
+            renderActividadHoy(actividadesHoy);
+          })
+          .catch(() => renderSection('actividad'));
+      } else {
+        renderSection(initialSection);
+      }
       history.replaceState({ section: initialSection }, '', location.pathname);
     }
 
