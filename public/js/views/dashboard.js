@@ -1343,9 +1343,65 @@ function renderCitasTable(items) {
       <td>${c.servicio?.nombre ?? '-'}</td>
       <td>${c.mascota?.nombre ?? '-'}</td>
       <td>${propietario}</td>
-      <td>${badge}</td>
+      <td>
+        <div class="d-flex align-items-center gap-2">
+          ${badge}
+          <div class="btn-group">
+            <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+              Acciones
+            </button>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="#" data-action="asignar" data-id="${c.id}">Asignar a mí</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="#" data-action="estado" data-id="${c.id}" data-estado="pendiente">Marcar pendiente</a></li>
+              <li><a class="dropdown-item" href="#" data-action="estado" data-id="${c.id}" data-estado="confirmada">Marcar confirmada</a></li>
+              <li><a class="dropdown-item" href="#" data-action="estado" data-id="${c.id}" data-estado="en_progreso">Marcar en progreso</a></li>
+              <li><a class="dropdown-item" href="#" data-action="estado" data-id="${c.id}" data-estado="completada">Marcar completada</a></li>
+              <li><a class="dropdown-item" href="#" data-action="estado" data-id="${c.id}" data-estado="cancelada">Marcar cancelada</a></li>
+            </ul>
+          </div>
+        </div>
+      </td>
     `;
     tbody.appendChild(tr);
+  });
+
+  // Delegar eventos para acciones de citas (admin y vet)
+  tbody.querySelectorAll('[data-action]').forEach(el => {
+    el.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      const action = el.dataset.action;
+      const id = el.dataset.id;
+      if (!id) return;
+      if (action === 'asignar') {
+        fetch('/vet/asignar-cita', {
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': getCsrfToken(),
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ cita_id: Number(id) })
+        })
+        .then(r => r.json())
+        .then(() => fetchCitasAndRender())
+        .catch(err => console.error('Error asignando cita:', err));
+      } else if (action === 'estado') {
+        const estado = el.dataset.estado;
+        fetch('/vet/actualizar-estado-actividad', {
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': getCsrfToken(),
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ cita_id: Number(id), estado })
+        })
+        .then(r => r.json())
+        .then(() => fetchCitasAndRender())
+        .catch(err => console.error('Error actualizando estado:', err));
+      }
+    });
   });
 }
 
