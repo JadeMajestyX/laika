@@ -329,48 +329,8 @@
 
         <div class="step-content d-none" data-step="2">
             <h5 class="fw-bold mb-4">¿Qué servicio necesita tu mascota?</h5>
-            
-            <div class="row g-3 mb-4">
-                <div class="col-md-4">
-                    <label class="radio-card">
-                        <input type="radio" name="service" value="Corte de pelo y baño" class="radio-card-input" required>
-                        <div class="radio-card-content">
-                            <i class="bi bi-scissors radio-icon"></i>
-                            <div class="radio-title">Estética</div>
-                            <small class="text-muted">Corte y baño</small>
-                        </div>
-                    </label>
-                </div>
-                <div class="col-md-4">
-                    <label class="radio-card">
-                        <input type="radio" name="service" value="Baño" class="radio-card-input">
-                        <div class="radio-card-content">
-                            <i class="bi bi-droplet-half radio-icon"></i>
-                            <div class="radio-title">Sólo Baño</div>
-                            <small class="text-muted">Limpieza profunda</small>
-                        </div>
-                    </label>
-                </div>
-                <div class="col-md-4">
-                    <label class="radio-card">
-                        <input type="radio" name="service" value="Visita médica" class="radio-card-input">
-                        <div class="radio-card-content">
-                            <i class="bi bi-heart-pulse radio-icon"></i>
-                            <div class="radio-title">Consulta</div>
-                            <small class="text-muted">Revisión médica</small>
-                        </div>
-                    </label>
-                </div>
-            </div>
-
-            <div id="medical-options" class="d-none mt-3">
-                <label for="medical_reason" class="form-label">Tipo de consulta</label>
-                <select id="medical_reason" name="medical_reason" class="form-select">
-                    <option value="">Selecciona...</option>
-                    <option value="Consulta general">Consulta general</option>
-                    <option value="Vacunación">Vacunación</option>
-                    <option value="Desparasitación">Desparasitación</option>
-                </select>
+            <div class="row g-3 mb-4" id="servicesContainer">
+                <div class="col-12 text-muted small">Selecciona una clínica para cargar sus servicios...</div>
             </div>
         </div>
 
@@ -419,6 +379,24 @@
                 <div class="col-md-6">
                     <label for="age" class="form-label">Edad (Años/Meses)</label>
                     <input type="text" id="age" name="age" class="form-control" placeholder="Ej. 2 años">
+                </div>
+                <hr class="mt-4">
+                <h6 class="fw-bold mt-2">Datos del propietario</h6>
+                <div class="col-md-6">
+                    <label for="owner_name" class="form-label">Nombre <span class="required">*</span></label>
+                    <input type="text" id="owner_name" name="owner_name" class="form-control" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="owner_lastname" class="form-label">Apellido <span class="required">*</span></label>
+                    <input type="text" id="owner_lastname" name="owner_lastname" class="form-control" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="owner_email" class="form-label">Correo <span class="required">*</span></label>
+                    <input type="email" id="owner_email" name="owner_email" class="form-control" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="owner_phone" class="form-label">Teléfono <span class="required">*</span></label>
+                    <input type="tel" id="owner_phone" name="owner_phone" class="form-control" required>
                 </div>
             </div>
         </div>
@@ -543,29 +521,32 @@
 
       //lista de clinicas
       const clinic = document.getElementById('clinic');
+      const servicesContainer = document.getElementById('servicesContainer');
       
 
       let currentStep = 1;
       const totalSteps = 5;
 
-      //get all clinics
-
+        //get all clinics
+        const clinicAddresses = {}; // nombre->direccion ya no; será id->direccion
         fetch('/clinicas-open')
         .then(response => response.json())
         .then(data => {
-            data.forEach(clinica => {
-                const option = document.createElement('option');
-                option.value = clinica.nombre;
-                option.textContent = clinica.nombre;
-                clinic.appendChild(option);
-            });
-            if(data.length === 0){
-                const option = document.createElement('option');
-                option.value = "";
-                option.classList.add("text-dark")
-                option.textContent = "No hay clínicas disponibles";
-                clinic.appendChild(option);
-            }
+          data.forEach(cl => {
+            const option = document.createElement('option');
+            option.value = cl.id;
+            option.textContent = cl.nombre;
+            option.dataset.address = cl.direccion || '';
+            clinic.appendChild(option);
+            clinicAddresses[String(cl.id)] = cl.direccion || '';
+          });
+          if(data.length === 0){
+            const option = document.createElement('option');
+            option.value = "";
+            option.classList.add("text-dark")
+            option.textContent = "No hay clínicas disponibles";
+            clinic.appendChild(option);
+          }
         })
 
         .catch(error => {
@@ -585,16 +566,6 @@
       const clinicSelect = document.getElementById('clinic');
       const clinicInfo = document.getElementById('clinicInfo');
       const clinicAddressDisplay = document.getElementById('clinicAddressDisplay');
-      
-      const serviceRadios = document.getElementsByName('service');
-      const medicalOptions = document.getElementById('medical-options');
-      
-      // Data Mock
-      const clinicAddresses = {
-        "Vetalia - Condesa": "Av Nuevo León 155, Hipódromo, CDMX",
-        "Clínica Laika Norte": "Av Norte 200, Col. Norte",
-        "Clínica Laika Sur": "Av Sur 50, Col. Sur"
-      };
 
       // --- LOGICA UI ---
       
@@ -607,18 +578,44 @@
           } else {
               clinicInfo.style.display = 'none';
           }
+          // cargar servicios de la clínica seleccionada
+          loadClinicServices(val);
       });
 
-      // Mostrar sub-opciones medicas
-      Array.from(serviceRadios).forEach(radio => {
-          radio.addEventListener('change', function(){
-              if(this.value === 'Visita médica'){
-                  medicalOptions.classList.remove('d-none');
-              } else {
-                  medicalOptions.classList.add('d-none');
-              }
+      function loadClinicServices(clinicaId){
+        servicesContainer.innerHTML = '<div class="col-12 text-muted small">Cargando servicios...</div>';
+        fetch('/getServicios', {
+          method: 'POST',
+          headers: { 'Content-Type':'application/json', 'X-CSRF-TOKEN': document.querySelector('input[name=_token]').value },
+          body: JSON.stringify({ clinica_id: clinicaId })
+        })
+        .then(r => r.json())
+        .then(servicios => {
+          if(!Array.isArray(servicios) || servicios.length === 0){
+            servicesContainer.innerHTML = '<div class="col-12 text-muted small">No hay servicios disponibles en esta clínica.</div>';
+            return;
+          }
+          servicesContainer.innerHTML = '';
+          servicios.forEach(s => {
+            const col = document.createElement('div');
+            col.className = 'col-md-4';
+            col.innerHTML = `
+              <label class="radio-card">
+                <input type="radio" name="service" value="${s.id}" data-service-name="${s.nombre}" class="radio-card-input" required>
+                <div class="radio-card-content">
+                  <i class="bi bi-stars radio-icon"></i>
+                  <div class="radio-title">${s.nombre}</div>
+                  <small class="text-muted">${s.descripcion || ''}</small>
+                </div>
+              </label>`;
+            servicesContainer.appendChild(col);
           });
-      });
+        })
+        .catch(err => {
+          console.error(err);
+          servicesContainer.innerHTML = '<div class="col-12 text-danger small">Error al cargar servicios</div>';
+        });
+      }
 
       // --- NAVEGACION ---
       function updateStepperUI(step) {
@@ -693,17 +690,23 @@
               alert("Por favor selecciona una clínica");
               return false;
           }
-          if(step === 2) {
-              let selected = false;
-              serviceRadios.forEach(r => { if(r.checked) selected = true; });
-              if(!selected) {
-                  alert("Selecciona un servicio");
-                  return false;
-              }
-          }
-          if(step === 3 && !document.getElementById('pet_name').value) {
+            if(step === 2) {
+              const selected = document.querySelector('input[name="service"]:checked');
+              if(!selected) { alert("Selecciona un servicio"); return false; }
+            }
+          if(step === 3){
+            if(!document.getElementById('pet_name').value){
               alert("Ingresa el nombre de la mascota");
               return false;
+            }
+            if(!document.getElementById('owner_name').value || !document.getElementById('owner_lastname').value){
+              alert("Ingresa nombre y apellido del propietario");
+              return false;
+            }
+            if(!document.getElementById('owner_email').value || !document.getElementById('owner_phone').value){
+              alert("Ingresa correo y teléfono del propietario");
+              return false;
+            }
           }
           // Puedes agregar más validaciones
           return true;
@@ -747,49 +750,72 @@
               selectedDayEl = day;
               
               // Mostrar horarios
+              const yyyy = now.getFullYear();
+              const mm = String(now.getMonth()+1).padStart(2,'0');
+              const dd = String(d).padStart(2,'0');
+              const isoDate = `${yyyy}-${mm}-${dd}`;
               selectedDateText = `${d} de ${monthNames[now.getMonth()]}`;
               dateFeedback.innerHTML = `<i class="bi bi-calendar-check-fill text-success"></i> ${selectedDateText}`;
               dateFeedback.classList.remove('alert-light');
               dateFeedback.classList.add('alert-success');
               
               document.getElementById('timeContainer').classList.remove('d-none');
-              generateTimes();
+              loadAvailableTimes(isoDate);
           };
           calendarEl.appendChild(day);
       }
-
-      function generateTimes() {
-          const times = ["09:00", "09:30", "10:00", "11:30", "15:00", "16:30"];
-          timeSlotsEl.innerHTML = "";
-          times.forEach(t => {
+      function loadAvailableTimes(isoDate) {
+          const clinicaId = clinicSelect.value;
+          const serviceInput = document.querySelector('input[name="service"]:checked');
+          if(!clinicaId || !serviceInput){
+              timeSlotsEl.innerHTML = '<div class="text-muted small">Selecciona clínica y servicio primero.</div>';
+              return;
+          }
+          timeSlotsEl.innerHTML = '<div class="text-muted small">Cargando horarios...</div>';
+          fetch('/agendar-cita/disponibilidad', {
+            method: 'POST',
+            headers: { 'Content-Type':'application/json', 'X-CSRF-TOKEN': document.querySelector('input[name=_token]').value },
+            body: JSON.stringify({ clinica_id: clinicaId, servicio_id: serviceInput.value, fecha: isoDate })
+          })
+          .then(r => r.json())
+          .then(resp => {
+            const times = Array.isArray(resp?.availableTimes) ? resp.availableTimes : [];
+            timeSlotsEl.innerHTML = '';
+            if(times.length === 0){
+              timeSlotsEl.innerHTML = '<div class="text-muted small">No hay horarios disponibles en esta fecha.</div>';
+              return;
+            }
+            times.forEach(t => {
               const btn = document.createElement('button');
-              btn.type = "button";
-              btn.className = "time-btn";
+              btn.type = 'button';
+              btn.className = 'time-btn';
               btn.textContent = t;
               btn.onclick = () => {
-                  document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
-                  btn.classList.add('active');
-                  selectedTimeText = t;
-                  // Auto avance opcional
-                  // currentStep++; updateStepperUI(currentStep);
+                document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                selectedTimeText = t;
               };
               timeSlotsEl.appendChild(btn);
+            });
+          })
+          .catch(err => {
+            console.error(err);
+            timeSlotsEl.innerHTML = '<div class="text-danger small">Error al cargar horarios</div>';
           });
       }
 
       // --- RESUMEN ---
-      function populateSummary() {
+        function populateSummary() {
           // Clinica
-          document.getElementById('sum_clinic').textContent = clinicSelect.value || 'No seleccionada';
+          const clinicText = clinicSelect.options[clinicSelect.selectedIndex]?.text || '';
+          document.getElementById('sum_clinic').textContent = clinicText || 'No seleccionada';
           document.getElementById('sum_clinic_address').textContent = clinicAddresses[clinicSelect.value] || '';
           
           // Servicio (Radio)
-          let srv = "";
-          serviceRadios.forEach(r => { if(r.checked) srv = r.value; });
-          document.getElementById('sum_service').textContent = srv || 'No seleccionado';
-          
-          const medReason = document.getElementById('medical_reason').value;
-          document.getElementById('sum_service_sub').textContent = (srv === 'Visita médica') ? medReason : '';
+          const selectedService = document.querySelector('input[name="service"]:checked');
+          const srvName = selectedService?.dataset?.serviceName || '';
+          document.getElementById('sum_service').textContent = srvName || 'No seleccionado';
+          document.getElementById('sum_service_sub').textContent = '';
 
           // Mascota
           const pName = document.getElementById('pet_name').value;
@@ -808,6 +834,62 @@
           const prof = document.getElementById('professional').value;
           document.getElementById('sum_professional').textContent = prof || 'Cualquiera disponible';
       }
+
+      // Submit: reservar cita
+      const form = document.getElementById('appointmentForm');
+      form.addEventListener('submit', function(e){
+        e.preventDefault();
+        const clinica_id = clinicSelect.value;
+        const serviceInput = document.querySelector('input[name="service"]:checked');
+        const fechaTexto = document.getElementById('sum_date').textContent;
+        const selectedBtn = document.querySelector('.time-btn.active');
+        if(!clinica_id || !serviceInput){ alert('Selecciona clínica y servicio'); return; }
+        if(!selectedBtn){ alert('Selecciona un horario'); return; }
+        // Para enviar la fecha en formato ISO usamos el día seleccionado del calendario ya calculado en loadAvailableTimes
+        // Mejor reconstruimos la fecha ISO a partir del mes actual y dia seleccionado
+        const activeDay = document.querySelector('.day-number.active');
+        if(!activeDay){ alert('Selecciona un día en el calendario'); return; }
+        const d = Number(activeDay.textContent);
+        const yyyy = now.getFullYear();
+        const mm = String(now.getMonth()+1).padStart(2,'0');
+        const dd = String(d).padStart(2,'0');
+        const fecha = `${yyyy}-${mm}-${dd}`;
+        const hora = selectedBtn.textContent.trim();
+
+        const payload = {
+          clinica_id,
+          servicio_id: serviceInput.value,
+          owner_nombre: document.getElementById('owner_name').value,
+          owner_apellido: document.getElementById('owner_lastname').value,
+          owner_email: document.getElementById('owner_email').value,
+          owner_telefono: document.getElementById('owner_phone').value,
+          mascota_nombre: document.getElementById('pet_name').value,
+          mascota_especie: (document.querySelector('input[name="species"]:checked')?.value || ''),
+          mascota_raza: document.getElementById('breed').value,
+          fecha,
+          hora
+        };
+        fetch('/agendar-cita/reservar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('input[name=_token]').value },
+          body: JSON.stringify(payload)
+        })
+        .then(r => r.json().then(j => ({ ok: r.ok, status: r.status, body: j })))
+        .then(({ ok, status, body }) => {
+          if(!ok){
+            alert(body?.message || 'No se pudo confirmar la cita');
+            return;
+          }
+          // Avanzar a paso final y mostrar resumen
+          currentStep = totalSteps;
+          updateStepperUI(currentStep);
+          alert('¡Cita reservada con éxito!');
+        })
+        .catch(err => {
+          console.error(err);
+          alert('Error al reservar. Intenta de nuevo.');
+        });
+      });
 
     });
   </script>

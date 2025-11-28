@@ -227,6 +227,10 @@ Route::get('/clinicas-open', [AgendarCitaController::class, 'getClinicas'])->nam
 //obtener servicios de una clinica con el id
 Route::post('/getServicios', [AgendarCitaController::class, 'getServices'])->name('clinicas.servicios');
 
+// disponibilidad y reserva de citas públicas
+Route::post('/agendar-cita/disponibilidad', [AgendarCitaController::class, 'disponibilidad'])->name('agendar.disponibilidad');
+Route::post('/agendar-cita/reservar', [AgendarCitaController::class, 'reservar'])->name('agendar.reservar');
+
 //eliminar cuenta
 Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
