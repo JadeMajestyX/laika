@@ -1357,6 +1357,7 @@ function renderCitasTable(items) {
               <li><a class="dropdown-item" href="#" data-action="estado" data-id="${c.id}" data-estado="confirmada">Marcar confirmada</a></li>
               <li><a class="dropdown-item" href="#" data-action="estado" data-id="${c.id}" data-estado="en_progreso">Marcar en progreso</a></li>
               <li><a class="dropdown-item" href="#" data-action="estado" data-id="${c.id}" data-estado="completada">Marcar completada</a></li>
+              <li><a class="dropdown-item" href="#" data-action="finalizar" data-id="${c.id}">Finalizar (concluir)</a></li>
               <li><a class="dropdown-item" href="#" data-action="estado" data-id="${c.id}" data-estado="cancelada">Marcar cancelada</a></li>
             </ul>
           </div>
@@ -1383,7 +1384,7 @@ function renderCitasTable(items) {
           },
           body: JSON.stringify({ cita_id: Number(id) })
         })
-        .then(r => r.json())
+        .then(async r => { if (!r.ok) throw new Error('HTTP '+r.status+' '+await r.text()); return r.json(); })
         .then(() => fetchCitasAndRender())
         .catch(err => console.error('Error asignando cita:', err));
       } else if (action === 'estado') {
@@ -1397,9 +1398,22 @@ function renderCitasTable(items) {
           },
           body: JSON.stringify({ cita_id: Number(id), estado })
         })
-        .then(r => r.json())
+        .then(async r => { if (!r.ok) throw new Error('HTTP '+r.status+' '+await r.text()); return r.json(); })
         .then(() => fetchCitasAndRender())
         .catch(err => console.error('Error actualizando estado:', err));
+      } else if (action === 'finalizar') {
+        fetch('/vet/finalizar-cita', {
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': getCsrfToken(),
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ cita_id: Number(id) })
+        })
+        .then(async r => { if (!r.ok) throw new Error('HTTP '+r.status+' '+await r.text()); return r.json(); })
+        .then(() => fetchCitasAndRender())
+        .catch(err => console.error('Error finalizando cita:', err));
       }
     });
   });
