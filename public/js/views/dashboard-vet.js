@@ -826,13 +826,14 @@ function actualizarTablaActividades() {
             tipoTexto = 'Cita';
           }
           
-          // Mostrar botón "Atender Cita" solo para citas confirmadas
-          const mostrarBotonAtender = actividad.tipo === 'cita' && actividad.estado === 'confirmada';
-          
-          const isCita = actividad.tipo === 'cita';
+          // Mostrar botón lápiz para cualquier registro atendible (cita o consulta)
+          // Si quieres limitar por estado, añade condición sobre actividad.estado
+          const atendible = (actividad.tipo === 'cita' || actividad.tipo === 'consulta');
           const citaId = actividad.id;
+          // Mostrar botón si es atendible y estado es confirmada o pendiente (amplía según necesidad)
+          const mostrarBotonAtender = atendible && ['confirmada','pendiente','en_progreso'].includes(actividad.estado);
           return `
-            <tr ${isCita ? `data-cita-id="${citaId}"` : ''}>
+            <tr ${atendible ? `data-cita-id="${citaId}"` : ''}>
               <td>${actividad.hora || 'N/A'}</td>
               <td>${actividad.paciente || 'N/A'}</td>
               <td>
@@ -885,7 +886,7 @@ function actualizarTablaActividades() {
               </td>
               <td>
                 ${mostrarBotonAtender ? `
-                  <button class="btn btn-outline-secondary btn-sm atender-cita-btn" type="button" data-cita-id="${citaId}" title="Atender cita">
+                  <button class="btn btn-outline-secondary btn-sm atender-cita-btn" type="button" data-cita-id="${citaId}" title="Atender ${actividad.tipo === 'consulta' ? 'consulta' : 'cita'}">
                     <i class="bi bi-pencil-square"></i>
                   </button>
                 ` : ''}
