@@ -374,18 +374,12 @@ function renderSection(section, data) {
 function renderAgendaFromCitas(payload) {
   const { citasClinica = [], userId, serviciosClinica = [], clinicaId } = payload || {};
   const toNum = (v) => v == null ? null : Number(v);
-  const gid = toNum(userId);
   const groomingServiceIds = new Set(
     (serviciosClinica || [])
       .filter((s) => (clinicaId == null || toNum(s.clinica_id) === toNum(clinicaId)) && isGroomingServiceName(s.nombre))
       .map((s) => toNum(s.id))
       .filter((id) => id != null)
   );
-  const mine = (c) => {
-    const vet = toNum(c.veterinario_id);
-    const creator = toNum(c.creada_por);
-    return (vet != null && vet === gid) || (creator != null && creator === gid);
-  };
   const isGroomingByService = (c) => {
     const sid = toNum(c.servicio_id);
     if (sid != null && groomingServiceIds.size > 0) return groomingServiceIds.has(sid);
@@ -394,7 +388,8 @@ function renderAgendaFromCitas(payload) {
   const agendaBody = document.getElementById('agendaBody');
   if (!agendaBody) return;
   const citas = (citasClinica || [])
-    .filter((c) => mine(c) && isGroomingByService(c))
+    // Listar todas las citas de grooming de la clínica del usuario
+    .filter((c) => isGroomingByService(c))
     .sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
   if (citas.length === 0) {
     agendaBody.innerHTML = `<tr><td colspan="6" class="text-center text-body-secondary py-4">No hay citas programadas</td></tr>`;
@@ -404,7 +399,7 @@ function renderAgendaFromCitas(payload) {
   citas.forEach((c) => {
     const hora = c.fecha ? new Date(c.fecha).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }) : '';
     const mascota = c.mascota?.nombre || 'Mascota';
-    const propietario = c.creador?.nombre || c.veterinario?.nombre || '';
+    const propietario = c.mascota?.propietario?.nombre || c.creador?.nombre || c.veterinario?.nombre || '';
     const servicio = c.servicio?.nombre || 'Servicio';
     const estado = c.status || '';
     const tr = document.createElement('tr');
