@@ -97,7 +97,7 @@
     // Cargar datos (optimización: usar mascota del endpoint sin segunda llamada si existe)
     let resp, citaObj, mascotaInfo, citasPasadas = [], recetaObj;
     try {
-      const citaRes = await fetch(API.citaDetalle(citaId));
+      const citaRes = await fetch(API.citaDetalle(citaId), { credentials: 'same-origin' });
       resp = await citaRes.json();
       citaObj = resp?.cita || {};
       recetaObj = resp?.receta || null;
