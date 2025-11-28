@@ -31,22 +31,31 @@
   const styleId = 'vet-detail-modal-style';
   if (!document.getElementById(styleId)) {
     const style = el('style', { id: styleId }, `
-      .vet-modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:9998}
+      .vet-modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9998}
       .vet-modal{position:fixed;inset:auto auto auto 50%;transform:translateX(-50%);
-        top:5%;width:min(1000px,92%);max-height:90%;overflow:auto;background:#fff;
-        border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.25);z-index:9999}
-      .vet-modal header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #eee}
+        top:5%;width:min(1000px,92%);max-height:90%;overflow:auto;background:var(--bs-body-bg,#fff);
+        color:var(--bs-body-color,#222);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.35);z-index:9999}
+      .vet-modal header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--bs-border-color,#444)}
       .vet-modal .content{display:grid;grid-template-columns:260px 1fr;gap:16px;padding:16px}
-      .vet-card{border:1px solid #e9e9e9;border-radius:10px;padding:12px;background:#fafafa}
+      .vet-card{border:1px solid var(--bs-border-color,#444);border-radius:10px;padding:12px;background:var(--bs-tertiary-bg,#f7f7f7)}
       .vet-list{margin:0;padding:0;list-style:none}
-      .vet-list li{padding:6px 4px;border-bottom:1px dashed #e5e5e5}
-      .vet-actions{display:flex;gap:8px;justify-content:flex-end;padding:12px 16px;border-top:1px solid #eee}
-      .vet-btn{appearance:none;border:1px solid #ddd;background:#fff;border-radius:8px;padding:8px 12px;cursor:pointer}
+      .vet-list li{padding:6px 4px;border-bottom:1px dashed var(--bs-border-color,#555)}
+      .vet-actions{display:flex;gap:8px;justify-content:flex-end;padding:12px 16px;border-top:1px solid var(--bs-border-color,#444);background:var(--bs-tertiary-bg,#f7f7f7)}
+      .vet-btn{appearance:none;border:1px solid var(--bs-border-color,#555);background:var(--bs-body-bg,#fff);color:var(--bs-body-color,#222);border-radius:8px;padding:8px 12px;cursor:pointer;transition:.15s}
+      .vet-btn:hover{filter:brightness(1.08)}
       .vet-btn.primary{background:#2563eb;color:#fff;border-color:#2563eb}
-      .vet-input, .vet-textarea{width:100%;border:1px solid #ddd;border-radius:8px;padding:8px}
+      .vet-input, .vet-textarea{width:100%;border:1px solid var(--bs-border-color,#555);background:var(--bs-body-bg,#fff);color:var(--bs-body-color,#222);border-radius:8px;padding:8px}
       .vet-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-      .vet-photo{width:100%;height:200px;object-fit:cover;border-radius:10px;border:1px solid #eee;background:#f6f6f6}
-      .pill{display:inline-block;padding:4px 8px;border-radius:999px;background:#eef; color:#245}
+      .vet-photo{width:100%;height:200px;object-fit:cover;border-radius:10px;border:1px solid var(--bs-border-color,#555);background:#2a2a2d}
+      .pill{display:inline-block;padding:4px 8px;border-radius:999px;background:#334e89;color:#e5e9f2;font-size:.75rem}
+      @media (prefers-color-scheme: dark){
+        .vet-card{background:#26262b}
+        .vet-modal{background:#1f1f24;color:#e5e5e8}
+        .vet-btn{background:#303038;color:#e5e5e8}
+        .vet-input,.vet-textarea{background:#26262b;color:#e5e5e8}
+        .vet-list li{border-bottom-color:#3a3a42}
+        .vet-actions{background:#26262b}
+      }
     `);
     document.head.appendChild(style);
   }
@@ -860,8 +869,8 @@ function actualizarTablaActividades() {
               </td>
               <td>
                 ${mostrarBotonAtender ? `
-                  <button class="btn btn-primary btn-sm atender-cita-btn" type="button" data-cita-id="${citaId}">
-                    <i class="bi bi-clipboard-plus me-1"></i>Atender Cita
+                  <button class="btn btn-outline-secondary btn-sm atender-cita-btn" type="button" data-cita-id="${citaId}" title="Atender cita">
+                    <i class="bi bi-pencil-square"></i>
                   </button>
                 ` : ''}
               </td>
