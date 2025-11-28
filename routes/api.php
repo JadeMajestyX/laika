@@ -1593,3 +1593,19 @@ Route::get('/horarios-disponibles', function(Request $request) {
 });
 
 //api para traer citas y recetas de una mascota, citas completadas con receta
+Route::middleware('auth:sanctum')->get('/citas-recetas-mascota/{id}', function(Request $request, $id){
+    $mascota = Mascota::find($id);
+    if (!$mascota) {
+        return response()->json(['message' => 'Mascota no encontrada'], 404);
+    }
+    $citas = Cita::with('receta.items')
+        ->where('mascota_id', $mascota->id)
+        ->where('status', 'completada')
+        ->whereHas('receta')
+        ->orderBy('fecha', 'desc')
+        ->get();
+    return response()->json([
+        'success' => true,
+        'citas' => $citas
+    ]);
+});
