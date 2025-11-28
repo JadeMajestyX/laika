@@ -121,6 +121,34 @@ class VetCitaFichaController extends Controller
                 ];
             }
 
+            // Obtener datos del veterinario asignado
+            $veterinarioData = null;
+            if ($cita->veterinario_id) {
+                $veterinario = \App\Models\User::find($cita->veterinario_id);
+                if ($veterinario) {
+                    $veterinarioData = [
+                        'id' => $veterinario->id,
+                        'nombre' => $veterinario->nombre ?? '',
+                        'apellido' => $veterinario->apellido_paterno ?? '',
+                        'nombre_completo' => trim(($veterinario->nombre ?? '') . ' ' . ($veterinario->apellido_paterno ?? '')),
+                    ];
+                }
+            }
+
+            // Obtener datos de la clínica
+            $clinicaData = null;
+            if ($cita->clinica_id) {
+                $clinica = \App\Models\Clinica::find($cita->clinica_id);
+                if ($clinica) {
+                    $clinicaData = [
+                        'id' => $clinica->id,
+                        'nombre' => $clinica->nombre ?? 'Clínica Veterinaria',
+                        'direccion' => $clinica->direccion ?? '',
+                        'telefono' => $clinica->telefono ?? '',
+                    ];
+                }
+            }
+
             return response()->json([
                 'success' => true,
                 'cita' => [
@@ -138,6 +166,8 @@ class VetCitaFichaController extends Controller
                 'mascota' => $mascotaData,
                 'historial' => $historial,
                 'receta' => $recetaData,
+                'veterinario' => $veterinarioData,
+                'clinica' => $clinicaData,
             ]);
             
         } catch (\Throwable $e) {

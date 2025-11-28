@@ -92,7 +92,7 @@
     backdrop.addEventListener('click', close);
 
     // Cargar datos del nuevo endpoint que devuelve todo en una sola llamada
-    let resp, citaObj, mascotaInfo, citasPasadas = [], recetaObj;
+    let resp, citaObj, mascotaInfo, citasPasadas = [], recetaObj, veterinarioInfo, clinicaInfo;
     try {
       const citaRes = await fetch(API.citaDetalle(citaId), { credentials: 'same-origin' });
       resp = await citaRes.json();
@@ -108,8 +108,10 @@
       recetaObj = resp?.receta || null;
       mascotaInfo = resp?.mascota || null;
       citasPasadas = resp?.historial || [];
+      veterinarioInfo = resp?.veterinario || null;
+      clinicaInfo = resp?.clinica || null;
       
-      console.log('Datos cargados:', { mascotaInfo, citasPasadas, recetaObj });
+      console.log('Datos cargados:', { mascotaInfo, citasPasadas, recetaObj, veterinarioInfo, clinicaInfo });
     } catch (e) {
       console.error('Error cargando datos de ficha:', e);
       alert('Error al cargar la ficha de la cita');
@@ -226,7 +228,7 @@
       }
 
       // Crear documento para imprimir con diseño profesional
-      const recetaDoc = crearDocumentoReceta(mascotaInfo, citaObj, diagInput.value, recetaItems);
+      const recetaDoc = crearDocumentoReceta(mascotaInfo, citaObj, diagInput.value, recetaItems, veterinarioInfo, clinicaInfo);
       
       const opt = {
         margin:       10,
@@ -240,7 +242,7 @@
 
     // Imprimir
     printBtn.addEventListener('click', () => {
-      const recetaDoc = crearDocumentoReceta(mascotaInfo, citaObj, diagInput.value, recetaItems);
+      const recetaDoc = crearDocumentoReceta(mascotaInfo, citaObj, diagInput.value, recetaItems, veterinarioInfo, clinicaInfo);
       const w = window.open('', 'PRINT', 'height=800,width=1100');
       if (!w) return;
       const html = `<!doctype html>
@@ -267,15 +269,15 @@
     });
 
     // Función para crear documento de receta profesional
-    function crearDocumentoReceta(mascota, cita, diagnostico, itemsReceta) {
+    function crearDocumentoReceta(mascota, cita, diagnostico, itemsReceta, veterinario, clinica) {
       const fecha = new Date();
       const fechaStr = fecha.toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' });
       
-      // Obtener datos del veterinario y clínica del DOM o contexto global
-      const vetNombre = window.vetData?.nombre || 'Dr./Dra. Veterinario';
-      const clinicaNombre = window.clinicaData?.nombre || 'VetCare - Clínica Veterinaria';
-      const clinicaDireccion = window.clinicaData?.direccion || 'Dirección de la clínica';
-      const clinicaTelefono = window.clinicaData?.telefono || 'Tel: (555) 123-4567';
+      // Usar datos reales del veterinario y clínica
+      const vetNombre = veterinario?.nombre_completo || 'Dr./Dra. Veterinario';
+      const clinicaNombre = clinica?.nombre || 'VetCare - Clínica Veterinaria';
+      const clinicaDireccion = clinica?.direccion || 'Dirección de la clínica';
+      const clinicaTelefono = clinica?.telefono ? `Tel: ${clinica.telefono}` : 'Tel: (555) 123-4567';
       
       const doc = el('div', { 
         style: 'width:210mm;min-height:297mm;background:white;padding:20mm;box-sizing:border-box;font-family:Arial,sans-serif;color:#333;position:relative'
