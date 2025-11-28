@@ -787,70 +787,82 @@ function asignarCita(citaId) {
 
 // Función para cambiar estado de actividades
 function cambiarEstadoActividadSimple(citaId, nuevoEstado, linkElement) {
-    const dropdown = linkElement.closest('.dropdown');
-    const button = dropdown.querySelector('.dropdown-toggle');
-    const estadoAnterior = button.textContent.trim();
-    
-    // Actualizar visualmente inmediatamente
-    button.textContent = nuevoEstado;
-    button.className = `btn btn-sm ${getEstadoClase(nuevoEstado)} dropdown-toggle position-relative`;
-    
-    // Cerrar dropdown
-    const dropdownInstance = bootstrap.Dropdown.getInstance(button);
-    if (dropdownInstance) {
-        dropdownInstance.hide();
+  const dropdown = linkElement.closest('.dropdown');
+  const button = dropdown.querySelector('.dropdown-toggle');
+  const estadoAnterior = button.textContent.trim();
+
+  // Mostrar el nuevo estado inmediatamente (capitalizar)
+  button.textContent = nuevoEstado.charAt(0).toUpperCase() + nuevoEstado.slice(1);
+  button.className = `btn btn-sm ${getEstadoClase(nuevoEstado)} dropdown-toggle position-relative`;
+
+  // Cerrar dropdown
+  const dropdownInstance = bootstrap.Dropdown.getInstance(button);
+  if (dropdownInstance) {
+    dropdownInstance.hide();
+  }
+
+  // Validar ID
+  if (!citaId) {
+    console.error('cambiarEstadoActividadSimple: citaId inválido', citaId);
+    button.textContent = estadoAnterior;
+    button.className = `btn btn-sm ${getEstadoClase(estadoAnterior)} dropdown-toggle position-relative`;
+    return;
+  }
+
+  const payload = { cita_id: Number(citaId), estado: nuevoEstado };
+  console.log('Enviando /vet-dashboard/actualizar-estado-actividad', payload);
+
+  // Hacer la petición al servidor incluyendo cookies de sesión y CSRF
+  fetch('/vet-dashboard/actualizar-estado-actividad', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+    },
+    body: JSON.stringify(payload)
+  })
+  .then(async (res) => {
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); } catch (e) { data = { success: false, _raw: text }; }
+    if (!res.ok || !data.success) {
+      console.error('Respuesta error:', res.status, data);
+      throw new Error(data.message || `Error del servidor (${res.status})`);
     }
-    
-    // Hacer la petición al servidor
-    fetch('/vet-dashboard/actualizar-estado-actividad', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-        },
-        body: JSON.stringify({
-            cita_id: citaId,
-            estado: nuevoEstado
-        })
-    })
-    .then(async (res) => {
-        const data = await res.json();
-        if (!res.ok || !data.success) {
-            throw new Error(data.message || 'Error del servidor');
-        }
-        return data;
-    })
-    .then(data => {
-        // Éxito - mostrar notificación
-        Swal.fire({
-            icon: 'success',
-            title: '✅ Estado actualizado',
-            text: 'El estado se ha cambiado correctamente',
-            timer: 2000,
-            showConfirmButton: false,
-            toast: true,
-            position: 'top-end'
-        });
-        
-        // Actualizar estadísticas
-        actualizarEstadisticasActividades();
-    })
-    .catch(error => {
-        console.error('❌ Error cambiando estado:', error);
-        
-        // Revertir cambios visuales
-        button.textContent = estadoAnterior;
-        button.className = `btn btn-sm ${getEstadoClase(estadoAnterior)} dropdown-toggle position-relative`;
-        
-        // Mostrar error
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: error.message || 'No se pudo actualizar el estado',
-            timer: 3000,
-            showConfirmButton: false
-        });
+    return data;
+  })
+  .then(data => {
+    // Éxito - mostrar notificación
+    Swal.fire({
+      icon: 'success',
+      title: '✅ Estado actualizado',
+      text: 'El estado se ha cambiado correctamente',
+      timer: 2000,
+      showConfirmButton: false,
+      toast: true,
+      position: 'top-end'
     });
+
+    // Actualizar estadísticas
+    actualizarEstadisticasActividades();
+  })
+  .catch(error => {
+    console.error('❌ Error cambiando estado:', error);
+
+    // Revertir cambios visuales
+    button.textContent = estadoAnterior;
+    button.className = `btn btn-sm ${getEstadoClase(estadoAnterior)} dropdown-toggle position-relative`;
+
+    // Mostrar error con más contexto
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: error.message || 'No se pudo actualizar el estado',
+      timer: 3000,
+      showConfirmButton: false
+    });
+  });
 }
 
 // Función para obtener la clase CSS según el estado
@@ -1300,26 +1312,36 @@ function cambiarPaginaHistorial(delta) {
 function actualizarEstadoActividad(selectElement) {
   const citaId = selectElement.dataset.citaId;
   const nuevoEstado = selectElement.value;
+  if (!citaId) {
+    console.error('actualizarEstadoActividad: falta citaId en el select', selectElement);
+    return;
+  }
+
+  const payload = { cita_id: Number(citaId), estado: nuevoEstado };
+  console.log('Enviando /vet-dashboard/actualizar-actividad', payload);
 
   fetch('/vet-dashboard/actualizar-actividad', {
     method: 'PUT',
+    credentials: 'same-origin',
     headers: {
       'Content-Type': 'application/json',
-      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
     },
-    body: JSON.stringify({
-      cita_id: citaId,
-      estado: nuevoEstado
-    })
+    body: JSON.stringify(payload)
   })
-  .then(res => res.json())
-  .then(data => {
-    if (data.success) {
-      // Actualizar la tabla de actividades
-      actualizarTablaActividades();
-    } else {
-      throw new Error(data.message || 'Error al actualizar el estado');
+  .then(async res => {
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); } catch (e) { data = { success: false, _raw: text }; }
+    if (!res.ok || !data.success) {
+      console.error('Error respuesta actualizar-actividad:', res.status, data);
+      throw new Error(data.message || `Error del servidor (${res.status})`);
     }
+    return data;
+  })
+  .then(data => {
+    // Actualizar la tabla de actividades
+    actualizarTablaActividades();
   })
   .catch(error => {
     console.error('Error:', error);
