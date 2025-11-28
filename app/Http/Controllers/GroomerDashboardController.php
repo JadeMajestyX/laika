@@ -34,7 +34,7 @@ class GroomerDashboardController extends Controller
 
         $clinicaId = $user->clinica_id;
         // Todas las citas de la clínica
-        $citasClinica = Cita::with(['clinica:id,nombre', 'servicio:id,nombre,clinica_id', 'mascota:id,nombre,propietario_id', 'mascota.propietario:id,nombre', 'creador:id,nombre', 'veterinario:id,nombre'])
+        $citasClinica = Cita::with(['servicio:id,nombre,clinica_id', 'mascota:id,nombre', 'creador:id,nombre', 'veterinario:id,nombre'])
             ->where('clinica_id', $clinicaId)
             ->orderByDesc('fecha')
             ->get([

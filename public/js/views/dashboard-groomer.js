@@ -194,16 +194,24 @@ function setTodayTexts() {
   if (textEl) textEl.textContent = 'Resumen de hoy para grooming';
 }
 
+function getClinicName(data) {
+  const d = data || {};
+  // Intentar obtener el nombre de clínica de distintas fuentes del payload
+  return d.clinicaNombre || d.usuario?.clinica?.nombre || d.clinica?.nombre || '';
+}
+
 function renderSection(section, data) {
   const mainContent = document.getElementById('mainContent');
   if (!mainContent) return;
   mainContent.innerHTML = '';
   if (section === 'home') {
     const userName = mainContent.dataset.usuarioNombre || 'Usuario';
+    const clinicaNombre = getClinicName(data);
     mainContent.innerHTML = `
       <div class="mb-3">
         <h1 class="mb-1">¡Hola, ${userName}! ✂️</h1>
         <p class="text-body-secondary small" id="todayText">Resumen de hoy para grooming</p>
+        ${clinicaNombre ? `<div class="small text-body-secondary">Clínica: <span class="fw-semibold">${clinicaNombre}</span></div>` : ''}
       </div>
       <div class="row g-3 g-lg-4 mb-4">
         <div class="col-12 col-md-6 col-lg-3">
@@ -275,10 +283,12 @@ function renderSection(section, data) {
       </div>
     `;
   } else if (section === 'agenda') {
+    const clinicaNombre = getClinicName(data);
     mainContent.innerHTML = `
       <div class="mb-3">
         <h1 class="mb-1">Mi Agenda</h1>
         <p class="text-body-secondary small">Citas asignadas para hoy</p>
+        ${clinicaNombre ? `<div class="small text-body-secondary">Clínica: <span class="fw-semibold">${clinicaNombre}</span></div>` : ''}
       </div>
       <div class="card card-soft p-4">
         <div class="table-responsive">
