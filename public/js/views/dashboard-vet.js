@@ -31,12 +31,12 @@
   const styleId = 'vet-detail-modal-style';
   if (!document.getElementById(styleId)) {
     const style = el('style', { id: styleId }, `
-      .vet-modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9998}
+      .vet-modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9998}
       .vet-modal{position:fixed;inset:auto auto auto 50%;transform:translateX(-50%);
-        top:5%;width:min(1000px,92%);max-height:90%;overflow:auto;background:var(--bs-body-bg,#fff);
-        color:var(--bs-body-color,#222);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.35);z-index:9999}
+        top:3%;width:min(1200px,95%);max-height:94%;overflow:auto;background:var(--bs-body-bg,#fff);
+        color:var(--bs-body-color,#222);border-radius:14px;box-shadow:0 14px 40px rgba(0,0,0,.45);z-index:9999}
       .vet-modal header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--bs-border-color,#444)}
-      .vet-modal .content{display:grid;grid-template-columns:260px 1fr;gap:16px;padding:16px}
+      .vet-modal .content{display:grid;grid-template-columns:320px 1fr;gap:20px;padding:20px}
       .vet-card{border:1px solid var(--bs-border-color,#444);border-radius:10px;padding:12px;background:var(--bs-tertiary-bg,#f7f7f7)}
       .vet-list{margin:0;padding:0;list-style:none}
       .vet-list li{padding:6px 4px;border-bottom:1px dashed var(--bs-border-color,#555)}
@@ -93,33 +93,40 @@
     closeBtn.addEventListener('click', close);
     backdrop.addEventListener('click', close);
 
-    // Cargar datos
-    let cita, mascota, citasPasadas = [];
+    // Cargar datos (optimización: usar mascota del endpoint sin segunda llamada si existe)
+    let resp, citaObj, mascotaInfo, citasPasadas = [], recetaObj;
     try {
       const citaRes = await fetch(API.citaDetalle(citaId));
-      cita = await citaRes.json();
-      const mascotaId = cita?.cita?.mascota_id || cita?.mascota_id || cita?.cita?.mascota?.id;
-      if (mascotaId) {
+      resp = await citaRes.json();
+      citaObj = resp?.cita || {};
+      recetaObj = resp?.receta || null;
+      mascotaInfo = resp?.mascota || null;
+      const mascotaId = mascotaInfo?.id || citaObj?.mascota_id;
+      if (mascotaId && !mascotaInfo) {
+        // fallback si el backend no envía 'mascota'
         const mRes = await fetch(API.mascotaById(mascotaId));
-        mascota = await mRes.json();
+        const mJson = await mRes.json();
+        mascotaInfo = mJson?.data || mJson?.mascota || mJson;
+      }
+      if (mascotaId) {
         const cpRes = await fetch(API.citasMascota(mascotaId));
         const cpJson = await cpRes.json();
-        citasPasadas = (cpJson?.citas || []).filter(x => (x.status === 'completada'));
+        citasPasadas = (cpJson?.citas || []).filter(x => (x.status === 'completada' || x.estado === 'completada'));
       }
     } catch (e) {
       console.warn('Error cargando datos de ficha:', e);
     }
 
     // Izquierda: perfil mascota
-    const fotoUrl = mascota?.data?.imagen_url || mascota?.mascota?.imagen_url || null;
+    const fotoUrl = mascotaInfo?.imagen_url || mascotaInfo?.imagen || null;
     leftCol.appendChild(el('img', { class: 'vet-photo', src: fotoUrl || '/images/pet-placeholder.png', alt: 'Foto de la mascota' }));
 
     leftCol.appendChild(el('div', { style: 'margin-top:10px' }, [
-      el('div', {}, [el('strong', {}, 'Mascota: '), (mascota?.data?.nombre || mascota?.mascota?.nombre || 'Desconocida')]),
-      el('div', {}, [el('strong', {}, 'Especie: '), (mascota?.data?.especie || mascota?.mascota?.especie || '-')]),
-      el('div', {}, [el('strong', {}, 'Raza: '), (mascota?.data?.raza || mascota?.mascota?.raza || '-')]),
-      el('div', {}, [el('strong', {}, 'Sexo: '), (mascota?.data?.sexo || mascota?.mascota?.sexo || '-')]),
-      el('div', {}, [el('strong', {}, 'Peso: '), (mascota?.data?.peso || mascota?.mascota?.peso || '-')]),
+      el('div', {}, [el('strong', {}, 'Mascota: '), (mascotaInfo?.nombre || 'Desconocida')]),
+      el('div', {}, [el('strong', {}, 'Especie: '), (mascotaInfo?.especie || '-')]),
+      el('div', {}, [el('strong', {}, 'Raza: '), (mascotaInfo?.raza || '-')]),
+      el('div', {}, [el('strong', {}, 'Sexo: '), (mascotaInfo?.sexo || '-')]),
+      el('div', {}, [el('strong', {}, 'Peso: '), (mascotaInfo?.peso || '-')]),
     ]));
 
     // Historial: citas atendidas
@@ -135,6 +142,7 @@
     // Derecha: diagnóstico y receta
     const diagTitle = el('h4', {}, 'Diagnóstico');
     const diagInput = el('textarea', { class: 'vet-textarea', rows: '6', placeholder: 'Escriba el diagnóstico clínico, hallazgos y recomendaciones...' });
+    if (citaObj?.diagnostico) diagInput.value = citaObj.diagnostico;
     const recetaTitle = el('h4', { style: 'margin-top:16px' }, 'Receta');
     const recetaList = el('div', { class: 'vet-card' });
     const recetaItems = [];
@@ -157,7 +165,11 @@
       recetaList.appendChild(wrapper);
     }
 
-    const addMedBtn = el('button', { class:'vet-btn' }, 'Agregar medicamento');
+    const addMedBtn = el('button', { class:'vet-btn', title:'Agregar medicamento' }, 'Agregar medicamento');
+        // Pre-cargar items de receta si existen
+        if (recetaObj?.items && Array.isArray(recetaObj.items)) {
+          recetaObj.items.forEach(it => addRecetaItem({ nombre: it.medicamento, dosis: it.dosis, notas: it.notas }));
+        }
     addMedBtn.addEventListener('click', () => addRecetaItem());
 
     rightCol.appendChild(el('div', { class:'vet-card' }, [diagTitle, diagInput]));
@@ -248,15 +260,19 @@
   // Delegar clicks en tarjetas/lista de citas para abrir el modal
   // Ajusta el selector según tu DOM real (ej. .cita-item[data-id])
   document.addEventListener('click', (ev) => {
-    const target = ev.target.closest('[data-cita-id]');
-    if (target) {
-      const id = target.getAttribute('data-cita-id');
-      if (id) {
-        ev.preventDefault();
-        openVetDetailModal(id);
-      }
+    const btn = ev.target.closest('button.atender-cita-btn[data-cita-id]');
+    if (btn) {
+      const id = btn.getAttribute('data-cita-id');
+      if (id) { ev.preventDefault(); openVetDetailModal(id); return; }
+    }
+    const row = ev.target.closest('tr[data-cita-id]');
+    if (row && row.getAttribute('data-cita-id')) {
+      ev.preventDefault();
+      openVetDetailModal(row.getAttribute('data-cita-id'));
     }
   });
+  // Exponer función global por si se requiere manualmente
+  window.openVetDetailModal = openVetDetailModal;
 })();
 
 // public/js/views/dashboard-vet.js
