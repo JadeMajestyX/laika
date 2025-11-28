@@ -66,30 +66,18 @@ class VetDashboardController extends Controller
                 ->distinct('mascota_id')
                 ->count('mascota_id');
             
-            // CITAS POR DÍA - CORREGIDO
+            // CITAS POR DÍA - solo tipo 'cita' para el gráfico
             $citasPorDia = [];
-            $diasSemana = [
-                'Monday' => 'Lun',
-                'Tuesday' => 'Mar',
-                'Wednesday' => 'Mié',
-                'Thursday' => 'Jue',
-                'Friday' => 'Vie',
-                'Saturday' => 'Sáb',
-                'Sunday' => 'Dom'
-            ];
-
             for ($i = 6; $i >= 0; $i--) {
                 $fecha = Carbon::today()->subDays($i);
-                $diaIngles = $fecha->format('l'); // Obtiene el día en inglés
-                // DEBUG: Log para verificar qué datos se están obteniendo
-                $count = Cita::where('clinica_id', $clinicaId)
-                    ->whereDate('fecha', $fecha)
-                    ->where('tipo', 'cita')
-                    ->count();
-                Log::info("Citas para {$fecha->format('Y-m-d')} ({$diaIngles}): {$count}");
+                // Forzar locale a inglés para el nombre del día
+                $diaIngles = $fecha->locale('en')->isoFormat('dddd'); // Monday, Tuesday, etc.
                 $citasPorDia[] = [
-                    'dia' => $diasSemana[$diaIngles] ?? $diaIngles, // Mapeo directo a español
-                    'total' => $count
+                    'dia' => $diaIngles,
+                    'total' => Cita::where('clinica_id', $clinicaId)
+                        ->whereDate('fecha', $fecha)
+                        ->where('tipo', 'cita') // ← SOLO CITAS
+                        ->count()
                 ];
             }
 
