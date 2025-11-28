@@ -457,6 +457,23 @@ function handlePopState() {
     const match = location.pathname.match(/^\/groomer-dashboard(?:\/([^\/?#]+))?/);
     const initialSection = (match && match[1]) ? match[1] : 'home';
     markActive(initialSection);
+    // Delegación para abrir modal al hacer click en "Ver"
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-action="ver"][data-id]');
+      if (!btn) return;
+      const id = btn.getAttribute('data-id');
+      if (!id) return;
+      openCitaModal(id);
+    });
+
+    // Acción de completar cita desde el modal
+    const completarBtn = document.getElementById('citaModalCompletar');
+    if (completarBtn) {
+      completarBtn.addEventListener('click', () => {
+        if (!window.__currentCitaId) return;
+        completeCita(window.__currentCitaId);
+      });
+    }
 
     if (initialSection === 'home') {
       fetch('/groomer-dashboard/data')
@@ -486,3 +503,100 @@ function handlePopState() {
     handlePopState();
   });
 })();
+
+// Helpers y lógica de modal
+function getCsrfToken() {
+  const el = document.querySelector('meta[name="csrf-token"]');
+  return el ? el.getAttribute('content') : '';
+}
+
+function showAlertInModal(msg) {
+  const box = document.getElementById('citaModalAlert');
+  if (!box) return;
+  if (!msg) { box.classList.add('d-none'); box.textContent = ''; return; }
+  box.textContent = msg;
+  box.classList.remove('d-none');
+}
+
+function populateCitaModal(data) {
+  const d = data || {};
+  const cita = d.cita || d; // por si el endpoint devuelve {cita: {...}}
+  document.getElementById('citaModalServicio')?.replaceChildren(document.createTextNode(cita?.servicio?.nombre || 'Servicio'));
+  document.getElementById('citaModalMascota')?.replaceChildren(document.createTextNode(cita?.mascota?.nombre || 'Mascota'));
+  const propietario = cita?.mascota?.propietario?.nombre || cita?.mascota?.user?.name || cita?.creador?.nombre || cita?.veterinario?.nombre || '';
+  document.getElementById('citaModalPropietario')?.replaceChildren(document.createTextNode(propietario));
+  const fechaStr = cita?.fecha ? new Date(cita.fecha).toLocaleString('es-MX') : '';
+  document.getElementById('citaModalFecha')?.replaceChildren(document.createTextNode(fechaStr));
+  const estadoEl = document.getElementById('citaModalEstado');
+  if (estadoEl) {
+    const estado = cita?.status || '';
+    estadoEl.textContent = estado;
+    estadoEl.className = 'badge ' + (estado === 'completada' ? 'bg-success' : 'bg-secondary');
+  }
+  const notasEl = document.getElementById('citaModalNotas');
+  if (notasEl) notasEl.value = cita?.notas || '';
+}
+
+function openCitaModal(id) {
+  showAlertInModal('');
+  window.__currentCitaId = Number(id);
+  fetch(`/groomer-dashboard/citas/${id}`)
+    .then((r) => {
+      if (!r.ok) throw new Error('No se pudo cargar la cita');
+      return r.json();
+    })
+    .then((data) => {
+      populateCitaModal(data);
+      const modalEl = document.getElementById('citaModal');
+      if (!modalEl || typeof bootstrap === 'undefined') return;
+      const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+      modal.show();
+    })
+    .catch((err) => {
+      console.error(err);
+      showAlertInModal('Error al cargar la cita. Intenta de nuevo.');
+    });
+}
+
+function completeCita(id) {
+  const notas = document.getElementById('citaModalNotas')?.value || '';
+  const token = getCsrfToken();
+  showAlertInModal('');
+  fetch(`/groomer-dashboard/citas/${id}/complete`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'X-CSRF-TOKEN': token,
+    },
+    body: JSON.stringify({ notas }),
+  })
+    .then((r) => {
+      if (!r.ok) return r.json().then((j) => { throw new Error(j?.message || 'No se pudo completar la cita'); });
+      return r.json();
+    })
+    .then((resp) => {
+      // Cerrar modal
+      const modalEl = document.getElementById('citaModal');
+      if (modalEl && typeof bootstrap !== 'undefined') {
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.hide();
+      }
+      // Refrescar la agenda para reflejar el estado actualizado
+      fetch('/groomer-dashboard/data')
+        .then((r) => r.json())
+        .then((data) => {
+          // Si estamos en la sección agenda, re-renderizar; si no, no cambiamos sección
+          const match = location.pathname.match(/^\/groomer-dashboard(?:\/([^\/?#]+))?/);
+          const section = (match && match[1]) || 'home';
+          if (section === 'agenda') {
+            renderSection('agenda', data);
+            renderAgendaFromCitas(data);
+          }
+        });
+    })
+    .catch((err) => {
+      console.error(err);
+      showAlertInModal(err?.message || 'Error al completar la cita');
+    });
+}
