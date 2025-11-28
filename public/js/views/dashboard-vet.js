@@ -1369,7 +1369,7 @@ function renderSection(section, data) {
   } else if (section === 'actividad') {
     mainContent.innerHTML = `
       <div class="mb-3">
-        <h1 class="mb-1">Actividad de Hoy</h1>
+        <h1 class="mb-1">Actividad de Hoy.</h1>
         <p class="text-body-secondary small">Registro de actividades y procedimientos del día actual</p>
       </div>
       
