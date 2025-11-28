@@ -1017,6 +1017,7 @@ function actualizarTablaActividades() {
               </td>
               <td>${actividad.procedimiento || 'N/A'}</td>
               <td>
+                ${actividad.es_mia ? `
                 <div class="dropdown">
                   <button class="btn btn-sm ${estadoClase} dropdown-toggle position-relative" 
                           type="button" data-bs-toggle="dropdown" 
@@ -1052,6 +1053,11 @@ function actualizarTablaActividades() {
                     </li>
                   </ul>
                 </div>
+                ` : `
+                <button class="btn btn-sm ${estadoClase} position-relative" style="min-width:120px;" disabled title="No puedes cambiar el estado de esta cita">
+                  ${actividad.estado || 'N/A'}
+                </button>
+                `}
               </td>
               <td>
                 ${mostrarBotonAtender ? `
