@@ -367,6 +367,9 @@ function renderSection(section, data) {
         </div>
       </div>
     `;
+    if (data && data.citasClinica) {
+      renderHistorialFromCitas(data);
+    }
   } else if (section === 'configuracion') {
     mainContent.innerHTML = `
       <div class="mb-3">
@@ -378,6 +381,41 @@ function renderSection(section, data) {
       </div>
     `;
   }
+}
+
+function renderHistorialFromCitas(payload) {
+  const { citasClinica = [], userId } = payload || {};
+  const toNum = (v) => v == null ? null : Number(v);
+  const gid = toNum(userId);
+  const mine = (c) => {
+    const vet = toNum(c.veterinario_id);
+    const creator = toNum(c.creada_por);
+    return (vet != null && vet === gid) || (creator != null && creator === gid);
+  };
+  const historialBody = document.getElementById('historialBody');
+  if (!historialBody) return;
+  const citas = (citasClinica || [])
+    .filter((c) => mine(c))
+    .sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
+  if (citas.length === 0) {
+    historialBody.innerHTML = `<tr><td colspan="4" class="text-center text-body-secondary py-4">No hay historial disponible</td></tr>`;
+    return;
+  }
+  historialBody.innerHTML = '';
+  citas.forEach((c) => {
+    const fecha = c.fecha ? new Date(c.fecha).toLocaleString('es-MX') : '';
+    const mascota = c.mascota?.nombre || 'Mascota';
+    const servicio = c.servicio?.nombre || 'Servicio';
+    const estado = c.status || '';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${fecha}</td>
+      <td>${mascota}</td>
+      <td>${servicio}</td>
+      <td>${estado}</td>
+    `;
+    historialBody.appendChild(tr);
+  });
 }
 
 function renderAgendaFromCitas(payload) {
@@ -491,6 +529,8 @@ function handlePopState() {
             renderAgendaFromCitas(data);
           } else if (section === 'actividad') {
             renderActividadesFromCitas(data);
+          } else if (section === 'historial') {
+            renderHistorialFromCitas(data);
           }
         });
     }
@@ -524,6 +564,8 @@ function handlePopState() {
             renderAgendaFromCitas(data);
           } else if (initialSection === 'actividad') {
             renderActividadesFromCitas(data);
+          } else if (initialSection === 'historial') {
+            renderHistorialFromCitas(data);
           }
         });
       history.replaceState({ section: initialSection }, '', location.pathname);
