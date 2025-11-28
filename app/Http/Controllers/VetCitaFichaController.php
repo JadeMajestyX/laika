@@ -249,14 +249,19 @@ class VetCitaFichaController extends Controller
                 $receta = Receta::create([
                     'cita_id' => $cita->id,
                     'veterinario_id' => $user->id,
+                    'diagnostico' => $validated['diagnostico'] ?? null,
                     'notas' => $validated['notas'] ?? null,
                 ]);
                 Log::info("Nueva receta creada con ID {$receta->id} para cita {$id}");
             } else {
+                // Actualizar campos si existen en la petición
+                if (array_key_exists('diagnostico', $validated)) {
+                    $receta->diagnostico = $validated['diagnostico'];
+                }
                 if (array_key_exists('notas', $validated)) {
                     $receta->notas = $validated['notas'];
-                    $receta->save();
                 }
+                $receta->save();
                 // Limpiar items anteriores
                 $itemsEliminados = $receta->items()->count();
                 $receta->items()->delete();

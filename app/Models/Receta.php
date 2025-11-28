@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Receta extends Model
 {
-    protected $fillable = ['cita_id', 'veterinario_id', 'notas'];
+    protected $fillable = ['cita_id', 'veterinario_id', 'diagnostico', 'notas'];
 
     public function cita(): BelongsTo
     {
