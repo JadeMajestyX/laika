@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -37,6 +38,22 @@ class VetReportesController extends Controller
 
         [$desde, $hasta, $periodo] = $this->resolveRangoFechas($request);
 
+        if ($this->shouldSkipReportCache()) {
+            return $this->buildReportPayload($desde, $hasta, $veterinarioId, $periodo, $withCharts);
+        }
+
+        $signature = $this->computeReportSignature($desde, $hasta, $veterinarioId);
+        $cacheKey = $this->reportCacheKey($veterinarioId, $desde, $hasta, $withCharts, $signature);
+
+        return Cache::remember(
+            $cacheKey,
+            now()->addSeconds($this->reportCacheTtl()),
+            fn () => $this->buildReportPayload($desde, $hasta, $veterinarioId, $periodo, $withCharts)
+        );
+    }
+
+    private function buildReportPayload(Carbon $desde, Carbon $hasta, int $veterinarioId, string $periodo, bool $withCharts): array
+    {
         $data = [
             'metricas' => $this->getMetricasPrincipales($desde, $hasta, $veterinarioId),
             'mascotasAtendidas' => $this->getMascotasAtendidas($desde, $hasta, $veterinarioId),
@@ -102,18 +119,25 @@ class VetReportesController extends Controller
      */
     private function getMetricasPrincipales(Carbon $desde, Carbon $hasta, int $veterinarioId)
     {
+        $metricas = Cita::where('veterinario_id', $veterinarioId)
+            ->whereBetween('fecha', [$desde, $hasta])
+            ->selectRaw('COUNT(*) as total_citas')
+            ->selectRaw("SUM(CASE WHEN tipo = 'consulta' THEN 1 ELSE 0 END) as total_consultas")
+            ->selectRaw('COUNT(DISTINCT mascota_id) as total_mascotas')
+            ->first();
+
+        if (!$metricas) {
+            return [
+                'citas' => 0,
+                'consultas' => 0,
+                'mascotas' => 0,
+            ];
+        }
+
         return [
-            'citas' => Cita::where('veterinario_id', $veterinarioId)
-                ->whereBetween('fecha', [$desde, $hasta])
-                ->count(),
-            'consultas' => Cita::where('veterinario_id', $veterinarioId)
-                ->whereBetween('fecha', [$desde, $hasta])
-                ->where('tipo', 'consulta')
-                ->count(),
-            'mascotas' => Cita::where('veterinario_id', $veterinarioId)
-                ->whereBetween('fecha', [$desde, $hasta])
-                ->distinct('mascota_id')
-                ->count('mascota_id'),
+            'citas' => (int) $metricas->total_citas,
+            'consultas' => (int) $metricas->total_consultas,
+            'mascotas' => (int) $metricas->total_mascotas,
         ];
     }
 
@@ -127,6 +151,7 @@ class VetReportesController extends Controller
             ->whereBetween('fecha', [$desde, $hasta])
             ->where('status', 'completada')
             ->groupBy('dia')
+            ->orderBy('dia')
             ->pluck('total', 'dia');
 
         $period = CarbonPeriod::create($desde->copy()->startOfDay(), '1 day', $hasta->copy()->startOfDay());
@@ -155,10 +180,10 @@ class VetReportesController extends Controller
             ->whereBetween('citas.fecha', [$desde, $hasta])
             ->where('citas.status', 'completada')
             ->where('citas.veterinario_id', $veterinarioId)
+            ->whereNotNull('mascotas.especie')
             ->select('mascotas.especie', DB::raw('COUNT(DISTINCT mascotas.id) as total'))
             ->groupBy('mascotas.especie')
             ->pluck('total', 'mascotas.especie')
-            ->filter(fn ($total, $especie) => !is_null($especie))
             ->toArray();
     }
 
@@ -167,10 +192,6 @@ class VetReportesController extends Controller
      */
     private function getResumenCitas(Carbon $desde, Carbon $hasta, int $veterinarioId)
     {
-        $total = Cita::where('veterinario_id', $veterinarioId)
-            ->whereBetween('fecha', [$desde, $hasta])
-            ->count();
-
         $rangoDias = $desde->diffInDays($hasta) + 1;
         $periodoAnterior = [
             $desde->copy()->subDays($rangoDias)->startOfDay(),
@@ -182,6 +203,8 @@ class VetReportesController extends Controller
             ->select(DB::raw('status as estado'), DB::raw('COUNT(*) as cantidad'))
             ->groupBy('status')
             ->get();
+
+        $total = $citas->sum('cantidad');
 
         $citasAnteriores = Cita::where('veterinario_id', $veterinarioId)
             ->whereBetween('fecha', $periodoAnterior)
@@ -204,6 +227,41 @@ class VetReportesController extends Controller
                 'tendencia' => $tendencia,
             ];
         })->values();
+    }
+
+    private function reportCacheKey(int $veterinarioId, Carbon $desde, Carbon $hasta, bool $withCharts, string $signature): string
+    {
+        return sprintf(
+            'vet-reportes:%d:%s:%s:%s:%d',
+            $veterinarioId,
+            $desde->format('YmdHis'),
+            $hasta->format('YmdHis'),
+            $signature,
+            $withCharts ? 1 : 0
+        );
+    }
+
+    private function reportCacheTtl(): int
+    {
+        return (int) config('cache.vet_reportes_ttl', 300);
+    }
+
+    private function shouldSkipReportCache(): bool
+    {
+        return app()->environment('testing') || $this->reportCacheTtl() <= 0;
+    }
+
+    private function computeReportSignature(Carbon $desde, Carbon $hasta, int $veterinarioId): string
+    {
+        $lastUpdated = Cita::where('veterinario_id', $veterinarioId)
+            ->whereBetween('fecha', [$desde, $hasta])
+            ->max('updated_at');
+
+        if (!$lastUpdated) {
+            return 'none';
+        }
+
+        return Carbon::parse($lastUpdated)->format('YmdHis');
     }
 
     /**

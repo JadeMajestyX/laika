@@ -441,6 +441,12 @@ if (window.dashboardVetLoaded) {
 window.dashboardVetLoaded = true;
 
 let chartInstance = null;
+let reportesMascotasChart = null;
+let reportesEspeciesChart = null;
+let reportesEstadosChart = null;
+const REPORTES_REFRESH_INTERVAL_MS = 30000;
+let activeSection = 'home';
+let reportesRefreshTimer = null;
 
 function buildChartSeries(citasPorDia) {
   const diasOrdenados = [
@@ -620,6 +626,388 @@ function renderActividades() {
         </div>
       `;
     });
+}
+
+function setActiveSection(section) {
+  activeSection = section;
+  if (section !== 'reportes') {
+    stopReportesAutoRefresh();
+  }
+}
+
+function startReportesAutoRefresh() {
+  if (activeSection !== 'reportes' || reportesRefreshTimer) return;
+  reportesRefreshTimer = setInterval(() => {
+    if (document.hidden || activeSection !== 'reportes') return;
+    fetchReportesData({ showLoading: false });
+  }, REPORTES_REFRESH_INTERVAL_MS);
+}
+
+function stopReportesAutoRefresh() {
+  if (!reportesRefreshTimer) return;
+  clearInterval(reportesRefreshTimer);
+  reportesRefreshTimer = null;
+}
+
+function buildReportesQueryParams() {
+  const periodo = document.getElementById('filtro-periodo')?.value || 'este-mes';
+  const desde = document.getElementById('filtro-desde')?.value;
+  const hasta = document.getElementById('filtro-hasta')?.value;
+  const params = new URLSearchParams({ periodo });
+
+  if (periodo === 'personalizado') {
+    if (desde) params.set('desde', desde);
+    if (hasta) params.set('hasta', hasta);
+  }
+
+  return params;
+}
+
+function setReportesLoading(isLoading) {
+  const btnFiltro = document.getElementById('btn-aplicar-filtro');
+  if (!btnFiltro) return;
+  btnFiltro.disabled = isLoading;
+  btnFiltro.innerHTML = isLoading
+    ? '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Cargando'
+    : 'Aplicar filtro';
+}
+
+function updateReportesUI(data) {
+  const metricas = data?.metricas || {};
+  const setMetric = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = typeof val === 'number' ? val : '--';
+  };
+
+  setMetric('metric-citas', metricas.citas ?? '--');
+  setMetric('metric-consultas', metricas.consultas ?? '--');
+  setMetric('metric-mascotas', metricas.mascotas ?? '--');
+
+  if (data?.periodo) {
+    const { desde, hasta } = data.periodo;
+    if (desde) {
+      const inputDesde = document.getElementById('filtro-desde');
+      if (inputDesde) inputDesde.value = desde;
+    }
+    if (hasta) {
+      const inputHasta = document.getElementById('filtro-hasta');
+      if (inputHasta) inputHasta.value = hasta;
+    }
+  }
+
+  renderMascotasAtendidasChart(data?.mascotasAtendidas);
+  renderMascotasEspecieChart(data?.mascotasEspecie);
+  renderResumenEstadosChart(data?.resumenCitas);
+  renderResumenCitas(data?.resumenCitas);
+}
+
+function showReportesError() {
+  renderResumenCitas([]);
+  ['metric-citas', 'metric-consultas', 'metric-mascotas'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = '--';
+  });
+
+  const tabla = document.getElementById('tabla-resumen-citas');
+  if (tabla) {
+    tabla.innerHTML = `
+      <tr>
+        <td colspan="4" class="text-center text-danger py-4">
+          <i class="bi bi-exclamation-triangle me-2"></i>
+          No se pudieron cargar los datos. Intenta nuevamente.
+        </td>
+      </tr>
+    `;
+  }
+
+  const estadosCanvas = document.getElementById('graficaResumenEstados');
+  const estadosEmpty = document.getElementById('mensaje-sin-datos-estados');
+  estadosCanvas?.classList.add('d-none');
+  estadosEmpty?.classList.remove('d-none');
+}
+
+function renderMascotasAtendidasChart(dataset = { fechas: [], atendidas: [] }) {
+  if (typeof Chart === 'undefined') return;
+
+  const canvas = document.getElementById('graficaMascotasAtendidas');
+  const emptyMessage = document.getElementById('mensaje-sin-datos-mascotas');
+  if (!canvas) return;
+
+  const hasData = Array.isArray(dataset?.atendidas) && dataset.atendidas.some((value) => value > 0);
+  canvas.classList.toggle('d-none', !hasData);
+  emptyMessage?.classList.toggle('d-none', hasData);
+
+  if (reportesMascotasChart) {
+    reportesMascotasChart.destroy();
+    reportesMascotasChart = null;
+  }
+
+  if (!hasData) return;
+
+  const styles = getComputedStyle(document.documentElement);
+  const brand = styles.getPropertyValue('--brand').trim() || '#3A7CA5';
+  const areaColor = brand.startsWith('#') ? `${brand}33` : 'rgba(58, 124, 165, 0.2)';
+  const textColor = styles.getPropertyValue('--bs-body-color').trim() || '#6c757d';
+
+  reportesMascotasChart = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels: dataset?.fechas || [],
+      datasets: [
+        {
+          label: 'Mascotas atendidas',
+          data: dataset?.atendidas || [],
+          borderColor: brand,
+          backgroundColor: areaColor,
+          fill: true,
+          tension: 0.4,
+          pointRadius: 3,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: textColor } },
+        y: { beginAtZero: true, ticks: { color: textColor } },
+      },
+    },
+  });
+}
+
+function renderMascotasEspecieChart(data = {}) {
+  if (typeof Chart === 'undefined') return;
+
+  const canvas = document.getElementById('graficaMascotasEspecie');
+  const emptyMessage = document.getElementById('mensaje-sin-datos-especies');
+  if (!canvas) return;
+
+  const labels = Object.keys(data || {});
+  const valores = Object.values(data || {});
+  const hasData = valores.some((value) => value > 0);
+  canvas.classList.toggle('d-none', !hasData);
+  emptyMessage?.classList.toggle('d-none', hasData);
+
+  if (reportesEspeciesChart) {
+    reportesEspeciesChart.destroy();
+    reportesEspeciesChart = null;
+  }
+
+  if (!hasData) return;
+
+  const colores = ['#3A7CA5', '#6CC3D5', '#F4A261', '#2A9D8F', '#E76F51', '#8ECAE6', '#B56576'];
+
+  reportesEspeciesChart = new Chart(canvas, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [
+        {
+          data: valores,
+          backgroundColor: labels.map((_, index) => colores[index % colores.length]),
+          borderWidth: 0,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+        },
+      },
+    },
+  });
+}
+
+function renderResumenEstadosChart(resumen = []) {
+  if (typeof Chart === 'undefined') return;
+
+  const canvas = document.getElementById('graficaResumenEstados');
+  const emptyMessage = document.getElementById('mensaje-sin-datos-estados');
+  if (!canvas) return;
+
+  const labels = Array.isArray(resumen) ? resumen.map((row) => row.estado || 'N/A') : [];
+  const valores = Array.isArray(resumen) ? resumen.map((row) => row.cantidad || 0) : [];
+  const hasData = valores.some((value) => value > 0);
+
+  canvas.classList.toggle('d-none', !hasData);
+  emptyMessage?.classList.toggle('d-none', hasData);
+
+  if (reportesEstadosChart) {
+    reportesEstadosChart.destroy();
+    reportesEstadosChart = null;
+  }
+
+  if (!hasData) {
+    return;
+  }
+
+  const palette = {
+    Pendiente: '#F4A261',
+    Confirmada: '#2A9D8F',
+    Completada: '#3A7CA5',
+    Cancelada: '#E76F51',
+    'En_progreso': '#6CC3D5',
+  };
+
+  const datasetsColors = labels.map((estado, index) => {
+    const normalized = estado?.toLowerCase();
+    if (!estado) return '#8ECAE6';
+    if (normalized.includes('pend')) return palette.Pendiente;
+    if (normalized.includes('confirm')) return palette.Confirmada;
+    if (normalized.includes('complet')) return palette.Completada;
+    if (normalized.includes('cancel')) return palette.Cancelada;
+    if (normalized.includes('progreso')) return palette['En_progreso'];
+    const fallback = ['#8ECAE6', '#B56576', '#E9C46A', '#2A9D8F', '#F4A261'];
+    return fallback[index % fallback.length];
+  });
+
+  const styles = getComputedStyle(document.documentElement);
+  const textColor = styles.getPropertyValue('--bs-body-color').trim() || '#6c757d';
+
+  reportesEstadosChart = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Citas',
+          data: valores,
+          backgroundColor: datasetsColors,
+          borderRadius: 6,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => `${ctx.parsed.y} cita(s)`,
+          },
+        },
+      },
+      scales: {
+        x: {
+          ticks: { color: textColor },
+        },
+        y: {
+          beginAtZero: true,
+          ticks: { color: textColor, precision: 0 },
+        },
+      },
+    },
+  });
+}
+
+function renderResumenCitas(resumen = []) {
+  const tbody = document.getElementById('tabla-resumen-citas');
+  if (!tbody) return;
+
+  if (!Array.isArray(resumen) || resumen.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="4" class="text-center text-muted py-4">
+          <i class="bi bi-info-circle me-2"></i>
+          No hay datos disponibles para el periodo seleccionado.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = resumen
+    .map((row) => {
+      const tendenciaPositiva = row.tendencia >= 0;
+      const tendenciaIcon = tendenciaPositiva ? 'bi-arrow-up' : 'bi-arrow-down';
+      const tendenciaClass = tendenciaPositiva ? 'text-success' : 'text-danger';
+      const tendenciaValor = typeof row.tendencia === 'number' ? row.tendencia : 0;
+      const porcentaje = typeof row.porcentaje === 'number' ? row.porcentaje.toFixed(2) : '0.00';
+
+      return `
+        <tr>
+          <td>${row.estado || 'N/A'}</td>
+          <td>${row.cantidad || 0}</td>
+          <td>${porcentaje}%</td>
+          <td class="${tendenciaClass}">
+            <i class="bi ${tendenciaIcon} me-1"></i>
+            ${tendenciaValor}%
+          </td>
+        </tr>
+      `;
+    })
+    .join('');
+}
+
+async function fetchReportesData(options = {}) {
+  const { showLoading = true } = options;
+  const params = buildReportesQueryParams();
+  if (showLoading) {
+    setReportesLoading(true);
+  }
+  try {
+    const response = await fetch(`/vet-dashboard/data/reportes?${params.toString()}`, {
+      headers: { Accept: 'application/json' },
+    });
+
+    if (!response.ok) {
+      throw new Error('No se pudo obtener la información de reportes');
+    }
+
+    const data = await response.json();
+    updateReportesUI(data);
+  } catch (error) {
+    console.error('Error al obtener reportes veterinarios:', error);
+    showReportesError();
+  } finally {
+    if (showLoading) {
+      setReportesLoading(false);
+    }
+  }
+}
+
+function initReportesSection() {
+  const periodoSelect = document.getElementById('filtro-periodo');
+  const desdeInput = document.getElementById('filtro-desde');
+  const hastaInput = document.getElementById('filtro-hasta');
+  const btnFiltro = document.getElementById('btn-aplicar-filtro');
+  const btnExportar = document.getElementById('btn-exportar') || document.getElementById('btn-exportar-main');
+
+  if (!periodoSelect) return;
+
+  const togglePersonalizado = () => {
+    const isCustom = periodoSelect.value === 'personalizado';
+    if (desdeInput) desdeInput.disabled = !isCustom;
+    if (hastaInput) hastaInput.disabled = !isCustom;
+  };
+
+  togglePersonalizado();
+
+  periodoSelect.addEventListener('change', () => {
+    togglePersonalizado();
+    if (periodoSelect.value !== 'personalizado') {
+      fetchReportesData();
+    }
+  });
+
+  btnFiltro?.addEventListener('click', (event) => {
+    event.preventDefault();
+    fetchReportesData();
+  });
+
+  btnExportar?.addEventListener('click', (event) => {
+    event.preventDefault();
+    const params = buildReportesQueryParams();
+    window.open(`/vet-reportes/export/pdf?${params.toString()}`, '_blank');
+  });
+
+  fetchReportesData().finally(() => startReportesAutoRefresh());
 }
 
 // Función para abrir el modal de consulta manual
@@ -1474,14 +1862,7 @@ function setTodayTexts() {
 
 // Construir parámetros de filtro para exportar o llamadas al backend
 function getReportFilters() {
-  const periodo = document.getElementById('filtro-periodo')?.value || 'este-mes';
-  const desde = document.getElementById('filtro-desde')?.value || '';
-  const hasta = document.getElementById('filtro-hasta')?.value || '';
-  const params = new URLSearchParams();
-  params.set('periodo', periodo);
-  if (desde) params.set('desde', desde);
-  if (hasta) params.set('hasta', hasta);
-  return params.toString();
+  return buildReportesQueryParams().toString();
 }
 
 // Disparar exportación: navega a la ruta de descarga con los filtros actuales
@@ -1510,6 +1891,7 @@ function attachReportHandlers() {
 }
 
 function renderSection(section, data) {
+  setActiveSection(section);
   const mainContent = document.getElementById('mainContent');
   if (!mainContent) return;
   mainContent.innerHTML = '';
@@ -1985,6 +2367,8 @@ function renderSection(section, data) {
         </div>
       </div>
     `;
+    attachReportHandlers();
+    initReportesSection();
   } else if (section === 'configuracion') { 
     mainContent.innerHTML = `
       <div class="mb-3">
@@ -2186,6 +2570,17 @@ function handlePopState() {
     initNavHandlers();
     handlePopState();
     attachReportHandlers();
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        stopReportesAutoRefresh();
+        return;
+      }
+
+      if (activeSection === 'reportes') {
+        fetchReportesData({ showLoading: false });
+        startReportesAutoRefresh();
+      }
+    });
     
     console.log('✅ dashboard-vet.js inicializado correctamente');
   });
