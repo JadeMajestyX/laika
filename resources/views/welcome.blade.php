@@ -251,20 +251,16 @@
           <p class="mb-4" style="font-size: 1.15rem; font-weight: 500; color: #555;">
                 Con nuestra app móvil, podrás agendar citas, monitorear la alimentación de tu mascota 
                 y recibir alertas en tiempo real.
+                  Descargalá ahora en tu celular:
             </p>
 
 
-                <a 
-                    href="https://play.google.com/apps/internaltest/4701520737243560292"
-                    target="_blank"
-                >
-                    <img 
-                        src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_ES.svg"
-                        alt="Da clic para descargar la APP"
-                        class="img-fluid d-block mx-auto"
-                        style="max-width: 250px;"
-                    >
+            <a href="https://play.google.com/apps/internaltest/4701520737243560292"
+                  target="_blank"
+                  class="btn btn-primary px-4 py-2">
+                    Descargar App
                 </a>
+
             </div>
 
             <!-- Columna derecha: Imagen de vista previa -->
@@ -308,14 +304,29 @@
           <h5 class="fw-bold text-primary">Horarios</h5>
           <p class="small">Lun–Vie: 9:00–20:00<br>Sáb: 9:00–14:00<br><span class="fw-semibold text-primary">Domingo cerrado</span></p>
         </div>
-        <div class="col-md-4">
-          <h5 class="fw-bold text-primary">Síguenos</h5>
-          <div class="d-flex gap-3 fs-4 text-primary">
+          <div class="col-md-4">
+    <h5 class="fw-bold text-primary">Síguenos en nuestras redes sociales</h5>
+
+    <div class="d-flex gap-3 fs-4 text-primary">
+
+        <!-- Facebook -->
+            <a href="https://www.facebook.com/people/Laika/61584069734659/?mibextid=wwXIfr&rdid=Roy2DDZ8iP32tjG0&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1CufJcmdoa%2F%3Fmibextid%3DwwXIfr"
+           target="_blank" 
+           class="text-primary"
+           style="text-decoration: none;">
             <i class="bi bi-facebook"></i>
+        </a>
+
+        <!-- Instagram -->
+             <a href="https://www.instagram.com/laika.jademajesty?igsh=NXVoYjAzYm85YzNj&utm_source=qr" 
+           target="_blank"
+           class="text-primary"
+           style="text-decoration: none;">
             <i class="bi bi-instagram"></i>
-            <i class="bi bi-twitter-x"></i>
-          </div>
-        </div>
+        </a>
+    </div>
+</div>
+
       </div>
     </div>
     <div class="text-center py-3 border-top small text-muted">
