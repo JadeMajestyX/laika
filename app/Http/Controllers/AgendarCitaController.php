@@ -46,6 +46,14 @@ class AgendarCitaController extends Controller
             'fecha' => 'required|date_format:Y-m-d',
         ]);
 
+        // Validar rango de fecha: hoy .. hoy + 1 año
+        $hoy = Carbon::today();
+        $limite = (clone $hoy)->addYear();
+        $fechaSel = Carbon::createFromFormat('Y-m-d', $request->fecha);
+        if ($fechaSel->lt($hoy) || $fechaSel->gt($limite)) {
+            return response()->json(['availableTimes' => []]);
+        }
+
         // Base de horarios (cada 30 min) 09:00 - 18:00
         $baseTimes = [];
         $start = Carbon::createFromFormat('H:i', '09:00');
@@ -64,6 +72,14 @@ class AgendarCitaController extends Controller
             ->all();
 
         $available = array_values(array_diff($baseTimes, $ocupadas));
+
+        // Si la fecha seleccionada es hoy, filtrar horas pasadas
+        if ($fechaSel->equalTo($hoy)) {
+            $nowTime = Carbon::now()->format('H:i');
+            $available = array_values(array_filter($available, function($h) use ($nowTime) {
+                return $h >= $nowTime;
+            }));
+        }
 
         return response()->json(['availableTimes' => $available]);
     }
@@ -89,6 +105,16 @@ class AgendarCitaController extends Controller
         ]);
 
         $fechaHora = Carbon::createFromFormat('Y-m-d H:i', $request->fecha.' '.$request->hora);
+
+        // Restringir a rango: ahora .. ahora + 1 año
+        $now = Carbon::now();
+        $limite = (clone $now)->addYear();
+        if ($fechaHora->lt($now)) {
+            return response()->json(['message' => 'La fecha/hora ya pasó'], 422);
+        }
+        if ($fechaHora->gt($limite)) {
+            return response()->json(['message' => 'La fecha seleccionada excede el máximo de 1 año'], 422);
+        }
 
         // Verificar disponibilidad (no exista otra cita a esa misma hora en la clínica)
         $yaOcupada = Cita::where('clinica_id', $request->clinica_id)

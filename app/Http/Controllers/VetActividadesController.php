@@ -267,14 +267,14 @@ class VetActividadesController extends Controller
             }
 
             // Buscar o crear el servicio "Consulta Manual"
-            $servicio = \App\Models\Servicio::firstOrCreate(
-                ['nombre' => 'Consulta', 'clinica_id' => $clinicaId],
-                [
-                    'descripcion' => 'Consulta manual creada por veterinario',
-                    'precio' => 0.00,
-                    'tiempo_estimado' => 30
-                ]
-            );
+            // $servicio = \App\Models\Servicio::firstOrCreate(
+            //     ['nombre' => 'Consulta', 'clinica_id' => $clinicaId],
+            //     [
+            //         'descripcion' => 'Consulta manual creada por veterinario',
+            //         'precio' => 0.00,
+            //         'tiempo_estimado' => 30
+            //     ]
+            // );
 
             // CREAR MASCOTA para el usuario
             $mascota = \App\Models\Mascota::create([
