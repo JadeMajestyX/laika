@@ -248,11 +248,11 @@ class VetCitaFichaController extends Controller
             if (!$receta) {
                 $receta = Receta::create([
                     'cita_id' => $cita->id,
-                    'veterinario_id' => $user->id,
+                    'veterinario_id' => $cita->veterinario_id ?? $user->id,
                     'diagnostico' => $validated['diagnostico'] ?? null,
                     'notas' => $validated['notas'] ?? null,
                 ]);
-                Log::info("Nueva receta creada con ID {$receta->id} para cita {$id}");
+                Log::info("Nueva receta creada con ID {$receta->id} para cita {$id}, veterinario: " . ($cita->veterinario_id ?? $user->id));
             } else {
                 // Actualizar campos si existen en la petición
                 if (array_key_exists('diagnostico', $validated)) {
