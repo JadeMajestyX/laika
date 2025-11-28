@@ -131,21 +131,30 @@ class VetCitaFichaController extends Controller
                         'nombre' => $veterinario->nombre ?? '',
                         'apellido' => $veterinario->apellido_paterno ?? '',
                         'nombre_completo' => trim(($veterinario->nombre ?? '') . ' ' . ($veterinario->apellido_paterno ?? '')),
+                        'clinica_id' => $veterinario->clinica_id,
                     ];
                 }
             }
 
-            // Obtener datos de la clínica
+            // Obtener datos de la clínica (priorizar de la cita, luego del veterinario)
             $clinicaData = null;
-            if ($cita->clinica_id) {
-                $clinica = \App\Models\Clinica::find($cita->clinica_id);
+            $clinicaId = $cita->clinica_id;
+            
+            // Si la cita no tiene clínica pero el veterinario sí, usar la del veterinario
+            if (!$clinicaId && isset($veterinario) && $veterinario->clinica_id) {
+                $clinicaId = $veterinario->clinica_id;
+            }
+            
+            if ($clinicaId) {
+                $clinica = \App\Models\Clinica::find($clinicaId);
                 if ($clinica) {
                     $clinicaData = [
                         'id' => $clinica->id,
                         'nombre' => $clinica->nombre ?? 'Clínica Veterinaria',
-                        'direccion' => $clinica->direccion ?? '',
-                        'telefono' => $clinica->telefono ?? '',
+                        'direccion' => $clinica->direccion ?? 'Sin dirección registrada',
+                        'telefono' => $clinica->telefono ?? 'Sin teléfono',
                     ];
+                    Log::info("Clínica cargada: {$clinica->nombre}, dirección: {$clinica->direccion}");
                 }
             }
 
