@@ -1,6 +1,4 @@
-@extends('layouts.app')
-
-@section('content')
+<x-app-layout>
 <div class="container py-3">
   <h4 class="mb-3">Recepción</h4>
 
@@ -77,4 +75,4 @@
 </div>
 
 <script src="/js/views/dashboard-receptionist.js"></script>
-@endsection
+</x-app-layout>
