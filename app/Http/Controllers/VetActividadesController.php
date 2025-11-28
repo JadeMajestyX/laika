@@ -7,20 +7,32 @@ use App\Models\Cita;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class VetActividadesController extends Controller
 {
     public function getCitasDisponibles()
     {
         try {
-            \Log::info('🔍 Buscando citas disponibles...');
+            Log::info('🔍 Buscando citas disponibles...');
             
             // Obtener la fecha y hora actual
             $now = Carbon::now();
+            $user = Auth::user();
+            $clinicaId = $user?->clinica_id;
+            if (!$clinicaId) {
+                Log::warning('Usuario sin clinica_id, devolviendo lista vacía');
+                return response()->json([
+                    'success' => true,
+                    'citas' => [],
+                    'message' => 'El veterinario no tiene clínica asignada'
+                ]);
+            }
             
             $citas = Cita::with(['mascota', 'servicio'])
                 ->whereNull('veterinario_id')
                 ->whereIn('status', ['pendiente', 'confirmada'])
+                ->where('clinica_id', $clinicaId)
                 // Filtrar por fecha y hora: solo citas futuras
                 ->where(function($query) use ($now) {
                     $query->whereDate('fecha', '>', $now->toDateString())
@@ -33,8 +45,8 @@ class VetActividadesController extends Controller
                 ->orderBy('fecha', 'asc')
                 ->get();
 
-            \Log::info(" Citas disponibles encontradas: " . $citas->count());
-            \Log::info(" Hora actual: " . $now->format('Y-m-d H:i:s'));
+            Log::info(" Citas disponibles encontradas (clinica {$clinicaId}): " . $citas->count());
+            Log::info(" Hora actual: " . $now->format('Y-m-d H:i:s'));
 
             $citasDisponibles = $citas->map(function ($cita) {
                 // Extraer hora de la fecha datetime
@@ -60,7 +72,7 @@ class VetActividadesController extends Controller
 
             // Log para debug
             foreach ($citasDisponibles as $cita) {
-                \Log::info(" Cita disponible: {$cita['fecha_completa']} - {$cita['mascota']['nombre']}");
+                Log::info(" Cita disponible: {$cita['fecha_completa']} - {$cita['mascota']['nombre']}");
             }
 
             return response()->json([
@@ -69,7 +81,7 @@ class VetActividadesController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            \Log::error(' Error en getCitasDisponibles: ' . $e->getMessage());
+            Log::error(' Error en getCitasDisponibles: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'error' => 'Error al obtener citas disponibles',
@@ -84,7 +96,7 @@ class VetActividadesController extends Controller
             $veterinarioId = Auth::id();
             $today = Carbon::today();
 
-            \Log::info(" Buscando actividades para veterinario: {$veterinarioId}");
+            Log::info(" Buscando actividades para veterinario: {$veterinarioId}");
 
             // Obtener TODAS las actividades de hoy (tanto citas como consultas manuales)
             $actividades = Cita::with(['mascota', 'servicio', 'mascota.user'])
@@ -133,7 +145,7 @@ class VetActividadesController extends Controller
                 'completadas' => $actividades->where('status', 'completada')->count()
             ];
 
-            \Log::info(" Actividades encontradas: " . $actividades->count());
+            Log::info(" Actividades encontradas: " . $actividades->count());
 
             return response()->json([
                 'actividades' => $actividades,
@@ -141,7 +153,7 @@ class VetActividadesController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Error en getActividadesHoy: ' . $e->getMessage());
+            Log::error('Error en getActividadesHoy: ' . $e->getMessage());
             return response()->json(['error' => 'Error del servidor'], 500);
         }
     }
@@ -188,7 +200,7 @@ class VetActividadesController extends Controller
             $cita->save();
 
             // Log de la actividad
-            \Log::info("Cita {$cita->id} asignada al veterinario {$veterinarioId}");
+            Log::info("Cita {$cita->id} asignada al veterinario {$veterinarioId}");
 
             return response()->json([
                 'success' => true,
@@ -196,7 +208,7 @@ class VetActividadesController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Error en asignarCita: ' . $e->getMessage());
+            Log::error('Error en asignarCita: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Error al asignar cita: ' . $e->getMessage()
@@ -279,7 +291,7 @@ class VetActividadesController extends Controller
                 'tipo' => 'consulta'
             ]);
 
-            \Log::info(" Consulta creada - Cliente: {$request->nombre_cliente} {$request->apellido_cliente}");
+            Log::info(" Consulta creada - Cliente: {$request->nombre_cliente} {$request->apellido_cliente}");
 
             return response()->json([
                 'success' => true,
@@ -288,7 +300,7 @@ class VetActividadesController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('❌ Error al crear consulta manual: ' . $e->getMessage());
+            Log::error('❌ Error al crear consulta manual: ' . $e->getMessage());
             
             return response()->json([
                 'success' => false,
@@ -305,7 +317,7 @@ class VetActividadesController extends Controller
                 'estado' => 'required|in:pendiente,confirmada,en_progreso,completada,cancelada'
             ]);
 
-            \Log::info(" Actualizando estado de cita {$request->cita_id} a {$request->estado}");
+            Log::info(" Actualizando estado de cita {$request->cita_id} a {$request->estado}");
 
             $cita = Cita::where('id', $request->cita_id)
                 ->where('veterinario_id', Auth::id()) // Solo el veterinario asignado puede cambiar el estado
@@ -316,7 +328,7 @@ class VetActividadesController extends Controller
             $cita->save();
 
             // Log de la actividad
-            \Log::info(" Estado de cita {$cita->id} cambiado de {$estadoAnterior} a {$request->estado} por veterinario " . Auth::id());
+            Log::info(" Estado de cita {$cita->id} cambiado de {$estadoAnterior} a {$request->estado} por veterinario " . Auth::id());
 
             return response()->json([
                 'success' => true,
@@ -326,7 +338,7 @@ class VetActividadesController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            \Log::error(' Error en actualizarEstadoActividad: ' . $e->getMessage());
+            Log::error(' Error en actualizarEstadoActividad: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Error al actualizar estado: ' . $e->getMessage()
@@ -379,7 +391,7 @@ class VetActividadesController extends Controller
             ]);
             
         } catch (\Exception $e) {
-            \Log::error('Error en getCitaDetalle: ' . $e->getMessage());
+            Log::error('Error en getCitaDetalle: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Error al obtener detalle de la cita'
@@ -404,7 +416,7 @@ class VetActividadesController extends Controller
             $cita->notas = $request->procedimiento ?? $cita->notas;
             $cita->save();
 
-            \Log::info(" Cita {$cita->id} finalizada por veterinario " . Auth::id());
+            Log::info(" Cita {$cita->id} finalizada por veterinario " . Auth::id());
 
             return response()->json([
                 'success' => true,
@@ -412,7 +424,7 @@ class VetActividadesController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Error en finalizarCita: ' . $e->getMessage());
+            Log::error('Error en finalizarCita: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Error al finalizar la cita'
