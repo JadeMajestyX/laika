@@ -4,32 +4,16 @@ let chartInstance = null;
 
 function buildChartSeries(citasPorDia) {
   const diasOrdenados = [
-    { en: 'Monday', es: 'Lun', esFull: 'Lunes' },
-    { en: 'Tuesday', es: 'Mar', esFull: 'Martes' },
-    { en: 'Wednesday', es: 'Mié', esFull: 'Miércoles' },
-    { en: 'Thursday', es: 'Jue', esFull: 'Jueves' },
-    { en: 'Friday', es: 'Vie', esFull: 'Viernes' },
-    { en: 'Saturday', es: 'Sáb', esFull: 'Sábado' },
-    { en: 'Sunday', es: 'Dom', esFull: 'Domingo' },
+    { en: 'Monday', es: 'Lun' },
+    { en: 'Tuesday', es: 'Mar' },
+    { en: 'Wednesday', es: 'Mié' },
+    { en: 'Thursday', es: 'Jue' },
+    { en: 'Friday', es: 'Vie' },
+    { en: 'Saturday', es: 'Sáb' },
+    { en: 'Sunday', es: 'Dom' },
   ];
-
-  // Build a lookup from possible incoming day strings (en, es short, es full) to the English key we use for ordering
-  const enByLabel = {};
-  diasOrdenados.forEach((d) => {
-    enByLabel[d.en.toLowerCase()] = d.en;
-    enByLabel[d.es.toLowerCase()] = d.en;
-    if (d.esFull) enByLabel[d.esFull.toLowerCase()] = d.en;
-  });
-
-  // Aggregate totals mapping to English day names so the ordering below works regardless of backend locale
   const map = {};
-  (citasPorDia || []).forEach((item) => {
-    const raw = (item && item.dia) ? String(item.dia).trim() : '';
-    const key = raw.toLowerCase();
-    const en = enByLabel[key] || raw; // fallback to raw if unknown
-    map[en] = (map[en] || 0) + (Number(item.total) || 0);
-  });
-
+  (citasPorDia || []).forEach((item) => { map[item.dia] = item.total; });
   return {
     labels: diasOrdenados.map((d) => d.es),
     data: diasOrdenados.map((d) => map[d.en] || 0),
@@ -101,48 +85,6 @@ function renderActividades(actividades) {
     `;
     container.appendChild(row);
   });
-}
-
-function renderActividadHoy(citas) {
-  const tbody = document.getElementById('actividadHoyBody');
-  if (!tbody) return;
-  tbody.innerHTML = '';
-  const rows = (citas || []).filter(Boolean);
-  if (rows.length === 0) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="4" class="text-center text-body-secondary py-5">Sin actividad registrada</td>
-      </tr>
-    `;
-    return;
-  }
-
-  rows.forEach((c) => {
-    const hora = c.hora || c.start_time || c.time || (c.fecha ? new Date(c.fecha).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '');
-    const mascota = (c.mascota && (c.mascota.nombre || c.mascota.nombre_completo)) || c.mascota || (c.mascota_nombre) || '—';
-    const servicio = (c.servicio && (c.servicio.nombre || c.servicio.title)) || c.servicio || c.servicio_nombre || '—';
-    const estado = c.estado || c.status || (c.estado_cita) || '—';
-
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td style="width:110px">${hora}</td>
-      <td>${mascota}</td>
-      <td>${servicio}</td>
-      <td>${estado}</td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-function extractActividadHoyFromData(data) {
-  // Try multiple possible keys that backend might return
-  if (!data) return [];
-  if (Array.isArray(data.actividadHoy)) return data.actividadHoy;
-  if (Array.isArray(data.actividadesHoy)) return data.actividadesHoy;
-  if (Array.isArray(data.actividades)) return data.actividades;
-  if (Array.isArray(data.citasHoy)) return data.citasHoy;
-  if (Array.isArray(data.citas)) return data.citas;
-  return [];
 }
 
 function setTodayTexts() {
@@ -355,21 +297,6 @@ function initNavHandlers() {
           });
         return;
       }
-      if (section === 'actividad') {
-        // Fetch data and populate the actividad table
-        fetch('/groomer-dashboard/data')
-          .then((res) => res.json())
-          .then((data) => {
-            renderSection('actividad');
-            const actividadesHoy = extractActividadHoyFromData(data);
-            renderActividadHoy(actividadesHoy);
-          })
-          .catch(() => {
-            renderSection('actividad');
-          });
-        history.pushState({ section }, '', `/groomer-dashboard/${section}`);
-        return;
-      }
       renderSection(section);
       history.pushState({ section }, '', `/groomer-dashboard/${section}`);
     });
@@ -392,112 +319,10 @@ function handlePopState() {
           renderActividades(data.actividades);
           setTodayTexts();
         });
-    } else if (section === 'actividad') {
-      fetch('/groomer-dashboard/data')
-        .then((res) => res.json())
-        .then((data) => {
-          renderSection('actividad');
-          const actividadesHoy = extractActividadHoyFromData(data);
-          renderActividadHoy(actividadesHoy);
-        })
-        .catch(() => renderSection('actividad'));
     } else {
       renderSection(section);
     }
   });
-}
-
-function renderActividadesGroomer() {
-  const container = document.getElementById('actividadReciente');
-  if (!container) return;
-
-  // Mostrar un indicador de carga mientras se obtienen los datos
-  container.innerHTML = `
-    <div class="text-center text-body-secondary py-4">
-      <div class="spinner-border spinner-border-sm me-2" role="status"></div>
-      Cargando citas disponibles...
-    </div>
-  `;
-
-  // Realizar la solicitud al backend para obtener las citas
-  fetch('/groomer-dashboard/citas-disponibles')
-    .then(async (res) => {
-      if (!res.ok) throw new Error('Error al obtener las citas');
-      return res.json();
-    })
-    .then((data) => {
-      container.innerHTML = '';
-      if (!data || data.length === 0) {
-        container.innerHTML = '<div class="text-center text-body-secondary py-3">No hay citas disponibles</div>';
-        return;
-      }
-
-      data.forEach((cita) => {
-        const row = document.createElement('div');
-        row.className = 'd-flex gap-3 align-items-start border-bottom pb-3';
-        row.innerHTML = `
-          <div class="icon-bubble bg-opacity-25 bg-primary-subtle text-primary">
-            <i class="bi bi-calendar-check"></i>
-          </div>
-          <div>
-            <div><strong>${cita.mascota || 'Mascota desconocida'}</strong> - ${cita.servicio || 'Servicio no especificado'}</div>
-            <div class="small text-body-secondary">${cita.fecha || 'Fecha no disponible'}</div>
-          </div>
-        `;
-        container.appendChild(row);
-      });
-    })
-    .catch((error) => {
-      console.error('Error al cargar las citas:', error);
-      container.innerHTML = '<div class="text-center text-danger py-3">Error al cargar las citas</div>';
-    });
-}
-
-function renderCitasGroomer() {
-  const container = document.getElementById('actividadReciente');
-  if (!container) return;
-
-  // Mostrar un indicador de carga mientras se obtienen los datos
-  container.innerHTML = `
-    <div class="text-center text-body-secondary py-4">
-      <div class="spinner-border spinner-border-sm me-2" role="status"></div>
-      Cargando citas...
-    </div>
-  `;
-
-  // Realizar la solicitud al backend para obtener las citas
-  fetch('/groomer-dashboard/citas')
-    .then(async (res) => {
-      if (!res.ok) throw new Error('Error al obtener las citas');
-      return res.json();
-    })
-    .then((data) => {
-      container.innerHTML = '';
-      if (!data || !data.success || !data.citas || data.citas.length === 0) {
-        container.innerHTML = '<div class="text-center text-body-secondary py-3">No hay citas disponibles</div>';
-        return;
-      }
-
-      data.citas.forEach((cita) => {
-        const row = document.createElement('div');
-        row.className = 'd-flex gap-3 align-items-start border-bottom pb-3';
-        row.innerHTML = `
-          <div class="icon-bubble bg-opacity-25 bg-primary-subtle text-primary">
-            <i class="bi bi-calendar-check"></i>
-          </div>
-          <div>
-            <div><strong>${cita.mascota?.nombre || 'Mascota desconocida'}</strong> - ${cita.servicio?.nombre || 'Servicio no especificado'}</div>
-            <div class="small text-body-secondary">${cita.fecha || 'Fecha no disponible'} ${cita.hora || ''}</div>
-            <div class="small text-body-secondary">Estado: ${cita.status || 'Desconocido'}</div>
-          </div>
-        `;
-        container.appendChild(row);
-      });
-    })
-    .catch((error) => {
-      console.error('Error al cargar las citas:', error);
-      container.innerHTML = '<div class="text-center text-danger py-3">Error al cargar las citas</div>';
-    });
 }
 
 (function() {
@@ -519,18 +344,7 @@ function renderCitasGroomer() {
         })
         .catch((err) => console.error('Error al obtener los datos del dashboard groomer:', err));
     } else {
-      if (initialSection === 'actividad') {
-        fetch('/groomer-dashboard/data')
-          .then((r) => r.json())
-          .then((data) => {
-            renderSection('actividad');
-            const actividadesHoy = extractActividadHoyFromData(data);
-            renderActividadHoy(actividadesHoy);
-          })
-          .catch(() => renderSection('actividad'));
-      } else {
-        renderSection(initialSection);
-      }
+      renderSection(initialSection);
       history.replaceState({ section: initialSection }, '', location.pathname);
     }
 
