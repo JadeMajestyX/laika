@@ -453,6 +453,53 @@ function renderActividadesGroomer() {
     });
 }
 
+function renderCitasGroomer() {
+  const container = document.getElementById('actividadReciente');
+  if (!container) return;
+
+  // Mostrar un indicador de carga mientras se obtienen los datos
+  container.innerHTML = `
+    <div class="text-center text-body-secondary py-4">
+      <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+      Cargando citas...
+    </div>
+  `;
+
+  // Realizar la solicitud al backend para obtener las citas
+  fetch('/groomer-dashboard/citas')
+    .then(async (res) => {
+      if (!res.ok) throw new Error('Error al obtener las citas');
+      return res.json();
+    })
+    .then((data) => {
+      container.innerHTML = '';
+      if (!data || !data.success || !data.citas || data.citas.length === 0) {
+        container.innerHTML = '<div class="text-center text-body-secondary py-3">No hay citas disponibles</div>';
+        return;
+      }
+
+      data.citas.forEach((cita) => {
+        const row = document.createElement('div');
+        row.className = 'd-flex gap-3 align-items-start border-bottom pb-3';
+        row.innerHTML = `
+          <div class="icon-bubble bg-opacity-25 bg-primary-subtle text-primary">
+            <i class="bi bi-calendar-check"></i>
+          </div>
+          <div>
+            <div><strong>${cita.mascota?.nombre || 'Mascota desconocida'}</strong> - ${cita.servicio?.nombre || 'Servicio no especificado'}</div>
+            <div class="small text-body-secondary">${cita.fecha || 'Fecha no disponible'} ${cita.hora || ''}</div>
+            <div class="small text-body-secondary">Estado: ${cita.status || 'Desconocido'}</div>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+    })
+    .catch((error) => {
+      console.error('Error al cargar las citas:', error);
+      container.innerHTML = '<div class="text-center text-danger py-3">Error al cargar las citas</div>';
+    });
+}
+
 (function() {
   document.addEventListener('DOMContentLoaded', () => {
     const match = location.pathname.match(/^\/groomer-dashboard(?:\/([^\/?#]+))?/);

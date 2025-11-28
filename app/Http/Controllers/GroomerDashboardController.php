@@ -118,4 +118,45 @@ class GroomerDashboardController extends Controller
             return response()->json(['error' => 'Error al obtener datos del dashboard'], 500);
         }
     }
+
+
+    //citas para el groomer
+    public function citas(Request $request){
+        try{
+            $servicios = Servicio::where('clinica_id', Auth::user()->clinica_id)
+                ->where(function ($q2) {
+                    $keywords = ['corte de pelo', 'baño', 'limpieza dental', 'peluque', 'peluquer', 'spa', 'corte de uñas', 'corte uñas', 'pelado'];
+                    foreach ($keywords as $kw) {
+                        $q2->orWhereRaw('LOWER(nombre) LIKE ?', ['%' . $kw . '%']);
+                    }
+                })->pluck('id')->toArray();
+
+
+            $citas = Cita::with(['mascota', 'servicio', 'mascota.user'])
+                ->where('clinica_id', Auth::user()->clinica_id)
+                ->whereIn('servicio_id', $servicios)
+                ->whereDate('fecha', '>=', Carbon::today())
+                ->orderBy('fecha')
+                ->get()
+                ->map(function($c) {
+                    return [
+                        'id' => $c->id,
+                        'fecha' => $c->fecha?->toDateString(),
+                        'hora' => $c->hora ?? ($c->fecha?->format('H:i') ?? null),
+                        'mascota' => ['nombre' => $c->mascota->nombre ?? null, 'raza' => $c->mascota->raza ?? null],
+                        'propietario' => $c->mascota->user->nombre ?? ($c->creador?->nombre ?? null),
+                        'servicio' => ['nombre' => $c->servicio->nombre ?? null],
+                        'status' => $c->status ?? null,
+                    ];
+                })->toArray();
+
+                return json_encode([
+                    'success' => true,
+                    'citas' => $citas,
+                ]);
+        } catch (\Exception $e){
+            Log::error('Error en GroomerDashboardController::citas - ' . $e->getMessage());
+            return response()->json(['error' => 'Error al obtener las citas del groomer'], 500);
+        }
+    }
 }
