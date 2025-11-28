@@ -21,7 +21,8 @@ class GroomerDashboardController extends Controller
 
     /**
      * GET /groomer-dashboard/data
-     * Resumen para el groomer autenticado, filtrando por su clínica y grooming.
+     * Devuelve todas las citas y servicios de la clínica del groomer autenticado.
+     * El filtrado por groomer se hará en el frontend.
      */
     public function data(Request $request)
     {
@@ -32,104 +33,24 @@ class GroomerDashboardController extends Controller
         }
 
         $clinicaId = $user->clinica_id;
-
-        $today = now()->startOfDay();
-        $endToday = now()->endOfDay();
-
-        // Detectar servicios de grooming por nombre
-        $keywords = [
-            'corte de pelo', 'baño', 'limpieza dental', 'spa', 'corte de uñas', 'desparasitación',
-            'peluquer', 'peluque', 'baño y corte', 'limpieza', 'groom', 'aseo'
-        ];
-        $servicioIds = Servicio::where('clinica_id', $clinicaId)
-            ->where(function ($q) use ($keywords) {
-                foreach ($keywords as $kw) {
-                    $q->orWhereRaw('LOWER(nombre) LIKE ?', ['%' . strtolower($kw) . '%']);
-                }
-            })
-            ->pluck('id')
-            ->all();
-
-        // Query base: clínica + citas del groomer + servicio de grooming
-        $baseQuery = Cita::query()
+        // Todas las citas de la clínica
+        $citasClinica = Cita::with(['servicio:id,nombre,clinica_id', 'mascota:id,nombre', 'creador:id,nombre', 'veterinario:id,nombre'])
             ->where('clinica_id', $clinicaId)
-            ->where(function ($q) use ($user) {
-                $q->where('veterinario_id', $user->id)
-                  ->orWhere('creada_por', $user->id);
-            })
-            ->when(!empty($servicioIds), function ($q) use ($servicioIds) {
-                $q->whereIn('servicio_id', $servicioIds);
-            });
+            ->orderByDesc('fecha')
+            ->get([
+                'id','clinica_id','servicio_id','mascota_id','creada_por','veterinario_id','fecha','status','tipo'
+            ]);
 
-        $citasHoy = (clone $baseQuery)
-            ->whereBetween('fecha', [$today, $endToday])
-            ->count();
-
-        $citasCompletadasHoy = (clone $baseQuery)
-            ->whereBetween('fecha', [$today, $endToday])
-            ->where('status', 'completada')
-            ->count();
-
-        $serviciosRealizadosHoy = (clone $baseQuery)
-            ->whereBetween('fecha', [$today, $endToday])
-            ->whereNotNull('servicio_id')
-            ->count();
-
-        $mascotasAtendidasHoy = (clone $baseQuery)
-            ->whereBetween('fecha', [$today, $endToday])
-            ->whereNotNull('mascota_id')
-            ->distinct('mascota_id')
-            ->count('mascota_id');
-
-        $yesterdayStart = now()->subDay()->startOfDay();
-        $yesterdayEnd = now()->subDay()->endOfDay();
-
-        $citasAyer = (clone $baseQuery)->whereBetween('fecha', [$yesterdayStart, $yesterdayEnd])->count();
-        $citasCompletadasAyer = (clone $baseQuery)->whereBetween('fecha', [$yesterdayStart, $yesterdayEnd])->where('status', 'completada')->count();
-        $serviciosAyer = (clone $baseQuery)->whereBetween('fecha', [$yesterdayStart, $yesterdayEnd])->whereNotNull('servicio_id')->count();
-        $mascotasAyer = (clone $baseQuery)->whereBetween('fecha', [$yesterdayStart, $yesterdayEnd])->whereNotNull('mascota_id')->distinct('mascota_id')->count('mascota_id');
-
-        $comparacion = [
-            'citasHoy' => self::pctChange($citasAyer, $citasHoy),
-            'citasCompletadas' => self::pctChange($citasCompletadasAyer, $citasCompletadasHoy),
-            'serviciosRealizados' => self::pctChange($serviciosAyer, $serviciosRealizadosHoy),
-            'mascotasAtendidas' => self::pctChange($mascotasAyer, $mascotasAtendidasHoy),
-        ];
-
-        $weekStart = now()->startOfWeek();
-        $weekEnd = now()->endOfWeek();
-        $citasSemana = (clone $baseQuery)
-            ->whereBetween('fecha', [$weekStart, $weekEnd])
-            ->get(['id', 'fecha']);
-
-        $citasPorDia = $citasSemana
-            ->groupBy(fn($c) => $c->fecha?->format('l'))
-            ->map(fn($grp) => ['dia' => optional($grp->first()->fecha)->format('l'), 'total' => $grp->count()])
-            ->values();
-
-        $actividades = (clone $baseQuery)
-            ->whereBetween('fecha', [$today, $endToday])
-            ->latest('fecha')
-            ->with(['servicio:id,nombre', 'mascota:id,nombre'])
-            ->take(10)
-            ->get()
-            ->map(function ($cita) {
-                $serv = $cita->servicio?->nombre ?? 'Servicio';
-                $masc = $cita->mascota?->nombre ?? 'Mascota';
-                return [
-                    'descripcion' => $serv.' - '.$masc,
-                    'created_at' => optional($cita->fecha)->format('Y-m-d H:i'),
-                ];
-            });
+        // Todos los servicios de la clínica
+        $serviciosClinica = Servicio::where('clinica_id', $clinicaId)
+            ->orderBy('nombre')
+            ->get(['id','clinica_id','nombre','descripcion','precio','tiempo_estimado']);
 
         return response()->json([
-            'citasHoy' => $citasHoy,
-            'citasCompletadas' => $citasCompletadasHoy,
-            'serviciosRealizados' => $serviciosRealizadosHoy,
-            'mascotasAtendidas' => $mascotasAtendidasHoy,
-            'comparacionporcentaje' => $comparacion,
-            'citasPorDia' => $citasPorDia,
-            'actividades' => $actividades,
+            'userId' => $user->id,
+            'clinicaId' => $clinicaId,
+            'citasClinica' => $citasClinica,
+            'serviciosClinica' => $serviciosClinica,
         ]);
     }
 

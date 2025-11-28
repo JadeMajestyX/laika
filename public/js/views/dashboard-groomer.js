@@ -2,7 +2,7 @@
 
 let chartInstance = null;
 
-function buildChartSeries(citasPorDia) {
+function buildChartSeriesFromCitas(citas, groomerId) {
   const diasOrdenados = [
     { en: 'Monday', es: 'Lun' },
     { en: 'Tuesday', es: 'Mar' },
@@ -13,7 +13,15 @@ function buildChartSeries(citasPorDia) {
     { en: 'Sunday', es: 'Dom' },
   ];
   const map = {};
-  (citasPorDia || []).forEach((item) => { map[item.dia] = item.total; });
+  const isMine = (c) => c.veterinario_id === groomerId || c.creada_por === groomerId;
+  (citas || [])
+    .filter(isMine)
+    .forEach((c) => {
+      const d = c.fecha ? new Date(c.fecha) : null;
+      if (!d) return;
+      const enDay = d.toLocaleDateString('en-US', { weekday: 'long' });
+      map[enDay] = (map[enDay] || 0) + 1;
+    });
   return {
     labels: diasOrdenados.map((d) => d.es),
     data: diasOrdenados.map((d) => map[d.en] || 0),
@@ -44,7 +52,22 @@ function renderChart(labels, data) {
   });
 }
 
-function updateDashboardMetrics(d) {
+function updateDashboardMetricsFromCitas(payload) {
+  const { citasClinica = [], userId } = payload || {};
+  const today = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  const isSameDay = (dt) => dt && dt.getFullYear() === today.getFullYear() && dt.getMonth() === today.getMonth() && dt.getDate() === today.getDate();
+  const mine = (c) => c.veterinario_id === userId || c.creada_por === userId;
+  const citasHoy = citasClinica.filter((c) => {
+    const d = c.fecha ? new Date(c.fecha) : null;
+    return mine(c) && isSameDay(d);
+  });
+  const completadas = citasHoy.filter((c) => c.status === 'completada');
+  const serviciosRealizados = citasHoy.filter((c) => c.servicio_id != null);
+  const mascotasSet = new Set();
+  citasHoy.forEach((c) => { if (c.mascota_id) mascotasSet.add(c.mascota_id); });
+  const mascotasAtendidas = mascotasSet.size;
+
   const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
   const setPct = (id, pct) => {
     const el = document.getElementById(id);
@@ -52,17 +75,32 @@ function updateDashboardMetrics(d) {
     el.textContent = (pct >= 0 ? '+' : '') + pct + '%';
     el.className = 'small ' + (pct >= 0 ? 'text-success' : 'text-danger');
   };
-  setVal('citasHoy', d.citasHoy);
-  setPct('porcentajeCitas', d.comparacionporcentaje?.citasHoy ?? 0);
-  setVal('citasCompletadas', d.citasCompletadas);
-  setPct('porcentajeCitasCompletadas', d.comparacionporcentaje?.citasCompletadas ?? 0);
-  setVal('serviciosRealizados', d.serviciosRealizados || 0);
-  setPct('porcentajeServicios', d.comparacionporcentaje?.serviciosRealizados ?? 0);
-  setVal('mascotasAtendidas', d.mascotasAtendidas || 0);
-  setPct('porcentajeMascotas', d.comparacionporcentaje?.mascotasAtendidas ?? 0);
+  setVal('citasHoy', citasHoy.length);
+  setPct('porcentajeCitas', 0);
+  setVal('citasCompletadas', completadas.length);
+  setPct('porcentajeCitasCompletadas', 0);
+  setVal('serviciosRealizados', serviciosRealizados.length);
+  setPct('porcentajeServicios', 0);
+  setVal('mascotasAtendidas', mascotasAtendidas);
+  setPct('porcentajeMascotas', 0);
 }
 
-function renderActividades(actividades) {
+function renderActividadesFromCitas(payload) {
+  const { citasClinica = [], userId } = payload || {};
+  const today = new Date();
+  const isSameDay = (dt) => dt && dt.getFullYear() === today.getFullYear() && dt.getMonth() === today.getMonth() && dt.getDate() === today.getDate();
+  const mine = (c) => c.veterinario_id === userId || c.creada_por === userId;
+  const actividades = citasClinica
+    .filter((c) => {
+      const d = c.fecha ? new Date(c.fecha) : null;
+      return mine(c) && isSameDay(d);
+    })
+    .sort((a,b) => new Date(b.fecha) - new Date(a.fecha))
+    .slice(0, 10)
+    .map((c) => ({
+      descripcion: (c.servicio?.nombre) || 'Servicio',
+      created_at: c.fecha ? new Date(c.fecha).toLocaleString('es-MX') : ''
+    }));
   const container = document.getElementById('actividadReciente');
   if(!container) return;
   container.innerHTML = '';
@@ -289,10 +327,10 @@ function initNavHandlers() {
           .then((res) => res.json())
           .then((data) => {
             renderSection('home', data);
-            const { labels, data: series } = buildChartSeries(data.citasPorDia);
-            updateDashboardMetrics(data);
+            const { labels, data: series } = buildChartSeriesFromCitas(data.citasClinica, data.userId);
+            updateDashboardMetricsFromCitas(data);
             renderChart(labels, series);
-            renderActividades(data.actividades);
+            renderActividadesFromCitas(data);
             setTodayTexts();
           });
         return;
@@ -313,10 +351,10 @@ function handlePopState() {
         .then((res) => res.json())
         .then((data) => {
           renderSection('home', data);
-          const { labels, data: series } = buildChartSeries(data.citasPorDia);
-          updateDashboardMetrics(data);
+          const { labels, data: series } = buildChartSeriesFromCitas(data.citasClinica, data.userId);
+          updateDashboardMetricsFromCitas(data);
           renderChart(labels, series);
-          renderActividades(data.actividades);
+          renderActividadesFromCitas(data);
           setTodayTexts();
         });
     } else {
@@ -336,10 +374,10 @@ function handlePopState() {
         .then((r) => r.json())
         .then((data) => {
           renderSection('home', data);
-          const { labels, data: series } = buildChartSeries(data.citasPorDia);
-          updateDashboardMetrics(data);
+          const { labels, data: series } = buildChartSeriesFromCitas(data.citasClinica, data.userId);
+          updateDashboardMetricsFromCitas(data);
           renderChart(labels, series);
-          renderActividades(data.actividades);
+          renderActividadesFromCitas(data);
           setTodayTexts();
         })
         .catch((err) => console.error('Error al obtener los datos del dashboard groomer:', err));
